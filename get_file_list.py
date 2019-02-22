@@ -1,3 +1,4 @@
+import os
 from os import listdir
 
 def get_file_list(thisPath):
@@ -15,8 +16,9 @@ def get_file_list(thisPath):
 
     for x in listdir(thisPath):
         #print(x)
-        for y in listdir(thisPath+'/'+x):
+        for y in listdir(thisPath + '/' + x):
             thisFile = x + '/' + y
-            list_of_reports.append(x+'/'+y)
+            list_of_reports.append(thisFile)
+            list_of_dates.append(os.path.getmtime(thisPath + '/' + thisFile))
 
     return (list_of_reports, list_of_dates)

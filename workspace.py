@@ -33,6 +33,13 @@ thisPerson
 thisFinish
 thisAntenna
 
+## test the get_file_list code
+from get_file_list import *
+filePath = 'm:/SharedFiles/LoopReportFiles'
+(fileList, dateList) = get_file_list(filePath)
+fileList
+dateList
+
 
 """
 
