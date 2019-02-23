@@ -30,7 +30,8 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
     run_time_hours = last_command-first_command
     run_time_hours = run_time_hours.total_seconds()/3600
 
-    summary['first_command'] = df.iloc[0]['time']
+    summary['first_command'] = '{} (UTC)'.format(df.iloc[0]['time'])
+    summary['last_command'] = '{} (UTC)'.format(df.iloc[-1]['time'])
     summary['total time'] = '{}'.format(last_command - first_command)
 
     send_receive_commands = df.groupby(['type']).size()
@@ -40,9 +41,9 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
 
     summary['# Send and Received']= df['command'].count()
 
-    asleep_time = (round(df['time_asleep'].sum()/df['time_delta'].sum() * 100 ,2))
-    summary['Asleep Time'] = '{} %'.format(asleep_time)
-    summary['Awake Time'] = '{} %'.format(round(100 - asleep_time , 4))
+    #asleep_time = (round(df['time_asleep'].sum()/df['time_delta'].sum() * 100 ,2))
+    #summary['Asleep Time'] = '{} %'.format(asleep_time)
+    #summary['Awake Time'] = '{} %'.format(round(100 - asleep_time , 4))
 
     if verboseFlag:
         print('{:.2f}'.format(run_time_hours))
@@ -112,8 +113,14 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
     cmd_count = df.groupby(['type','command']).size().reset_index(name='count')
     cmd_count
 
+    # partition file to extract useful information
+    (thisPerson, thisFinish, thisAntenna) = parse_info_from_filename(thisFile)
+    lastDate = last_command.date()
+    lastTime = last_command.time()
+
     # use cmds_per_seq_histogram
     print(' Summary for', thisFile)
+    print(f' Upload by {thisPerson} with {thisFinish} ending using {thisAntenna}')
     print('__________________________________________\n')
     print('  Number of Messages in Sequence, Number Occurrences')
     count=0
@@ -125,39 +132,45 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
 
     print('__________________________________________\n')
 
+    print(' Summary for', thisFile)
+    print(f' Uploaded by {thisPerson} ending {thisFinish} using {thisAntenna}')
+    print('__________________________________________')
+    for key, value in summary.items():
+        print(key.ljust(19).title(),':',value)
+
+    print('Pod Time (hrs)      : {:.2f}'.format(run_time_hours))
+    print('Radio On (hrs)      : {:.2f}, {:.1f}%'.format(totalRadioHrs, 100*totalRadioHrs/run_time_hours))
+    print('Number sequences    : {:d}'.format(number_of_sequences))
+    print('Median time btw seq : {:.2f} minutes'.format(medSeqDelTime))
+    print('Number nonce resync : {:d}'.format(numberOfNonceResync))
+
     # report nonceResync and faultInFile
-    print('  There were {:d} instances of nonceResync'.format(numberOfNonceResync))
     if isFaultInFile:
-        print('Fault found in MessageLogs')
         thisFault = faultInFile.iloc[0]
     else:
-        print('No Fault found in MessageLogs')
         thisFault = 'N/A'
 
-    print('  ', thisFault)
+    print('Fault in MessageLog :', thisFault)
 
+    print('__________________________________________\n')
 
-    # partition file to extract useful information
-
-    (thisPerson, thisFinish, thisAntenna) = parse_info_from_filename(thisFile)
-    lastDate = last_command.date()
-    lastTime = last_command.time()
 
     # set up a table format order
     headerString = 'Who, finishState, antenna, lastMsgDate, podOn(hrs), radioOn(hrs), radioOn(%), ' + \
        'numMessages, numSend, numRecv, medianMinBetweenSeq, #Sequences, ' + \
        ' MaxMsgInSingleSeq, #of1MsgPerSeq, #of2MsgPerSeq, #of4MsgPerSeq, #of6MsgPerSeq, #NonceResync, #faultInFile, filename'
 
-    print(headerString)
-    # Please - no spaces for person, finish or antenna or date - works better for excel import
-    print(f'{thisPerson},{thisFinish},{thisAntenna},{lastDate}, '\
-          '{:.2f}, {:5.2f},'.format(run_time_hours, totalRadioHrs), \
-          '{:.1f}%,'.format(100*totalRadioHrs/run_time_hours),  \
-          f'{number_of_messages}, {send_receive_commands[1]}, {send_receive_commands[0]},', \
-          '{:5.2f},'.format(medSeqDelTime), \
-          '{:5d},{:5d},'.format(number_of_sequences, len(cmds_per_seq_histogram)), \
-          '{:5d},{:5d},'.format(cmds_per_seq_histogram[0], cmds_per_seq_histogram[1]), \
-          '{:5d},{:5d},{}'.format(cmds_per_seq_histogram[3], cmds_per_seq_histogram[5], thisFile))
+    if verboseFlag:
+        print(headerString)
+        # Please - no spaces for person, finish or antenna or date - works better for excel import
+        print(f'{thisPerson}, {thisFinish}, {thisAntenna}, {lastDate}, '\
+              '{:.2f}, {:5.2f}, '.format(run_time_hours, totalRadioHrs), \
+              '{:.1f}%, '.format(100*totalRadioHrs/run_time_hours),  \
+              f'{number_of_messages}, {send_receive_commands[1]}, {send_receive_commands[0]},', \
+              '{:5.2f}, '.format(medSeqDelTime), \
+              '{:5d}, {:5d}, '.format(number_of_sequences, len(cmds_per_seq_histogram)), \
+              '{:5d}, {:5d}, '.format(cmds_per_seq_histogram[0], cmds_per_seq_histogram[1]), \
+              '{:5d}, {:5d}, {:5d}, {}, {}'.format(cmds_per_seq_histogram[3], cmds_per_seq_histogram[5], numberOfNonceResync, thisFault, thisFile))
 
     # save the output to a file
 
@@ -172,12 +185,13 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
         stream_out.write(headerString)
         stream_out.write('\n')
 
-    # write out the information
-    stream_out.write(f'{thisPerson}, {thisFinish}, {thisAntenna}, {lastDate}, {run_time_hours}, ')
-    stream_out.write(f'{totalRadioHrs}, {100*totalRadioHrs/run_time_hours}, {number_of_messages}, ')
-    stream_out.write(f'{send_receive_commands[1]}, {send_receive_commands[0]}, ')
-    stream_out.write(f'{medSeqDelTime}, {number_of_sequences}, {len(cmds_per_seq_histogram)}, ')
-    stream_out.write(f'{cmds_per_seq_histogram[0]}, {cmds_per_seq_histogram[1]}, {cmds_per_seq_histogram[3]}, {cmds_per_seq_histogram[5]}, ')
+    # write out the information for csv (don't want extra spaces for this )
+    stream_out.write(f'{thisPerson},{thisFinish},{thisAntenna},{lastDate},{run_time_hours},')
+    stream_out.write(f'{totalRadioHrs},{100*totalRadioHrs/run_time_hours},{number_of_messages},')
+    stream_out.write(f'{send_receive_commands[1]},{send_receive_commands[0]},')
+    stream_out.write(f'{medSeqDelTime}, {number_of_sequences}, {len(cmds_per_seq_histogram)},')
+    stream_out.write(f'{cmds_per_seq_histogram[0]},{cmds_per_seq_histogram[1]},{cmds_per_seq_histogram[3]},{cmds_per_seq_histogram[5]},')
+    stream_out.write(f'{numberOfNonceResync},{thisFault},')
     stream_out.write(f'{thisFile}')
     stream_out.write('\n')
     stream_out.close()
