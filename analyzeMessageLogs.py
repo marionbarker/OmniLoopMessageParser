@@ -1,30 +1,27 @@
 import pandas as pd
 from messageLogs_functions import *
 
-def analyzeMessageLogs(thisPath, thisFile, outFile):
-
-    # hard code these for now
-    verboseFlag =  0   # if this is 1 then more print stmts
-    numRowsBeg  =  10   # if >0, print this many messages from beginning of record
-    numRowsEnd  =  10   # if >0, print this many messages from end of record
+def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, numRowsEnd):
 
     # set up the asleep time as an adjustable parameter
     #   Eelke hard coded 30 sec - which is the time the radio stays on for the Pod
     radio_on_time   = 30 # add new variable name, same as sleep_time_param
 
-    ##filepath = 'M:/SharedFiles/LoopReports/'
-    filename = thisPath+'/'+thisFile
-    print(thisFile)
-    print(filename)
+    filename = thisPath + '/' + thisFile
+    if verboseFlag:
+        print('File relative path:', thisFile)
+        print('File absolute path:', filename)
+
     commands = read_file(filename)
     df = generate_table(commands, radio_on_time)
 
-
     if numRowsBeg>0:
-        df.head(numRowsBeg)
+        headList = df.head(numRowsBeg)
+        print(headList)
 
     if numRowsEnd>0:
-        df.tail(numRowsEnd)
+        tailList = df.tail(numRowsEnd)
+        print(tailList)
 
     summary = {}
 
@@ -69,6 +66,12 @@ def analyzeMessageLogs(thisPath, thisFile, outFile):
     #     tuples of [number of commands in a sequence, number of sequences with that length]
     cmds_per_sequence = count_cmds_per_sequence(sequence_of_cmds)
 
+    # find all instances of '06' - request for nonce resync
+    nonceResync = df[df.command=='06']
+    numberOfNonceResync = len(nonceResync)
+
+    faultInFile = df[df.command=='02'].raw_value
+    isFaultInFile = len(faultInFile)
 
     # Prepare an array of the time since pod started to the first command in each
     #   sequence and the number of commands in that sequence and radio on time
@@ -98,13 +101,16 @@ def analyzeMessageLogs(thisPath, thisFile, outFile):
 
     cmds_per_seq_histogram = get_cmds_per_seq_histogram(cmds_per_sequence)
 
-    print(' Summary for', thisFile)
-    print('__________________________________________\n')
-    print('  Instances, Number of S/R in Sequence')
-    for idx in cmds_per_sequence:
-        print(' {:5d}'.format(idx[1]), ' {:8d}'.format(idx[0]))
+    #print(' Summary for', thisFile)
+    #print('__________________________________________\n')
+    #print('  Instances, Number of S/R in Sequence')
+    #for idx in cmds_per_sequence:
+    #    print(' {:5d}'.format(idx[1]), ' {:8d}'.format(idx[0]))
+    #
+    #print('__________________________________________\n')
 
-    print('__________________________________________\n')
+    cmd_count = df.groupby(['type','command']).size().reset_index(name='count')
+    cmd_count
 
     # use cmds_per_seq_histogram
     print(' Summary for', thisFile)
@@ -115,16 +121,23 @@ def analyzeMessageLogs(thisPath, thisFile, outFile):
         count += 1
         if idx==0:
             continue
-        print(' {:5d}'.format(count), ' {:8d}'.format(idx))
+        print(' {:5d}, {:8d}'.format(count,idx))
 
     print('__________________________________________\n')
 
+    # report nonceResync and faultInFile
+    print('  There were {:d} instances of nonceResync'.format(numberOfNonceResync))
+    if isFaultInFile:
+        print('Fault found in MessageLogs')
+        thisFault = faultInFile.iloc[0]
+    else:
+        print('No Fault found in MessageLogs')
+        thisFault = 'N/A'
 
-    cmd_count = df.groupby(['type','command']).size().reset_index(name='count')
-    cmd_count
-    # manually read the number of 06 receives
+    print('  ', thisFault)
 
-    # part
+
+    # partition file to extract useful information
 
     (thisPerson, thisFinish, thisAntenna) = parse_info_from_filename(thisFile)
     lastDate = last_command.date()
@@ -133,19 +146,18 @@ def analyzeMessageLogs(thisPath, thisFile, outFile):
     # set up a table format order
     headerString = 'Who, finishState, antenna, lastMsgDate, podOn(hrs), radioOn(hrs), radioOn(%), ' + \
        'numMessages, numSend, numRecv, medianMinBetweenSeq, #Sequences, ' + \
-       ' MaxMsgInSingleSeq, #of1MsgPerSeq, #of2MsgPerSeq, #of4MsgPerSeq, #of6MsgPerSeq, filename'
+       ' MaxMsgInSingleSeq, #of1MsgPerSeq, #of2MsgPerSeq, #of4MsgPerSeq, #of6MsgPerSeq, #NonceResync, #faultInFile, filename'
 
     print(headerString)
     # Please - no spaces for person, finish or antenna or date - works better for excel import
     print(f'{thisPerson},{thisFinish},{thisAntenna},{lastDate}, '\
-          '{:.2f},'.format(run_time_hours), '{:5.2f},'.format(totalRadioHrs), \
+          '{:.2f}, {:5.2f},'.format(run_time_hours, totalRadioHrs), \
           '{:.1f}%,'.format(100*totalRadioHrs/run_time_hours),  \
           f'{number_of_messages}, {send_receive_commands[1]}, {send_receive_commands[0]},', \
           '{:5.2f},'.format(medSeqDelTime), \
-          '{:5d},'.format(number_of_sequences), '{:5d},'.format(len(cmds_per_seq_histogram)), \
-          '{:5d},'.format(cmds_per_seq_histogram[0]), '{:5d},'.format(cmds_per_seq_histogram[1]), \
-          '{:5d},'.format(cmds_per_seq_histogram[3]), '{:5d},'.format(cmds_per_seq_histogram[5]), \
-           thisFile)
+          '{:5d},{:5d},'.format(number_of_sequences, len(cmds_per_seq_histogram)), \
+          '{:5d},{:5d},'.format(cmds_per_seq_histogram[0], cmds_per_seq_histogram[1]), \
+          '{:5d},{:5d},{}'.format(cmds_per_seq_histogram[3], cmds_per_seq_histogram[5], thisFile))
 
     # save the output to a file
 
@@ -176,4 +188,4 @@ def analyzeMessageLogs(thisPath, thisFile, outFile):
     # table for each command
     groupByCmdType = df.groupby(['type','command']).size().reset_index(name='count')
 
-    return (df, groupBy0602, groupByCmdType)
+    return df

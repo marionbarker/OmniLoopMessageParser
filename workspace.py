@@ -10,25 +10,63 @@ from analyzeMessageLogs import *
 from get_file_list import *
 
 filePath = 'm:/SharedFiles/LoopReportFiles'
-outFile = 'm:/SharedFiles/LoopReportPythonAnalysis/output_20190221.csv'
-fileList = get_file_list(filePath)
+outFile = 'm:/SharedFiles/LoopReportPythonAnalysis/output_20190222.csv'
+fileDateList = get_file_list(filePath)
 
+verboseFlag =  0   # if this is 1 then more print stmts
+numRowsBeg  =  10   # if >0, print this many messages from beginning of record
+numRowsEnd  =  10   # if >0, print this many messages from end of record
+
+## this one has a fault
+df = analyzeMessageLogs(filePath, fileDateList[6][0], outFile, verboseFlag, numRowsBeg, numRowsEnd)
+## this one has no fault
+df = analyzeMessageLogs(filePath, fileDateList[0][0], outFile, verboseFlag, numRowsBeg, numRowsEnd)
+
+## code in function:
+faultInFile = df[df.command=='02'].raw_value
+isFaultInFile = len(faultInFile)
+
+    if isFaultInFile:
+        print('Fault found in MessageLogs')
+    else:
+        print('No Fault found in MessageLogs')
+        faultInFile = 'N/A'
+
+    print('  ', faultInFile)
+
+## output if there is a fault:
+Fault found in MessageLogs
+   2985    0216020d00000000000034ffff03ff0000000089b00900...
+Name: raw_value, dtype: object
+
+## output if there is not a fault:
+No Fault found in MessageLogs
+   N/A
+
+I want the string '0216020d00000000000034ffff03ff0000000089b00900' to paste into output report without the dataframe debris
+
+## to loop through all
 count=0
-for thisFile in fileList:
-    analyzeMessageLogs(filePath, thisFile, outFile)
+for x in fileDateList:
+    analyzeMessageLogs(filePath, x[0], outFile, verboseFlag, numRowsBeg, numRowsEnd)
     count += 1
+    if count>3:
+        break
 
 
-## not part of main test
-(df, groupBy0602, groupByCmdType) = analyzeMessageLogs('m:/SharedFiles/LoopReportFiles', 'Joe/Loop-Report-2019-02-04-020637-0800_Nominal_origAnt.md', 'm:/SharedFiles/LoopReportPythonAnalysis/output_20190220.csv')
+## selected tests
+df = analyzeMessageLogs('m:/SharedFiles/LoopReportFiles', 'Joe/Loop-Report-2019-02-04-020637-0800_Nominal_origAnt.md', 'm:/SharedFiles/LoopReportPythonAnalysis/output_20190220.csv', verboseFlag, numRowsBeg, numRowsEnd)
 
-analyzeMessageLogs('m:/SharedFiles/LoopReportFiles', 'Joe/Loop-Report-2019-02-20-184503-0800_Nominal.md', 'm:/SharedFiles/LoopReportPythonAnalysis/output_20190220.csv')
-analyzeMessageLogs(filePath, fileList[0], outFile)
-analyzeMessageLogs(filePath, fileList[5], outFile)
-analyzeMessageLogs(filePath, fileList[11], outFile)
-analyzeMessageLogs(filePath, fileList[12], outFile)
+analyzeMessageLogs('m:/SharedFiles/LoopReportFiles', 'Joe/Loop-Report-2019-02-20-184503-0800_Nominal.md', 'm:/SharedFiles/LoopReportPythonAnalysis/output_20190220.csv', verboseFlag, numRowsBeg, numRowsEnd)
+analyzeMessageLogs(filePath, fileDateList[0][0], outFile, verboseFlag, numRowsBeg, numRowsEnd)
 
-(thisPerson, thisFinish, thisAntenna) = parse_info_from_filename(fileList[0])
+## this one has a fault
+df = analyzeMessageLogs(filePath, fileDateList[6][0], outFile, verboseFlag, numRowsBeg, numRowsEnd)
+
+analyzeMessageLogs(filePath, fileDateList[11][0], outFile, verboseFlag, numRowsBeg, numRowsEnd)
+analyzeMessageLogs(filePath, fileDateList[12][0], outFile, verboseFlag, numRowsBeg, numRowsEnd)
+
+(thisPerson, thisFinish, thisAntenna) = parse_info_from_filename(fileDateList[0][0])
 thisPerson
 thisFinish
 thisAntenna
@@ -36,9 +74,15 @@ thisAntenna
 ## test the get_file_list code
 from get_file_list import *
 filePath = 'm:/SharedFiles/LoopReportFiles'
-(fileList, dateList) = get_file_list(filePath)
-fileList
-dateList
+fileDateList = get_file_list(filePath)
+fileDateList
+
+## test the get_file_list code
+from get_file_list import *
+filePath = 'm:/SharedFiles/LoopReportFiles'
+fileDateList = get_file_list(filePath)
+fileDateList
+fileDateList[1][0]
 
 
 """

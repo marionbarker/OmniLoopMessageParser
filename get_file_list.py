@@ -1,5 +1,5 @@
 import os
-from os import listdir
+from os import listdir 
 
 def get_file_list(thisPath):
     """

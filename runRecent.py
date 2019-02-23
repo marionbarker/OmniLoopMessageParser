@@ -1,8 +1,14 @@
-# test snippets
+# run the most recent file and append to master csv
 from analyzeMessageLogs import *
 from get_file_list import *
 
+verboseFlag =  1   # if this is 1 then more print stmts
+numRowsBeg  =  10   # if >0, print this many messages from beginning of record
+numRowsEnd  =  10   # if >0, print this many messages from end of record
+
 filePath = 'm:/SharedFiles/LoopReportFiles'
-outFile = 'm:/SharedFiles/LoopReportPythonAnalysis/output_20190221.csv'
-## append new runs to csv file
-analyzeMessageLogs(filePath, 'Marion/Loop Report 2019-02-21 22_29_55-08_00_Pod33_Nominal.md', outFile)
+outFile = 'm:/SharedFiles/LoopReportPythonAnalysis/output_master.csv'
+fileDateList = get_file_list(filePath)
+
+## last runs to csv file
+analyzeMessageLogs(filePath, fileDateList[-1][0], outFile, verboseFlag, numRowsBeg, numRowsEnd)
