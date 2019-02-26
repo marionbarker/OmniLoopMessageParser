@@ -1,5 +1,7 @@
 import pandas as pd
 from messageLogs_functions import *
+from byteUtils import *
+from messagePatternParsing import *
 
 def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, numRowsEnd):
 
@@ -118,6 +120,39 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
     lastDate = last_command.date()
     lastTime = last_command.time()
 
+    idx = -1
+    thisMessage = df.iloc[idx]['raw_value']
+    parsedMessage = processMsg(thisMessage)
+
+    insulinDelivered = parsedMessage['total_insulin_delivered']
+    insulinNotDelivered = parsedMessage['insulin_not_delivered']
+    specialComments = 'None'
+
+    if insulinDelivered == 0 or np.isnan(insulinDelivered):
+        # assume this is a fault that doesn't return this information
+        # or a nonce Resync
+        idx -= 1
+        while df.iloc[idx]['type'] != 'receive':
+            idx -= 1
+        lastRecv = df.iloc[idx]['raw_value']
+        parsedPriorMessage = processMsg(lastRecv)
+
+        while parsedPriorMessage['message_type'] == '06':
+            idx -= 1
+            while df.iloc[idx]['type'] != 'receive':
+                idx -= 1
+            lastRecv = df.iloc[idx]['raw_value']
+            parsedPriorMessage = processMsg(lastRecv)
+
+        print(' idx = ', idx)
+        print(' parsedPriorMessage message_type = ', parsedPriorMessage['message_type'])
+        print(' parsedPriorMessage raw_value = ', parsedPriorMessage['raw_value'])
+
+        insulinDelivered = parsedPriorMessage['total_insulin_delivered']
+        insulinNotDelivered = parsedPriorMessage['insulin_not_delivered']
+        specialComments = 'Insulin from {:d} pod message before last'.format(-idx-1)
+
+
     # use cmds_per_seq_histogram
     print(' Summary for', thisFile)
     print(f' Upload by {thisPerson} with {thisFinish} ending using {thisAntenna}')
@@ -154,11 +189,43 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
 
     print('__________________________________________\n')
 
+    # shortened report to copy and paste:
+    print('__________________________________________\n')
+
+    print(' Summary for', thisFile)
+    print(f' Uploaded by {thisPerson} ending {thisFinish} using {thisAntenna}')
+    print('')
+    print('UTC for First Message : {}'.format(first_command))
+    print('Pod On   : {:.1f} hrs'.format(run_time_hours))
+    print('Radio On : {:.2f} hrs, {:.1f}%'.format(totalRadioHrs, 100*totalRadioHrs/run_time_hours))
+    print('Messages: Sent = {:5d}'.format(send_receive_commands[1]))
+    print('Messages: Recv = {:5d}'.format(send_receive_commands[0]))
+    print('Sequences: {:d}, period {:.2f} minutes'.format(number_of_sequences, medSeqDelTime))
+    print('Number nonce resync : {:d}'.format(numberOfNonceResync))
+    print('Total insulin delivered = {:.2f} u'.format(insulinDelivered))
+    print('Insulin not delivered   = {:.2f} u'.format(insulinNotDelivered))
+    print('Special Comments = ', specialComments)
+
+    # report nonceResync and faultInFile
+    if isFaultInFile:
+        thisFault = faultInFile.iloc[0]
+    else:
+        thisFault = 'N/A'
+
+    print('Fault in MessageLog :', thisFault)
+
+    print('__________________________________________\n')
+
+    if isFaultInFile:
+        processedMsg = processMsg(thisFault)
+        for keys,values in processedMsg.items():
+            print('  {} =   {}'.format(keys, values))
 
     # set up a table format order
     headerString = 'Who, finishState, antenna, lastMsgDate, podOn(hrs), radioOn(hrs), radioOn(%), ' + \
        'numMessages, numSend, numRecv, medianMinBetweenSeq, #Sequences, ' + \
-       ' MaxMsgInSingleSeq, #of1MsgPerSeq, #of2MsgPerSeq, #of4MsgPerSeq, #of6MsgPerSeq, #NonceResync, #faultInFile, filename'
+       ' MaxMsgInSingleSeq, #of1MsgPerSeq, #of2MsgPerSeq, #of4MsgPerSeq, #of6MsgPerSeq, #NonceResync, ' \
+       ' insulinDelivered, insulinNotDelivered, specialComments, #faultInFile, filename'
 
     if verboseFlag:
         print(headerString)
@@ -170,7 +237,8 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
               '{:5.2f}, '.format(medSeqDelTime), \
               '{:5d}, {:5d}, '.format(number_of_sequences, len(cmds_per_seq_histogram)), \
               '{:5d}, {:5d}, '.format(cmds_per_seq_histogram[0], cmds_per_seq_histogram[1]), \
-              '{:5d}, {:5d}, {:5d}, {}, {}'.format(cmds_per_seq_histogram[3], cmds_per_seq_histogram[5], numberOfNonceResync, thisFault, thisFile))
+              '{:5d}, {:5d}, {:5d}, '.format(cmds_per_seq_histogram[3], cmds_per_seq_histogram[5], numberOfNonceResync), \
+              f'{insulinDelivered}, {insulinNotDelivered}, {specialComments}, {thisFault}, {thisFile}')
 
     # save the output to a file
 
@@ -191,8 +259,8 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
     stream_out.write(f'{send_receive_commands[1]},{send_receive_commands[0]},')
     stream_out.write(f'{medSeqDelTime}, {number_of_sequences}, {len(cmds_per_seq_histogram)},')
     stream_out.write(f'{cmds_per_seq_histogram[0]},{cmds_per_seq_histogram[1]},{cmds_per_seq_histogram[3]},{cmds_per_seq_histogram[5]},')
-    stream_out.write(f'{numberOfNonceResync},{thisFault},')
-    stream_out.write(f'{thisFile}')
+    stream_out.write(f'{numberOfNonceResync},{insulinDelivered},{insulinNotDelivered},')
+    stream_out.write(f'{specialComments},{thisFault},{thisFile}')
     stream_out.write('\n')
     stream_out.close()
 

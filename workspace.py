@@ -10,12 +10,113 @@ from analyzeMessageLogs import *
 from get_file_list import *
 
 filePath = 'm:/SharedFiles/LoopReportFiles'
-outFile = 'm:/SharedFiles/LoopReportPythonAnalysis/output_20190222.csv'
+outFile = 'm:/SharedFiles/LoopReportPythonAnalysis/output_testing.csv'
 fileDateList = get_file_list(filePath)
 
 verboseFlag =  0   # if this is 1 then more print stmts
-numRowsBeg  =  10   # if >0, print this many messages from beginning of record
-numRowsEnd  =  10   # if >0, print this many messages from end of record
+numRowsBeg  =  0   # if >0, print this many messages from beginning of record
+numRowsEnd  =  0   # if >0, print this many messages from end of record
+
+## run most recent report
+df = analyzeMessageLogs(filePath, fileDateList[-2][0], outFile, verboseFlag, numRowsBeg, numRowsEnd)
+
+df = analyzeMessageLogs(filePath, fileDateList[-1][0], outFile, verboseFlag, numRowsBeg, numRowsEnd)
+
+# get a 1d message from pod
+rawMsg = df.iloc[-3]['raw_value']
+byteMsg = bytearray.fromhex(rawMsg)
+
+if byteMsg[0] == 0x1d:
+    thisValue = parse_1d(byteMsg)
+else:
+    thisValue = ignoreMsg(byteMsg)
+
+print(thisValue)
+
+
+
+####################################
+## good stuff here
+from byteUtils import *
+from messagePatternParsing import *
+
+msg = '060314217881e4'
+processedMsg = processMsg(msg)
+
+
+msg1 = '1d6804f3e88c004227ff039b'
+processedMsg1 = processMsg(msg1)
+
+msg2 = '0e0100032f'
+processedMsg2 = processMsg(msg2)
+
+msg3 = '0216020d00001b0d0a5b40108d03ff108f0000189708030d8010'
+processedMsg = processMsg(msg3)
+
+for keys,values in processedMsg.items():
+    print('  {} =   {}'.format(keys, values))
+#
+
+thisMsg = processMsg(msg1)
+thisMsg = processMsg(msg2)
+thisMsg = processMsg(msg3)
+keyList = *thisMsg,
+for key in thisMsg:
+    if key == 'total_insulin_delivered':
+        print('  Total insulin delivered = {:.2f} u'.format(thisMsg[key]))
+
+
+thisMsg.get('total_insulin_delivered',None)
+
+thisKey = 'total_insulin_delivered'
+if thisMsg.get(thisKey,None):
+    print('  Total insulin delivered = {:.2f} u'.format(thisMsg[thisKey]))
+
+
+
+byteMsg = bytearray.fromhex(msg)
+byteList = list(byteMsg)
+byte_0 = combineByte(byteList[0])
+byte_1 = combineByte(byteList[1])
+dword_3 = combineByte(byteList[2:6])
+dword_4 = combineByte(byteList[6:10])
+cksm = combineByte(byteList[10:12])
+#print('0x{:x}'.format(combineByte(byte_0)))
+#print('0x{:x}'.format(combineByte(byte_1)))
+#print('0x{:x}'.format(combineByte(dword_3)))
+#print('0x{:x}'.format(combineByte(dword_4)))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+df = analyzeMessageLogs(filePath, fileDateList[-2][0], outFile, 0, 0, 0)
+df = analyzeMessageLogs(filePath, fileDateList[-3][0], outFile, 0, 0, 0)
+
+Joe - ended at 70+ hrs with 0x40
+
+Ben - ended at 80 hrs
+0216020d0000000e0c4b1c12c0037512c00400099909009000ee
+Anders ended with 0x40
+0216020d000038000593400e9603ff0e970000185808030d0066
+Anders ended with 0x12
+0216020d00000000000012ffff03ff0005000088b70800000138
+
+# split up a 1d command:
+thisCmd = df.iloc[-3].raw_value
+# thisCmd is '1d6802a38084003a4fff035e'
+# split into nibbles (characters = 8 bits)
+chFromCmd = list(iter(thisCmd))
+
 
 ## this one has a fault
 df = analyzeMessageLogs(filePath, fileDateList[6][0], outFile, verboseFlag, numRowsBeg, numRowsEnd)
@@ -153,3 +254,31 @@ analyzeMessageLogs(thisFile, verboseFlag, numRowsBeg, numRowsEnd)
 thisFile  = 'Theresa/Loop-Report-2019-02-18-18_51_42-07_00_Nominal.md'
 analyzeMessageLogs(thisFile, verboseFlag, numRowsBeg, numRowsEnd)
 """
+
+idx = -1
+thisMessage = df.iloc[idx]['raw_value']
+parsedMessage = processMsg(thisMessage)
+
+insulinDelivered = parsedMessage['total_insulin_delivered']
+insulinNotDelivered = parsedMessage['insulin_not_delivered']
+specialComments = 'None'
+
+    if insulinDelivered == 0 or np.isnan(insulinDelivered):
+        # assume this is a fault that doesn't return this information
+        # or a nonce Resync
+        idx = -1
+        while df.iloc[idx] != 'receive':
+            idx -= 1
+        lastRecv = df.iloc[idx]['raw_value']
+        parsedPriorMessage = processMsg(lastRecv)
+
+        while parsedPriorMessage['message_type'] == '0x06':
+            idx -= 1
+            while df.iloc[idx] != 'receive':
+                idx -= 1
+            lastRecv = df.iloc[idx]['raw_value']
+            parsedPriorMessage = processMsg(lastRecv)
+
+        insulinDelivered = parsedPriorMessage['total_insulin_delivered']
+        insulinNotDelivered = parsedPriorMessage['insulin_not_delivered']
+        specialComments = 'Insulin from {:d} pod message before last'.format(-idx-1)
