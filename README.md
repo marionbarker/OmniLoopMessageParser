@@ -24,7 +24,11 @@ Review updated statistics
 
 ## runAll.py
 
-When added output is desired, archive output_master.csv then run python runAll.py which applies processing and send output table for every file in the Loop Reports directory to a new output_master.csv
+When code has been modified to report an additional column (or to reorder the columns), archive and then delete output_master.csv
+
+Run python runAll.py
+
+This will apply new processing and send output table for every file in the Loop Reports directory to a new output_master.csv with updated header row.
 
 ## Main Code
 
