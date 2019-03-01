@@ -27,7 +27,7 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
         tailList = df.tail(numRowsEnd)
         print(tailList)
 
-    # set up a few parameters here from df
+    # set up a few reportable values here from df
     first_command = df.iloc[0]['time']
     last_command = df.iloc[-1]['time']
     send_receive_commands = df.groupby(['type']).size()
@@ -52,23 +52,24 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
         print('Average time between commands =',round(mean_seconds_time_delta/60,3), 'minutes')
         print('Average receive time after send command =',round(mean_receive_time_delta,3), 'seconds')
 
-    # This gives us better fidelity than the above calculations
     # Prepare a list of the indices to dataframes that are part of a single sequence
-    #   i.e., send receive exchanges with one radio-on time
-    # separating out the send send send events from the send receive pairs
+    #   i.e., send receive exchanges within one radio-on time
+    #   and another list of send only events grouped by adjacency
+    #   each list_of is a list of grouped indices
     list_of_sequence_indices, list_of_send_only_indices = generate_sequence(df)
     number_of_sequences = len(list_of_sequence_indices)
     number_of_send_only_sequences = len(list_of_send_only_indices)
 
     # Prepare of list of the number of individual commands in each sequence
     #     tuples of [number of commands in a sequence, number of sequences with that length]
+    # These are not sorted, so the 12-message pair sequence is typically first
     cmds_per_sequence = count_cmds_per_sequence(list_of_sequence_indices)
     cmds_per_send_only_sequence = count_cmds_per_sequence(list_of_send_only_indices)
 
     # extract timing and parameters from sequences
     time_vs_sequenceLength = create_time_vs_sequenceLength(df, list_of_sequence_indices, radio_on_time)
 
-    # parse into cummulative on time for Pod and Radio, with #messages and response time for each sequence
+    # split into cummulative on time for Pod and Radio, with #messages and response time for each sequence
     podOnCumHrs, radioOnCumHrs, numCmdThisSeq, responseTimeThisSeq = zip(*time_vs_sequenceLength)
 
     degOfFit = 1
@@ -77,7 +78,6 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
 
     totalPodHrs = podOnCumHrs[-1]
     totalRadioHrs = radioOnCumHrs[-1]
-    responseTime = responseTimeThisSeq[-1]
 
     # find all instances of '06' - request for nonce resync
     nonceResync = df[df.command=='06']
@@ -94,9 +94,7 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
     maxSeqDelTime  = 60.0*np.max(seqDelTime)  # max time in minutes
 
     cmds_per_seq_histogram, total_messages_all_seq = get_cmds_per_seq_histogram(cmds_per_sequence)
-    total_messages_all_seq
     cmds_per_send_only_seq_histogram, total_messages_send_only = get_cmds_per_seq_histogram(cmds_per_send_only_sequence)
-    total_messages_send_only
     longestSendOnlyRun = len(cmds_per_send_only_seq_histogram)
 
     cmd_count = df.groupby(['type','command']).size().reset_index(name='count')
@@ -265,6 +263,7 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
     basal_running_time = (temp_basal_times.loc[temp_basal_times['time_diff_tbs'] > 30 * 60]['time_diff_tbs'] - (30 * 60))
     #print(basal_running_time)
     print('{} TBs where normal Basal is running before them'.format(basal_running_time.apply(to_time).count()))
-    basal_running_time.apply(to_time)
+    basRunTime = basal_running_time.apply(to_time)
+    print(basRunTime)
 
     return df

@@ -81,7 +81,7 @@ def generate_sequence(frame):
             # this case is when frame ends with 2 or more send
             elif secondIdx == nextIdx:
                 list_of_send_only.append(send_only)
-                if sequence:
+                if sequence != list_of_sequences[-1]:
                     list_of_sequences.append(sequence)
             continue
         # this is part of a send-recieve pair, if time_asleep is nan,
@@ -95,7 +95,7 @@ def generate_sequence(frame):
             sequence = []
             sequence.append(index)
         # capture the final pair if ending in send/receive
-        if nextIdx == secondIdx:
+        if nextIdx == secondIdx and sequence != list_of_sequences[-1]:
             list_of_sequences.append(sequence)
 
     return list_of_sequences, list_of_send_only
@@ -109,16 +109,19 @@ def count_cmds_per_sequence(list_of_sequences):
 
     return list(sequence_counter.items())
 
-# prepare an array of the time since pod started to the first command in each
-# sequence and the number of commands in that sequence
+# Prepare an array of the time since pod started to the first command in each
+# sequence and the number of commands in that sequence. This function has been
+# expanded in scope but not renamed.
 def create_time_vs_sequenceLength(frame, list_of_sequences, radio_on_time):
     """
-    Returns a list of tuples (time since first command, length of sequence).
+    Returns a list of tuples
+      (time since first message, cummulative radio on time,
+       length of sequence, average response time for this sequence)
 
     PARAMS:
-        frame (pandas.DataFrame): The pandas dataframe of commands
+        frame (pandas.DataFrame): The pandas dataframe of messages
         list_of_sequences (list): The list of sequences from generate_sequence()
-        radio_on_time: time in sec that Pod radio stays on one awake
+        radio_on_time: time in sec that Pod radio stays on once awake
 
     RETURNS:
         time_vs_sequenceLength (list):
@@ -192,6 +195,7 @@ def get_cmds_per_seq_histogram(cmds_per_sequence):
     maxNum = 0;
     totalMsg = 0;
     for idx in cmds_per_sequence:
+        totalMsg += idx[0]*idx[1]
         if idx[0] > maxNum:
             maxNum = idx[0]
 
@@ -201,7 +205,6 @@ def get_cmds_per_seq_histogram(cmds_per_sequence):
     for idx in cmds_per_sequence:
         nn = idx[0]-1
         cmds_per_seq_histogram[nn] = idx[1]
-        totalMsg += idx[0]*idx[1]
 
     return cmds_per_seq_histogram, totalMsg
 
@@ -213,3 +216,8 @@ def time_difference(df_column):
 # new function (2/27/2019)
 def to_time(df_time_column):
     return time.strftime("%H:%M:%S",time.gmtime(df_time_column))
+
+# new function (MDB) (3/1/2019)
+def flatten(list_of_lists):
+    flat_list = [item for sublist in list_of_lists for item in sublist]
+    return flat_list
