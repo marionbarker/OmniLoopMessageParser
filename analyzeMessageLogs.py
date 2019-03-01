@@ -5,16 +5,18 @@ from messagePatternParsing import *
 
 def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, numRowsEnd):
 
-    # set up the asleep time as an adjustable parameter
-    #   Eelke hard coded 30 sec - which is the time the radio stays on for the Pod
-    radio_on_time   = 30 # add new variable name, same as sleep_time_param
+    # This is time (sec) radio on Pod stays awake once comm is initiated
+    radio_on_time   = 30
 
     filename = thisPath + '/' + thisFile
     if verboseFlag:
         print('File relative path:', thisFile)
         print('File absolute path:', filename)
 
+    # read the MessageLogs from the file
     commands = read_file(filename)
+
+    # add more stuff and return as a DataFrame
     df = generate_table(commands, radio_on_time)
 
     if numRowsBeg>0:
@@ -25,33 +27,23 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
         tailList = df.tail(numRowsEnd)
         print(tailList)
 
-    summary = {}
-
+    # set up a few parameters here from df
     first_command = df.iloc[0]['time']
     last_command = df.iloc[-1]['time']
-    run_time_hours = last_command-first_command
-    run_time_hours = run_time_hours.total_seconds()/3600
+    send_receive_commands = df.groupby(['type']).size()
+    number_of_messages = len(df)
 
+    # this is Eelke's formatting, leave it here,
+    # set up summary as a dictionary to use for printing out later
+    summary = {}
     summary['first_command'] = '{} (UTC)'.format(df.iloc[0]['time'])
     summary['last_command'] = '{} (UTC)'.format(df.iloc[-1]['time'])
     summary['total time'] = '{}'.format(last_command - first_command)
-
-    send_receive_commands = df.groupby(['type']).size()
-
     summary['# Sent to Pod'] = send_receive_commands[1]
     summary['# Received from Pod']= send_receive_commands[0]
-
     summary['# Send and Received']= df['command'].count()
 
-    #asleep_time = (round(df['time_asleep'].sum()/df['time_delta'].sum() * 100 ,2))
-    #summary['Asleep Time'] = '{} %'.format(asleep_time)
-    #summary['Awake Time'] = '{} %'.format(round(100 - asleep_time , 4))
-
-    if verboseFlag:
-        print('{:.2f}'.format(run_time_hours))
-
     # calculate average times between messages
-
     mean_seconds_time_delta = (df['time_delta']).mean()
     mean_receive_time_delta = (df.loc[df['type'] == 'receive']['time_delta']).mean()
 
@@ -60,14 +52,32 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
         print('Average time between commands =',round(mean_seconds_time_delta/60,3), 'minutes')
         print('Average receive time after send command =',round(mean_receive_time_delta,3), 'seconds')
 
+    # This gives us better fidelity than the above calculations
     # Prepare a list of the indices to dataframes that are part of a single sequence
-    sequence_of_cmds = generate_sequence(df)
-    number_of_messages = len(df)
-    number_of_sequences = len(sequence_of_cmds)
+    #   i.e., send receive exchanges with one radio-on time
+    # separating out the send send send events from the send receive pairs
+    list_of_sequence_indices, list_of_send_only_indices = generate_sequence(df)
+    number_of_sequences = len(list_of_sequence_indices)
+    number_of_send_only_sequences = len(list_of_send_only_indices)
 
     # Prepare of list of the number of individual commands in each sequence
     #     tuples of [number of commands in a sequence, number of sequences with that length]
-    cmds_per_sequence = count_cmds_per_sequence(sequence_of_cmds)
+    cmds_per_sequence = count_cmds_per_sequence(list_of_sequence_indices)
+    cmds_per_send_only_sequence = count_cmds_per_sequence(list_of_send_only_indices)
+
+    # extract timing and parameters from sequences
+    time_vs_sequenceLength = create_time_vs_sequenceLength(df, list_of_sequence_indices, radio_on_time)
+
+    # parse into cummulative on time for Pod and Radio, with #messages and response time for each sequence
+    podOnCumHrs, radioOnCumHrs, numCmdThisSeq, responseTimeThisSeq = zip(*time_vs_sequenceLength)
+
+    degOfFit = 1
+    mPodHrs, bPodHrs = np.polyfit(podOnCumHrs, responseTimeThisSeq, degOfFit)
+    mRadioHrs, bRadioHrs = np.polyfit(radioOnCumHrs, responseTimeThisSeq, degOfFit)
+
+    totalPodHrs = podOnCumHrs[-1]
+    totalRadioHrs = radioOnCumHrs[-1]
+    responseTime = responseTimeThisSeq[-1]
 
     # find all instances of '06' - request for nonce resync
     nonceResync = df[df.command=='06']
@@ -76,41 +86,18 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
     faultInFile = df[df.command=='02'].raw_value
     isFaultInFile = len(faultInFile)
 
-    # Prepare an array of the time since pod started to the first command in each
-    #   sequence and the number of commands in that sequence and radio on time
-    time_vs_sequenceLength = create_time_vs_sequenceLength(df, sequence_of_cmds, radio_on_time)
-    lastElement = time_vs_sequenceLength[-1]
-    totalRadioHrs = lastElement[2]
-
-    # break into times (hours since pod start) and #cmds in sequence for plotting
-    times = [x[0] for x in time_vs_sequenceLength]
-    lengths = [y[1] for y in time_vs_sequenceLength]
-    singleton_times = create_singleton_times(time_vs_sequenceLength)
-    number_of_singletons = len(singleton_times)
-    singleton_ones = [1 for n in range (0, number_of_singletons)]
-
-    # print(f'singleton_times = {singleton_times}')
-    # print(f'singleton_ones = {singleton_ones}')
-    #print(f'cmds_per_sequence = {cmds_per_sequence}')
-
-    seqDelTime = [times[n+1]-times[n] for n in range (0, len(times)-1)]
-    # print('First and last seqDelTime (hrs) =', seqDelTime[0],  seqDelTime[-1])
-    # print('First and last seqDelTime (min) =', 60.0*seqDelTime[0],  60.0*seqDelTime[-1])
+    seqDelTime = [podOnCumHrs[n+1]-podOnCumHrs[n] for n in range (0, len(podOnCumHrs)-1)]
 
     medSeqDelTime  = 60.0*np.median(seqDelTime)  # median time in minutes
     meanSeqDelTime = 60.0*np.mean(seqDelTime) # mean time in minutes
     minSeqDelTime  = 60.0*np.min(seqDelTime)  # min time in minutes
     maxSeqDelTime  = 60.0*np.max(seqDelTime)  # max time in minutes
 
-    cmds_per_seq_histogram = get_cmds_per_seq_histogram(cmds_per_sequence)
-
-    #print(' Summary for', thisFile)
-    #print('__________________________________________\n')
-    #print('  Instances, Number of S/R in Sequence')
-    #for idx in cmds_per_sequence:
-    #    print(' {:5d}'.format(idx[1]), ' {:8d}'.format(idx[0]))
-    #
-    #print('__________________________________________\n')
+    cmds_per_seq_histogram, total_messages_all_seq = get_cmds_per_seq_histogram(cmds_per_sequence)
+    total_messages_all_seq
+    cmds_per_send_only_seq_histogram, total_messages_send_only = get_cmds_per_seq_histogram(cmds_per_send_only_sequence)
+    total_messages_send_only
+    longestSendOnlyRun = len(cmds_per_send_only_seq_histogram)
 
     cmd_count = df.groupby(['type','command']).size().reset_index(name='count')
     cmd_count
@@ -166,18 +153,15 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
         print(' {:5d}, {:8d}'.format(count,idx))
 
     print('__________________________________________\n')
+    print('  Number of Messages in Send-only, Number Occurrences')
+    count=0
+    for idx in cmds_per_send_only_seq_histogram:
+        count += 1
+        if idx==0:
+            continue
+        print(' {:5d}, {:8d}'.format(count,idx))
 
-    print(' Summary for', thisFile)
-    print(f' Uploaded by {thisPerson} ending {thisFinish} using {thisAntenna}')
-    print('__________________________________________')
-    for key, value in summary.items():
-        print(key.ljust(19).title(),':',value)
-
-    print('Pod Time (hrs)      : {:.2f}'.format(run_time_hours))
-    print('Radio On (hrs)      : {:.2f}, {:.1f}%'.format(totalRadioHrs, 100*totalRadioHrs/run_time_hours))
-    print('Number sequences    : {:d}'.format(number_of_sequences))
-    print('Median time btw seq : {:.2f} minutes'.format(medSeqDelTime))
-    print('Number nonce resync : {:d}'.format(numberOfNonceResync))
+    print('__________________________________________\n')
 
     # report nonceResync and faultInFile
     if isFaultInFile:
@@ -196,15 +180,18 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
     print(f' Uploaded by {thisPerson} ending {thisFinish} using {thisAntenna}')
     print('')
     print('UTC for First Message : {}'.format(first_command))
-    print('Pod On   : {:.1f} hrs'.format(run_time_hours))
-    print('Radio On : {:.2f} hrs, {:.1f}%'.format(totalRadioHrs, 100*totalRadioHrs/run_time_hours))
+    print('Pod On   : {:.1f} hrs'.format(totalPodHrs))
+    print('Radio On : {:.2f} hrs, {:.1f}%'.format(totalRadioHrs, 100*totalRadioHrs/totalPodHrs))
     print('Messages: Sent = {:5d}'.format(send_receive_commands[1]))
     print('Messages: Recv = {:5d}'.format(send_receive_commands[0]))
     print('Sequences: {:d}, period {:.2f} minutes'.format(number_of_sequences, medSeqDelTime))
     print('Number nonce resync : {:d}'.format(numberOfNonceResync))
+    print('Number send-only msg {:d} in {:d} sequences, longest series : {:d}'.format(total_messages_send_only, number_of_send_only_sequences, longestSendOnlyRun))
+    print('Response time (sec) : Initial {:.1f}, Final  {:.1f}, Slope {:.3f} s/hrPodLife, {:.3f} s/hrRadioLife'.format(bPodHrs, bPodHrs+mPodHrs*totalPodHrs, mPodHrs, mRadioHrs))
     print('Total insulin delivered = {:.2f} u'.format(insulinDelivered))
     print('Insulin not delivered   = {:.2f} u'.format(insulinNotDelivered))
     print('Special Comments = ', specialComments)
+
 
     # report nonceResync and faultInFile
     if isFaultInFile:
@@ -231,8 +218,8 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
         print(headerString)
         # Please - no spaces for person, finish or antenna or date - works better for excel import
         print(f'{thisPerson}, {thisFinish}, {thisAntenna}, {lastDate}, '\
-              '{:.2f}, {:5.2f}, '.format(run_time_hours, totalRadioHrs), \
-              '{:.1f}%, '.format(100*totalRadioHrs/run_time_hours),  \
+              '{:.2f}, {:5.2f}, '.format(totalPodHrs, totalRadioHrs), \
+              '{:.1f}%, '.format(100*totalRadioHrs/totalPodHrs),  \
               f'{number_of_messages}, {send_receive_commands[1]}, {send_receive_commands[0]},', \
               '{:5.2f}, '.format(medSeqDelTime), \
               '{:5d}, {:5d}, '.format(number_of_sequences, len(cmds_per_seq_histogram)), \
@@ -254,8 +241,8 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
         stream_out.write('\n')
 
     # write out the information for csv (don't want extra spaces for this )
-    stream_out.write(f'{thisPerson},{thisFinish},{thisAntenna},{lastDate},{run_time_hours},')
-    stream_out.write(f'{totalRadioHrs},{100*totalRadioHrs/run_time_hours},{number_of_messages},')
+    stream_out.write(f'{thisPerson},{thisFinish},{thisAntenna},{lastDate},{totalPodHrs},')
+    stream_out.write(f'{totalRadioHrs},{100*totalRadioHrs/totalPodHrs},{number_of_messages},')
     stream_out.write(f'{send_receive_commands[1]},{send_receive_commands[0]},')
     stream_out.write(f'{medSeqDelTime}, {number_of_sequences}, {len(cmds_per_seq_histogram)},')
     stream_out.write(f'{cmds_per_seq_histogram[0]},{cmds_per_seq_histogram[1]},{cmds_per_seq_histogram[3]},{cmds_per_seq_histogram[5]},')
@@ -269,5 +256,15 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
 
     # table for each command
     groupByCmdType = df.groupby(['type','command']).size().reset_index(name='count')
+
+    # new from Eelke 2/27/2019
+    temp_basal_times = df.loc[df['command']=='1a16']
+    # print(temp_basal_times)
+    temp_basal_times['time_diff_tbs'] = time_difference(temp_basal_times['time'])
+    # print(temp_basal_times)
+    basal_running_time = (temp_basal_times.loc[temp_basal_times['time_diff_tbs'] > 30 * 60]['time_diff_tbs'] - (30 * 60))
+    #print(basal_running_time)
+    print('{} TBs where normal Basal is running before them'.format(basal_running_time.apply(to_time).count()))
+    basal_running_time.apply(to_time)
 
     return df

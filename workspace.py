@@ -6,6 +6,80 @@ cd SharedFiles
 
 """
 
+# work on the generate_new_sequence code that separates send only from the
+# send-receive sequences
+# copy the beginning of analyzeMessageLogs here and un indent so can paste onto python window
+import pandas as pd
+from messageLogs_functions import *
+from byteUtils import *
+from messagePatternParsing import *
+from get_file_list import *
+
+thisPath = 'm:/SharedFiles/LoopReportFiles'
+fileDateList = get_file_list(thisPath)
+
+verboseFlag =  0   # if this is 1 then more print stmts
+numRowsBeg  =  5   # if >0, print this many messages from beginning of record
+numRowsEnd  =  5   # if >0, print this many messages from end of record
+
+thisFile = fileDateList[-5][0]
+
+radio_on_time   = 30 # add new variable name, same as sleep_time_param
+
+filename = thisPath + '/' + thisFile
+
+commands = read_file(filename)
+df = generate_table(commands, radio_on_time)
+
+df.head(numRowsBeg)
+df.tail(numRowsEnd)
+
+mean_seconds_time_delta = (df['time_delta']).mean()
+mean_receive_time_delta = (df.loc[df['type'] == 'receive']['time_delta']).mean()
+
+# this is where we test the new function
+# Prepare a list of the indices to dataframes that are part of a single sequence
+# old_sequence_of_cmds = generate_sequence(df)
+list_of_sequence_indices, list_of_send_only_indices  = generate_sequence(df)
+len(df)
+len(list_of_sequence_indices)
+len(list_of_send_only_indices)
+
+# Prepare of list of the number of individual commands in each sequence
+#     tuples of [number of commands in a sequence, number of sequences with that length]
+cmds_per_sequence = count_cmds_per_sequence(list_of_sequence_indices)
+cmds_per_send_only = count_cmds_per_sequence(list_of_send_only_indices)
+
+# using list_of_send_only_indices, slice the df to get one that ends with just send
+list_of_sequence_indices[-1]
+list_of_send_only_indices[-1]
+df.tail()
+# [3102, 3103, 3104]
+
+# check this and if worked
+# ndf = df.iloc[0:3105]
+# list_of_sequence_indices, list_of_send_only_indices = generate_sequence(ndf)
+# list_of_sequence_indices[-1]
+# list_of_send_only_indices[-1]
+# ndf.tail(10)
+
+time_vs_sequenceLength = create_time_vs_sequenceLength(df, list_of_sequence_indices, radio_on_time)
+
+podOnCumHrs, radioOnCumHrs, numCmdThisSeq, responseTimeThisSeq = zip(*time_vs_sequenceLength)
+
+degOfFit = 1
+mPodHrs, bPodHrs = np.polyfit(podOnCumHrs, responseTimeThisSeq, degOfFit)
+mRadioHrs, bRadioHrs = np.polyfit(radioOnCumHrs, responseTimeThisSeq, degOfFit)
+
+totalPodHrs = podOnCumHrs[-1]
+totalRadioHrs = radioOnCumHrs[-1]
+responseTime = responseTimeThisSeq[-1]
+
+
+
+
+#### ----------------- end of generate_new_sequence workspace ------------ ####
+
 from analyzeMessageLogs import *
 from get_file_list import *
 
@@ -17,8 +91,38 @@ verboseFlag =  0   # if this is 1 then more print stmts
 numRowsBeg  =  0   # if >0, print this many messages from beginning of record
 numRowsEnd  =  0   # if >0, print this many messages from end of record
 
-## run most recent report
 df = analyzeMessageLogs(filePath, fileDateList[-2][0], outFile, verboseFlag, numRowsBeg, numRowsEnd)
+
+# Resync nonce
+df2 = df.loc[df['command']=='06']
+print(df2)
+
+# TB commands
+TB_commands = df.loc[df['command']=='1a16']
+print(TB_commands)
+
+
+
+
+dfAll = pd.DataFrame(fileDateList[0:3])
+
+count=0
+for thisFile in fileDateList:
+    df = analyzeMessageLogs(filePath, thisFile[0], outFile, verboseFlag, numRowsBeg, numRowsEnd)
+    df['session'] = thisFile[0]
+    dfAll = dfAll.append(df, ignore_index=True)
+    count += 1
+    if count == 4:
+        break
+
+print('Completed running', count,'files')
+
+
+## run most recent report
+thisFile = fileDateList[-2][0]
+df = analyzeMessageLogs(filePath, thisFile, outFile, verboseFlag, numRowsBeg, numRowsEnd)
+dfAll = pd.DataFrame(fileDateList)
+dfAll = dfAll.append(df, ignore_index=True)
 
 df = analyzeMessageLogs(filePath, fileDateList[-1][0], outFile, verboseFlag, numRowsBeg, numRowsEnd)
 
@@ -37,10 +141,33 @@ print(thisValue)
 
 ####################################
 ## good stuff here
+# learn about struct - try this
+from struct import *
 from byteUtils import *
 from messagePatternParsing import *
 
 msg = '060314217881e4'
+bmsg = bytearray.fromhex(msg)
+n0 = 3
+n1 = 5
+n0 = 5
+n1 = 7
+
+aa = combineByte(bmsg[n0:n1])
+# the > sets up the correct endian for the pc
+# and unpack returns a list of values
+# no particular reason to go to using struct and unpack and there's the
+# concern about endian - so stick with my combineByte code
+ab = unpack('>H',bmsg[n0:n1])
+aa
+ab[0]
+
+int(bmsg[0])
+
+
+
+# this works now - play with above
+
 processedMsg = processMsg(msg)
 
 

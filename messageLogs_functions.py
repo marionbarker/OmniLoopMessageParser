@@ -13,16 +13,15 @@ import os
 from collections import Counter
 import numpy as np
 
-
 # read the file from the file_path (replace Eelke's original load_file(file_url))
 
 def read_file(filename):
     commands = []
     file = open(filename)
-    # limit the number of characters to 5k lines
+    # limit the number of characters to read
+    # this seems to be required from some files, ad-hoc maxChars to work
     maxChars = 100*3400
     xcode_log_text = file.read(maxChars)
-
     # print(xcode_log_text)
     regex = r"\* ([0-9-:\s]*)\s.*\s(send|receive)\s([a-z0-9]*)\n*"
     select_1a_commands = re.findall(regex, xcode_log_text, re.MULTILINE)
@@ -45,25 +44,61 @@ def generate_table(commands, radio_on_time):
     df['time_asleep'] = df['time_delta'].loc[df['time_delta'] > radio_on_time] - radio_on_time  # radio_on_time seconds the radio stays awake
     return df
 
-
 # generate a list of sequences (command/response groupings) from the dataframes
+# separating out the send only sequences (assumes pod is out of range)
 def generate_sequence(frame):
-    # returns a list of the indices to dataframes that are part of a single sequence
-    # This list will hold our indices
+    """
+    Purpose: Return two lists of lists of indices into the DataFrame
+
+    Input:
+        frame: DataFrame just created by generate_table
+
+    Output:
+       list_of_sequences : list of lists for send-receive pairs where all
+                    s/r pairs within the radio-on time are in one sequence
+       list_of_send_only : list of lists of send without a response
+                          where adjacent sends are grouped together
+
+    """
+    # These two will hold the smaller lists (sequence and send_only)
     list_of_sequences = []
-    # This list is a sequence, remember to clear it after appending to the big list
+    list_of_send_only = []
+
+    # These two hold indices as long as criteria are true and then are reset
     sequence = []
+    send_only = []
+
+    # iterate through the DataFrame
     for index, row in frame.iterrows():
+        # first check if this is a send and if the next message also a send
+        nextIdx = min(index+1,len(frame)-1)
+        secondIdx = min(index+2,len(frame)-1)
+        if row['type'] == 'send' and frame.iloc[nextIdx]['type'] == 'send':
+            send_only.append(index)
+            if frame.iloc[secondIdx]['type'] == 'receive':
+                list_of_send_only.append(send_only)
+                send_only = []
+            # this case is when frame ends with 2 or more send
+            elif secondIdx == nextIdx:
+                list_of_send_only.append(send_only)
+                if sequence:
+                    list_of_sequences.append(sequence)
+            continue
+        # this is part of a send-recieve pair, if time_asleep is nan,
+        #   radio is still on, so add to current sequence
         if pd.isna(row['time_asleep']):
             sequence.append(index)
+        # radio is off, therefore append sequence, and start over
         else:
             list_of_sequences.append(sequence)
             del(sequence)
             sequence = []
             sequence.append(index)
+        # capture the final pair if ending in send/receive
+        if nextIdx == secondIdx:
+            list_of_sequences.append(sequence)
 
-    return list_of_sequences
-
+    return list_of_sequences, list_of_send_only
 
 # prepare of list of the number of individual commands in each sequence
 # this returns tuples of [number of commands in a sequence, number of sequences with that length]
@@ -73,7 +108,6 @@ def count_cmds_per_sequence(list_of_sequences):
         sequence_counter[len(sequence)] += 1
 
     return list(sequence_counter.items())
-
 
 # prepare an array of the time since pod started to the first command in each
 # sequence and the number of commands in that sequence
@@ -89,9 +123,10 @@ def create_time_vs_sequenceLength(frame, list_of_sequences, radio_on_time):
     RETURNS:
         time_vs_sequenceLength (list):
           list of tuples (
-              time in hours since pod start,
-              length of messages,
+              cummulative time (hours) since pod start,
               cummulative time (hours) pod radio is awake
+              number of send-recv messages in this sequence,
+              average reponse time (recv-send) in this sequence
               )
     """
     # initialize some stuff
@@ -102,25 +137,24 @@ def create_time_vs_sequenceLength(frame, list_of_sequences, radio_on_time):
     for sequence in list_of_sequences:
         timeDelta_since_beginning = (frame.iloc[sequence[0]]['time']-first_command)
         time_since_beginning_hrs = timeDelta_since_beginning.total_seconds()/3600
+
         seqLength = len(sequence)
+
         timeInSequence = (frame.iloc[sequence[seqLength-1]]['time']-frame.iloc[sequence[0]]['time'])
         timeInSequence_sec = timeInSequence.total_seconds()
         thisTime =  (timeInSequence_sec + radio_on_time)/3600
-        if seqLength >= 1:
-            pod_radio_awake_time += thisTime
+        pod_radio_awake_time += thisTime
 
-        time_vs_sequenceLength.append((time_since_beginning_hrs, seqLength, pod_radio_awake_time))
+        idx = 1
+        responseTime = 0
+        while idx < seqLength:
+            responseTime += frame.iloc[sequence[idx]]['time_delta']
+            idx += 2
+        responseTime = 2*responseTime/seqLength
+
+        time_vs_sequenceLength.append((time_since_beginning_hrs, pod_radio_awake_time, seqLength, responseTime))
 
     return time_vs_sequenceLength
-
-# prepare all single sequence commands
-def create_singleton_times(time_vs_sequenceLength):
-    time_for_singleton = []
-    for item in time_vs_sequenceLength:
-        if item[1] == 1:
-            time_for_singleton.append(item[0])
-
-    return time_for_singleton
 
 # parse the information in the filename
 def parse_info_from_filename(filename):
@@ -156,6 +190,7 @@ def parse_info_from_filename(filename):
 def get_cmds_per_seq_histogram(cmds_per_sequence):
     # first find out the maximum number of commands in a sequence
     maxNum = 0;
+    totalMsg = 0;
     for idx in cmds_per_sequence:
         if idx[0] > maxNum:
             maxNum = idx[0]
@@ -166,5 +201,15 @@ def get_cmds_per_seq_histogram(cmds_per_sequence):
     for idx in cmds_per_sequence:
         nn = idx[0]-1
         cmds_per_seq_histogram[nn] = idx[1]
+        totalMsg += idx[0]*idx[1]
 
-    return cmds_per_seq_histogram
+    return cmds_per_seq_histogram, totalMsg
+
+# new function (2/27/2019)
+def time_difference(df_column):
+    time_difference = (df_column - df_column.shift()).dt.seconds.fillna(0).astype(int)
+    return time_difference
+
+# new function (2/27/2019)
+def to_time(df_time_column):
+    return time.strftime("%H:%M:%S",time.gmtime(df_time_column))

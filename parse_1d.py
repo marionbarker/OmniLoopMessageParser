@@ -4,6 +4,16 @@ from byteUtils import *
 def parse_1d(msg):
     # extract information from the 1d response and return as a dictionary
     """
+    The $1D status response is sent from the Pod to provide information on its
+    internal state, including insulin delivery, unacknowledged alerts,
+    Pod active time, reservoir level, etc. as the normal response to
+    non-specialized commands. This page explains how the different values are
+    packed into the $1D status response.
+
+    The $1D status response has the following form:
+        00 01 02030405 06070809
+        1d SS 0PPPSNNN AATTTTRR
+
     # byte 0 - 1d
     # byte 1 - nibble 1a, nibble 1b
       nibble 1a
@@ -30,6 +40,7 @@ def parse_1d(msg):
     byteList = list(byteMsg)
     byte_0 = byteList[0]
     byte_1 = byteList[1]
+    # replace combineByte with unpack
     dword_3 = combineByte(byteList[2:6])
     dword_4 = combineByte(byteList[6:10])
     cksm   = combineByte(byteList[10:12])
