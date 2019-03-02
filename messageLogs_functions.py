@@ -48,6 +48,8 @@ def generate_table(commands, radio_on_time):
 
 # generate a list of sequences (command/response groupings) from the dataframes
 # separating out the send only sequences (assumes pod is out of range)
+#  3/2/2019 - protect against the corner case of initial failure to pairs
+#             followed by success, e.g., 'Marion/Loop Report 2019-02-06 18_38_18-08_00_Pod27_Nominal.md'
 def generate_sequence(frame):
     """
     Purpose: Return two lists of lists of indices into the DataFrame
@@ -90,9 +92,11 @@ def generate_sequence(frame):
         #   radio is still on, so add to current sequence
         if pd.isna(row['time_asleep']):
             sequence.append(index)
-        # radio is off, therefore append sequence, and start over
+        # radio is off, therefore append sequence to list_of_sequences,
+        # and start a new sequence - ensure sequence is NOT empty
         else:
-            list_of_sequences.append(sequence)
+            if sequence:
+              list_of_sequences.append(sequence)
             del(sequence)
             sequence = []
             sequence.append(index)

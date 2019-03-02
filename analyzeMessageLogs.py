@@ -137,10 +137,10 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
         print(df2.sort_values(by=['time']))
 
     # capture the normal basal information
-    normaBasalBeforeTB = df_basals_seq["command"].count()
-    normaBasalLessThan30sec = df_basals_seq["command"].loc[(df_basals_seq["normal_basal_running_seconds"] < 30)].count()
-    print('  {} normal Basals ran before a new TB was sent'.format( normaBasalBeforeTB))
-    print('  {} normal Basals ran for < 30 seconds'.format( normaBasalLessThan30sec))
+    numberScheduleBeforeTempBasal = df_basals_seq["command"].count()
+    numberScheduleBasalLessThan30sec = df_basals_seq["command"].loc[(df_basals_seq["normal_basal_running_seconds"] < 30)].count()
+    print('  {} normal Basals ran before a new TB was sent'.format( numberScheduleBeforeTempBasal))
+    print('  {} normal Basals ran for < 30 seconds'.format( numberScheduleBasalLessThan30sec))
 
     # partition file to extract useful information
     (thisPerson, thisFinish, thisAntenna) = parse_info_from_filename(thisFile)
@@ -231,8 +231,8 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
         print('   {:5d}, {}'.format(row['count'], row['command']))
 
     print('Response time (sec) : Initial {:.1f}, Final  {:.1f}, Slope {:.3f} s/hrPodLife, {:.3f} s/hrRadioLife'.format(bPodHrs, bPodHrs+mPodHrs*totalPodHrs, mPodHrs, mRadioHrs))
-    print('Count of normal basal running before TB :', normaBasalBeforeTB)
-    print('Count of normal basal running < 30 sec :', normaBasalLessThan30sec)
+    print('Count of normal basal running before TB :', numberScheduleBeforeTempBasal)
+    print('Count of normal basal running < 30 sec :', numberScheduleBasalLessThan30sec)
     print('Total insulin delivered = {:.2f} u'.format(insulinDelivered))
     print('Insulin not delivered   = {:.2f} u'.format(insulinNotDelivered))
     print('Special Comments = ', specialComments)
@@ -255,21 +255,22 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
 
     # set up a table format order
     headerString = 'Who, finishState, antenna, lastMsgDate, podOn(hrs), radioOn(hrs), radioOn(%), ' + \
-       'numMessages, numSend, numRecv, medianMinBetweenSeq, #Sequences, ' + \
-       ' MaxMsgInSingleSeq, #of1MsgPerSeq, #of2MsgPerSeq, #of4MsgPerSeq, #of6MsgPerSeq, #NonceResync, ' \
+       'numMessages, numSend, numRecv, medianMinBetweenSeq, #Sequences, longestSendRecvSeq, ' + \
+       'total_messages_send_only, number_of_send_only_sequences, longestSendOnlyRun, #NonceResync, ' \
+       'numberScheduleBeforeTempBasal, numberScheduleBasalLessThan30sec, ' + \
        ' insulinDelivered, insulinNotDelivered, specialComments, #faultInFile, filename'
 
     if verboseFlag:
         print(headerString)
-        # Please - no spaces for person, finish or antenna or date - works better for excel import
         print(f'{thisPerson}, {thisFinish}, {thisAntenna}, {lastDate}, '\
               '{:.2f}, {:5.2f}, '.format(totalPodHrs, totalRadioHrs), \
               '{:.1f}%, '.format(100*totalRadioHrs/totalPodHrs),  \
               f'{number_of_messages}, {send_receive_commands[1]}, {send_receive_commands[0]},', \
               '{:5.2f}, '.format(medSeqDelTime), \
               '{:5d}, {:5d}, '.format(number_of_sequences, len(cmds_per_seq_histogram)), \
-              '{:5d}, {:5d}, '.format(cmds_per_seq_histogram[0], cmds_per_seq_histogram[1]), \
-              '{:5d}, {:5d}, {:5d}, '.format(cmds_per_seq_histogram[3], cmds_per_seq_histogram[5], numberOfNonceResync), \
+              '{:5d}, {:5d}, '.format(total_messages_send_only, number_of_send_only_sequences), \
+              '{:5d}, {:5d}, '.format(longestSendOnlyRun, numberOfNonceResync), \
+              '{:5d}, {:5d}, '.format(numberScheduleBeforeTempBasal, numberScheduleBasalLessThan30sec), \
               f'{insulinDelivered}, {insulinNotDelivered}, {specialComments}, {thisFault}, {thisFile}')
 
     # save the output to a file
@@ -290,8 +291,9 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
     stream_out.write(f'{totalRadioHrs},{100*totalRadioHrs/totalPodHrs},{number_of_messages},')
     stream_out.write(f'{send_receive_commands[1]},{send_receive_commands[0]},')
     stream_out.write(f'{medSeqDelTime}, {number_of_sequences}, {len(cmds_per_seq_histogram)},')
-    stream_out.write(f'{cmds_per_seq_histogram[0]},{cmds_per_seq_histogram[1]},{cmds_per_seq_histogram[3]},{cmds_per_seq_histogram[5]},')
-    stream_out.write(f'{numberOfNonceResync},{insulinDelivered},{insulinNotDelivered},')
+    stream_out.write(f'{total_messages_send_only},{number_of_send_only_sequences},{longestSendOnlyRun},')
+    stream_out.write(f'{numberOfNonceResync},{numberScheduleBeforeTempBasal},{numberScheduleBasalLessThan30sec},')
+    stream_out.write(f'{insulinDelivered},{insulinNotDelivered},')
     stream_out.write(f'{specialComments},{thisFault},{thisFile}')
     stream_out.write('\n')
     stream_out.close()

@@ -12,6 +12,7 @@ numRowsEnd  =  0   # if >0, print this many messages from end of record
 
 count=0
 for thisFile in fileDateList:
+    print('Processing: ', thisFile[0])
     analyzeMessageLogs(filePath, thisFile[0], outFile, verboseFlag, numRowsBeg, numRowsEnd)
     count += 1
 
