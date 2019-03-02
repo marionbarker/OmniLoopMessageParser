@@ -1,6 +1,7 @@
 import pandas as pd
 from messageLogs_functions import *
 from byteUtils import *
+from basal_analysis import *
 from messagePatternParsing import *
 
 def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, numRowsEnd):
@@ -97,8 +98,49 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
     cmds_per_send_only_seq_histogram, total_messages_send_only = get_cmds_per_seq_histogram(cmds_per_send_only_sequence)
     longestSendOnlyRun = len(cmds_per_send_only_seq_histogram)
 
+    # get distribution for all commands from full DataFrame
     cmd_count = df.groupby(['type','command']).size().reset_index(name='count')
-    cmd_count
+    if verboseFlag:
+        print('Distribution of all messages by command')
+        print(cmd_count)
+
+    # get distribution for all commands in the Sequences
+    flatListSequence = flatten(list_of_sequence_indices)
+    seqDF = df.iloc[flatListSequence]
+    seq_cmd_count = seqDF.groupby(['type','command']).size().reset_index(name='count')
+    if verboseFlag:
+        print('Distribution of messages in sequences by command')
+        print(seq_cmd_count)
+
+    # get distribution for all commands in the send-only lists
+    flatListSendOnly = flatten(list_of_send_only_indices)
+    soDF = df.iloc[flatListSendOnly]
+    so_cmd_count = soDF.groupby(['type','command']).size().reset_index(name='count')
+    if verboseFlag:
+        print('Distribution of messages sent without a response, by command')
+        print(so_cmd_count)
+
+    # new from Eelke 2/27/2019 and updated 3/2/2019
+    df_basals_all_messages, df2 = basal_analysis(df)
+    print('Using ALL messages:')
+    if verboseFlag:
+        print(df_basals_all_messages.loc[:,["time", "command", "normal_basal_running_time"]])
+        print(df2.sort_values(by=['time']))
+
+    print('  {} normal Basals ran before a new TB was sent'.format(df_basals_all_messages["command"].count()))
+    print('  {} normal Basals ran for < 30 seconds'.format(df_basals_all_messages["command"].loc[(df_basals_all_messages["normal_basal_running_seconds"] < 30)].count()))
+
+    df_basals_seq, df2 = basal_analysis(seqDF)
+    print('Using just messages that follow send-recv pattern:')
+    if verboseFlag:
+        print(df_basals_seq.loc[:,["time", "command", "normal_basal_running_time"]])
+        print(df2.sort_values(by=['time']))
+
+    # capture the normal basal information
+    normaBasalBeforeTB = df_basals_seq["command"].count()
+    normaBasalLessThan30sec = df_basals_seq["command"].loc[(df_basals_seq["normal_basal_running_seconds"] < 30)].count()
+    print('  {} normal Basals ran before a new TB was sent'.format( normaBasalBeforeTB))
+    print('  {} normal Basals ran for < 30 seconds'.format( normaBasalLessThan30sec))
 
     # partition file to extract useful information
     (thisPerson, thisFinish, thisAntenna) = parse_info_from_filename(thisFile)
@@ -175,17 +217,22 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
     print('__________________________________________\n')
 
     print(' Summary for', thisFile)
-    print(f' Uploaded by {thisPerson} ending {thisFinish} using {thisAntenna}')
     print('')
     print('UTC for First Message : {}'.format(first_command))
-    print('Pod On   : {:.1f} hrs'.format(totalPodHrs))
-    print('Radio On : {:.2f} hrs, {:.1f}%'.format(totalRadioHrs, 100*totalRadioHrs/totalPodHrs))
-    print('Messages: Sent = {:5d}'.format(send_receive_commands[1]))
-    print('Messages: Recv = {:5d}'.format(send_receive_commands[0]))
-    print('Sequences: {:d}, period {:.2f} minutes'.format(number_of_sequences, medSeqDelTime))
+    print('Pod On   : {:.1f} hrs, '.format(totalPodHrs), \
+        'Radio On : {:.2f} hrs, {:.1f}%'.format(totalRadioHrs, 100*totalRadioHrs/totalPodHrs))
+    print('Messages: Sent = {:5d},'.format(send_receive_commands[1]), \
+        'Recv = {:5d}'.format(send_receive_commands[0]))
+    print('Sequences: {:d}, median period {:.2f} minutes'.format(number_of_sequences, medSeqDelTime))
     print('Number nonce resync : {:d}'.format(numberOfNonceResync))
     print('Number send-only msg {:d} in {:d} sequences, longest series : {:d}'.format(total_messages_send_only, number_of_send_only_sequences, longestSendOnlyRun))
+    print('Distribution of messages sent without a response:\n       #, command')
+    for index, row in so_cmd_count.iterrows():
+        print('   {:5d}, {}'.format(row['count'], row['command']))
+
     print('Response time (sec) : Initial {:.1f}, Final  {:.1f}, Slope {:.3f} s/hrPodLife, {:.3f} s/hrRadioLife'.format(bPodHrs, bPodHrs+mPodHrs*totalPodHrs, mPodHrs, mRadioHrs))
+    print('Count of normal basal running before TB :', normaBasalBeforeTB)
+    print('Count of normal basal running < 30 sec :', normaBasalLessThan30sec)
     print('Total insulin delivered = {:.2f} u'.format(insulinDelivered))
     print('Insulin not delivered   = {:.2f} u'.format(insulinNotDelivered))
     print('Special Comments = ', specialComments)
@@ -254,16 +301,5 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
 
     # table for each command
     groupByCmdType = df.groupby(['type','command']).size().reset_index(name='count')
-
-    # new from Eelke 2/27/2019
-    temp_basal_times = df.loc[df['command']=='1a16']
-    # print(temp_basal_times)
-    temp_basal_times['time_diff_tbs'] = time_difference(temp_basal_times['time'])
-    # print(temp_basal_times)
-    basal_running_time = (temp_basal_times.loc[temp_basal_times['time_diff_tbs'] > 30 * 60]['time_diff_tbs'] - (30 * 60))
-    #print(basal_running_time)
-    print('{} TBs where normal Basal is running before them'.format(basal_running_time.apply(to_time).count()))
-    basRunTime = basal_running_time.apply(to_time)
-    print(basRunTime)
 
     return df
