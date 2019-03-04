@@ -42,6 +42,10 @@ byteUtils.py : combine array of bytes into appropriate integer
 
 get_file_list.py : given a path, find all the named subpaths with their associated Loop Report.md file, return list sorted from oldest to newest
 
+basal_analysis.py : basal timing analysis added to Jupyter by Eelke and copied over on 3/2/2019
+
+utils.py : add new low level routines used by more than one function (needed for Eelke basal analysis and Marion extract sequences from dataframe)
+
 messagePatternParsing.py : decides which parser to call and if parser doesn't exist yet, returns default msgDict dictionary
 
 parse_1d.py : parses 0x1d response and returns results in msgDict dictionary
