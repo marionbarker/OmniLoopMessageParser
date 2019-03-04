@@ -1,5 +1,6 @@
 # file: parse_1d - does the parsing for the 1d message returned from the pod
 from byteUtils import *
+from utils import *
 
 def parse_1d(msg):
     # extract information from the 1d response and return as a dictionary
@@ -61,11 +62,12 @@ def parse_1d(msg):
     msgDict['temp_basal_active']       = (byte_1 >> 4 & 0x2) != 0
     msgDict['basal_active']            = (byte_1 >> 4 & 0x1) != 0
 
-    msgDict['seq_byte_1']  = byte_1 & 0xF
+    msgDict['pod_progress']  = byte_1 & 0xF
+    msgDict['pod_progress_meaning']  = getPodProgessMeaning(byte_1 & 0xF)
 
     msgDict['total_pulses_delivered'] = (dword_3 >> 15) & 0x1FFF
     msgDict['total_insulin_delivered']  = int(msgDict['total_pulses_delivered']) * 0.05
-    msgDict['seq_dword_0']  = (dword_3 >> 11) & 0xF
+    msgDict['sequence']  = (dword_3 >> 11) & 0xF
     msgDict['pulses_not_delivered'] = dword_3 & 0x007F
     msgDict['insulin_not_delivered'] = int(msgDict['pulses_not_delivered'])*0.05
 

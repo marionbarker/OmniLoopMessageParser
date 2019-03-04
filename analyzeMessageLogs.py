@@ -79,6 +79,8 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
 
     totalPodHrs = podOnCumHrs[-1]
     totalRadioHrs = radioOnCumHrs[-1]
+    initialResponseSec = bPodHrs
+    finalResponseSec = bPodHrs + mPodHrs*totalPodHrs
 
     # find all instances of '06' - request for nonce resync
     nonceResync = df[df.command=='06']
@@ -230,7 +232,7 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
     for index, row in so_cmd_count.iterrows():
         print('   {:5d}, {}'.format(row['count'], row['command']))
 
-    print('Response time (sec) : Initial {:.1f}, Final  {:.1f}, Slope {:.3f} s/hrPodLife, {:.3f} s/hrRadioLife'.format(bPodHrs, bPodHrs+mPodHrs*totalPodHrs, mPodHrs, mRadioHrs))
+    print('Response time (sec) : Initial {:.1f}, Final  {:.1f}, Slope {:.3f} s/hrPodLife, {:.3f} s/hrRadioLife'.format(initialResponseSec, finalResponseSec, mPodHrs, mRadioHrs))
     print('Count of normal basal running before TB :', numberScheduleBeforeTempBasal)
     print('Count of normal basal running < 30 sec :', numberScheduleBasalLessThan30sec)
     print('Total insulin delivered = {:.2f} u'.format(insulinDelivered))
@@ -254,11 +256,12 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
             print('  {} =   {}'.format(keys, values))
 
     # set up a table format order
-    headerString = 'Who, finishState, antenna, lastMsgDate, podOn(hrs), radioOn(hrs), radioOn(%), ' + \
-       'numMessages, numSend, numRecv, medianMinBetweenSeq, #Sequences, longestSendRecvSeq, ' + \
-       'total_messages_send_only, number_of_send_only_sequences, longestSendOnlyRun, #NonceResync, ' \
-       'numberScheduleBeforeTempBasal, numberScheduleBasalLessThan30sec, ' + \
-       ' insulinDelivered, insulinNotDelivered, specialComments, #faultInFile, filename'
+    headerString = 'Who, finish State, antenna, lastMsg Date, podOn (hrs), radioOn (hrs), radioOn (%), ' + \
+       'num Messages, numSend, numRecv, medianMinutes Between Seq, # Sequences, longest SendRecv Seq, ' + \
+       '# messages send_only, # send_only sequences, longest SendOnly Run, #Nonce Resync, ' \
+       '#Schedule Before TempBasal, #Schedule BasalLess Than30sec, ' + \
+       'Initial Pod Response (sec), Final Pod Response (sec), Response Slope (s/podHr), Response Slope (s/radioHr), ' + \
+       ' insulin Delivered, insulin Not Delivered, specialComments, #faultInFile, filename'
 
     if verboseFlag:
         print(headerString)
@@ -271,6 +274,7 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
               '{:5d}, {:5d}, '.format(total_messages_send_only, number_of_send_only_sequences), \
               '{:5d}, {:5d}, '.format(longestSendOnlyRun, numberOfNonceResync), \
               '{:5d}, {:5d}, '.format(numberScheduleBeforeTempBasal, numberScheduleBasalLessThan30sec), \
+              '{:5.1f}, {:5.1f}, {:6.3f}, {:6.3f}, '.format(initialResponseSec, finalResponseSec, mPodHrs, mRadioHrs), \
               f'{insulinDelivered}, {insulinNotDelivered}, {specialComments}, {thisFault}, {thisFile}')
 
     # save the output to a file
@@ -293,6 +297,7 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
     stream_out.write(f'{medSeqDelTime}, {number_of_sequences}, {len(cmds_per_seq_histogram)},')
     stream_out.write(f'{total_messages_send_only},{number_of_send_only_sequences},{longestSendOnlyRun},')
     stream_out.write(f'{numberOfNonceResync},{numberScheduleBeforeTempBasal},{numberScheduleBasalLessThan30sec},')
+    stream_out.write(f'{initialResponseSec},{finalResponseSec},{mPodHrs},{mRadioHrs},')
     stream_out.write(f'{insulinDelivered},{insulinNotDelivered},')
     stream_out.write(f'{specialComments},{thisFault},{thisFile}')
     stream_out.write('\n')
