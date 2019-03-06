@@ -82,10 +82,6 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
     initialResponseSec = bPodHrs
     finalResponseSec = bPodHrs + mPodHrs*totalPodHrs
 
-    # find all instances of '06' - request for nonce resync
-    nonceResync = df[df.command=='06']
-    numberOfNonceResync = len(nonceResync)
-
     faultInFile = df[df.command=='02'].raw_value
     isFaultInFile = len(faultInFile)
 
@@ -144,13 +140,29 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
     print('  {} normal Basals ran before a new TB was sent'.format( numberScheduleBeforeTempBasal))
     print('  {} normal Basals ran for < 30 seconds'.format( numberScheduleBasalLessThan30sec))
 
+    # find all instances of '06' - request for nonce resync inside seqDF
+    nonceResync = seqDF[seqDF.command=='06']
+    numberOfNonceResync = len(nonceResync)
+
+    # find all instances of '1a13' - basal command
+    basalMessages = seqDF[seqDF.command=='1a13']
+    numberOfBasal = len(basalMessages)
+
+    # find all instances of '1a16' - temp basal command
+    tbMessages = seqDF[seqDF.command=='1a16']
+    numberOfTB = len(tbMessages)
+
+    # find all instances of '1a17' - bolus command
+    bolusMessages = seqDF[seqDF.command=='1a17']
+    numberOfBolus = len(bolusMessages)
+
     # partition file to extract useful information
     (thisPerson, thisFinish, thisAntenna) = parse_info_from_filename(thisFile)
     lastDate = last_command.date()
     lastTime = last_command.time()
 
     idx = -1
-    thisMessage = df.iloc[idx]['raw_value']
+    thisMessage = seqDF.iloc[idx]['raw_value']
     parsedMessage = processMsg(thisMessage)
 
     insulinDelivered = parsedMessage['total_insulin_delivered']
@@ -161,16 +173,16 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
         # assume this is a fault that doesn't return this information
         # or a nonce Resync
         idx -= 1
-        while df.iloc[idx]['type'] != 'receive':
+        while seqDF.iloc[idx]['type'] != 'receive':
             idx -= 1
-        lastRecv = df.iloc[idx]['raw_value']
+        lastRecv = seqDF.iloc[idx]['raw_value']
         parsedPriorMessage = processMsg(lastRecv)
 
         while parsedPriorMessage['message_type'] == '06':
             idx -= 1
-            while df.iloc[idx]['type'] != 'receive':
+            while seqDF.iloc[idx]['type'] != 'receive':
                 idx -= 1
-            lastRecv = df.iloc[idx]['raw_value']
+            lastRecv = seqDF.iloc[idx]['raw_value']
             parsedPriorMessage = processMsg(lastRecv)
 
         print(' idx = ', idx)
@@ -220,25 +232,20 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
 
     print(' Summary for', thisFile)
     print('')
-    print('UTC for First Message : {}'.format(first_command))
-    print('Pod On   : {:.1f} hrs, '.format(totalPodHrs), \
-        'Radio On : {:.2f} hrs, {:.1f}%'.format(totalRadioHrs, 100*totalRadioHrs/totalPodHrs))
-    print('Messages: Sent = {:5d},'.format(send_receive_commands[1]), \
-        'Recv = {:5d}'.format(send_receive_commands[0]))
-    print('Sequences: {:d}, median period {:.2f} minutes'.format(number_of_sequences, medSeqDelTime))
-    print('Number nonce resync : {:d}'.format(numberOfNonceResync))
-    print('Number send-only msg {:d} in {:d} sequences, longest series : {:d}'.format(total_messages_send_only, number_of_send_only_sequences, longestSendOnlyRun))
-    print('Distribution of messages sent without a response:\n       #, command')
-    for index, row in so_cmd_count.iterrows():
-        print('   {:5d}, {}'.format(row['count'], row['command']))
-
-    print('Response time (sec) : Initial {:.1f}, Final  {:.1f}, Slope {:.3f} s/hrPodLife, {:.3f} s/hrRadioLife'.format(initialResponseSec, finalResponseSec, mPodHrs, mRadioHrs))
-    print('Count of normal basal running before TB :', numberScheduleBeforeTempBasal)
-    print('Count of normal basal running < 30 sec :', numberScheduleBasalLessThan30sec)
-    print('Total insulin delivered = {:.2f} u'.format(insulinDelivered))
-    print('Insulin not delivered   = {:.2f} u'.format(insulinNotDelivered))
-    print('Special Comments = ', specialComments)
-
+    print('First Message       :  {} UTC'.format(first_command))
+    print('Pod & Radio (hr)    :  {:5.1f}, {:5.2f}, {:5.1f}%'.format(totalPodHrs, \
+        totalRadioHrs, 100*totalRadioHrs/totalPodHrs))
+    print('#Sent, Recv, Nonce  :  {:5d}, {:5d}, {:5d}'.format(send_receive_commands[1], \
+        send_receive_commands[0], numberOfNonceResync))
+    print('Sequences, Period   :  {:5d}, {:5.2f} minutes'.format(number_of_sequences, medSeqDelTime))
+    print('Response time (s)   :  {:5.1f}, {:5.1f}, Initial, Final'.format(initialResponseSec, finalResponseSec))
+    print('                    :  {:5.3f}, {:5.3f}, s/hrPodLife, s/hrRadioLife'.format(mPodHrs, mRadioHrs))
+    print('#basal, TB, Bolus   :  {:5d}, {:5d}, {:5d}'.format(numberOfBasal, numberOfTB, numberOfBolus))
+    print('#TB after schBasal  :  {:5d}'.format( numberScheduleBeforeTempBasal))
+    print('#schBasal < 30 sec  :  {:5d}'.format( numberScheduleBasalLessThan30sec))
+    print('Insulin delivered   : {:6.2f} u'.format(insulinDelivered))
+    print('      not delivered : {:6.2f} u'.format(insulinNotDelivered))
+    print('Special Comments    :', specialComments)
 
     # report nonceResync and faultInFile
     if isFaultInFile:
@@ -248,7 +255,12 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
 
     print('Fault in MessageLog :', thisFault)
 
+    print('Number send-only msg {:d} in {:d} sequences, longest series : {:d}'.format(total_messages_send_only, number_of_send_only_sequences, longestSendOnlyRun))
+    print('\nDistribution of messages sent without a response:\n       #, command')
+    for index, row in so_cmd_count.iterrows():
+        print('   {:5d}, {}'.format(row['count'], row['command']))
     print('__________________________________________\n')
+
 
     if isFaultInFile:
         processedMsg = processMsg(thisFault)
@@ -259,6 +271,7 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
     headerString = 'Who, finish State, antenna, lastMsg Date, podOn (hrs), radioOn (hrs), radioOn (%), ' + \
        'num Messages, numSend, numRecv, medianMinutes Between Seq, # Sequences, longest SendRecv Seq, ' + \
        '# messages send_only, # send_only sequences, longest SendOnly Run, #Nonce Resync, ' \
+       '#Basal, #TB, #Bolus, ' + \
        '#Schedule Before TempBasal, #Schedule BasalLess Than30sec, ' + \
        'Initial Pod Response (sec), Final Pod Response (sec), Response Slope (s/podHr), Response Slope (s/radioHr), ' + \
        ' insulin Delivered, insulin Not Delivered, specialComments, #faultInFile, filename'
@@ -273,6 +286,7 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
               '{:5d}, {:5d}, '.format(number_of_sequences, len(cmds_per_seq_histogram)), \
               '{:5d}, {:5d}, '.format(total_messages_send_only, number_of_send_only_sequences), \
               '{:5d}, {:5d}, '.format(longestSendOnlyRun, numberOfNonceResync), \
+              '{:5d}, {:5d}, {:5d}, '.format(numberOfBasal, numberOfTB, numberOfBolus), \
               '{:5d}, {:5d}, '.format(numberScheduleBeforeTempBasal, numberScheduleBasalLessThan30sec), \
               '{:5.1f}, {:5.1f}, {:6.3f}, {:6.3f}, '.format(initialResponseSec, finalResponseSec, mPodHrs, mRadioHrs), \
               f'{insulinDelivered}, {insulinNotDelivered}, {specialComments}, {thisFault}, {thisFile}')
@@ -296,7 +310,8 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
     stream_out.write(f'{send_receive_commands[1]},{send_receive_commands[0]},')
     stream_out.write(f'{medSeqDelTime}, {number_of_sequences}, {len(cmds_per_seq_histogram)},')
     stream_out.write(f'{total_messages_send_only},{number_of_send_only_sequences},{longestSendOnlyRun},')
-    stream_out.write(f'{numberOfNonceResync},{numberScheduleBeforeTempBasal},{numberScheduleBasalLessThan30sec},')
+    stream_out.write(f'{numberOfNonceResync},{numberOfBasal},{numberOfTB},')
+    stream_out.write(f'{numberOfBolus},{numberScheduleBeforeTempBasal},{numberScheduleBasalLessThan30sec},')
     stream_out.write(f'{initialResponseSec},{finalResponseSec},{mPodHrs},{mRadioHrs},')
     stream_out.write(f'{insulinDelivered},{insulinNotDelivered},')
     stream_out.write(f'{specialComments},{thisFault},{thisFile}')
