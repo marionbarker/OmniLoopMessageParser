@@ -41,7 +41,6 @@ def parse_1d(msg):
     byteList = list(byteMsg)
     byte_0 = byteList[0]
     byte_1 = byteList[1]
-    # replace combineByte with unpack
     dword_3 = combineByte(byteList[2:6])
     dword_4 = combineByte(byteList[6:10])
     cksm   = combineByte(byteList[10:12])
