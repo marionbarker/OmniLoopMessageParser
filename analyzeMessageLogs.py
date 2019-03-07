@@ -103,8 +103,14 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
         print(cmd_count)
 
     # get distribution for all commands in the Sequences
+    # note that seqDF has an index that differs from df,
+    #       the original_index is preserved as a new column in seqDF
+    #   e.g., if idx is index value in seqDF,
+    #         to find it in df:
+    #         df.iloc[seqDF.iloc[idx]['original_index']]
     flatListSequence = flatten(list_of_sequence_indices)
-    seqDF = df.iloc[flatListSequence]
+    seqDF = createSubsetDataFrame (df, flatListSequence)
+
     seq_cmd_count = seqDF.groupby(['type','command']).size().reset_index(name='count')
     if verboseFlag:
         print('Distribution of messages in sequences by command')
@@ -112,7 +118,7 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
 
     # get distribution for all commands in the send-only lists
     flatListSendOnly = flatten(list_of_send_only_indices)
-    soDF = df.iloc[flatListSendOnly]
+    soDF = createSubsetDataFrame (df, flatListSendOnly)
     so_cmd_count = soDF.groupby(['type','command']).size().reset_index(name='count')
     if verboseFlag:
         print('Distribution of messages sent without a response, by command')
@@ -324,4 +330,4 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
     # table for each command
     groupByCmdType = df.groupby(['type','command']).size().reset_index(name='count')
 
-    return df
+    return df, seqDF

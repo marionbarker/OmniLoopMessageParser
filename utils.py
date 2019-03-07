@@ -15,6 +15,18 @@ def flatten(list_of_lists):
     flat_list = [item for sublist in list_of_lists for item in sublist]
     return flat_list
 
+# return a new DataFrame of just the selected indices in the original DataFrame
+# maintain the original index as a new column in the returned DataFrame
+def createSubsetDataFrame (frame, indexList):
+    # add original index to the frame as a new column
+    frame['original_index'] = frame.index.array
+    # extract column list
+    newCol = frame.columns
+    subFrame = frame.iloc[indexList]
+    newData = subFrame.values
+    newFrame = pd.DataFrame(newData, columns = newCol)
+    return newFrame
+
 def getPodProgessMeaning(thisInt):
     """ convert the value for pod progess into it's meaning """
     podProgress = { \
@@ -36,3 +48,11 @@ def getPodProgessMeaning(thisInt):
         15: 'Pod inactive'}
 
     return podProgress[thisInt]
+
+def printDict(thisDict):
+    for keys,values in thisDict.items():
+        print('  {} =   {}'.format(keys, values))
+
+def printList(thisList):
+    for item in thisList:
+        print(item)
