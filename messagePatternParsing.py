@@ -5,15 +5,23 @@ from utils import *
 
 from parse_02 import *
 from parse_06 import *
-from parse_1d import *
+from parse_0e import *
+from parse_1a13 import *
 from parse_1a16 import *
+from parse_1a17 import *
+from parse_1d import *
+from parse_1f import *
 
+# note - parsers not finished return a hex string for 'message_type', e.g., '0x01'
+#        whereas parsers that have been finished use '1a16' or '1d'
 def ignoreMsg(msg):
     msgDict = {}
-    msgDict['message_type'] = 'Not Parsed Yet'
+    byteMsg = bytearray.fromhex(msg)
+    msgDict['mtype'] = byteMsg[0]
+    msgDict['message_type'] = hex(byteMsg[0])
     msgDict['raw_value']    = msg
-    msgDict['total_insulin_delivered']    = np.nan
-    msgDict['insulin_not_delivered']      = np.nan
+    msgDict['total_insulin_delivered']    = round(Decimal(0),2)
+    msgDict['insulin_not_delivered']      = round(Decimal(0),2)
     return msgDict
 
 def parse_1a(msg):
@@ -23,18 +31,22 @@ def parse_1a(msg):
     xtype = byteList[16]
     if xtype == 0x16:
         msgDict = parse_1a16(msg)
+    elif xtype == 0x17:
+        msgDict = parse_1a17(msg)
     else:
-        msgDict = ignoreMsg(msg)
+        msgDict = parse_1a13(msg)
 
     return msgDict
 
 chooseMsgType = {
     0x02: parse_02,
     0x06: parse_06,
+    0x0e: parse_0e,
     0x1a: parse_1a,
-    0x1d: parse_1d
+    0x1d: parse_1d,
+    0x1f: parse_1f
 }
 
-def processMsg(rawMsg):
-    byteMsg = bytearray.fromhex(rawMsg)
-    return chooseMsgType.get(byteMsg[0],ignoreMsg)(rawMsg)
+def processMsg(msg):
+    byteMsg = bytearray.fromhex(msg)
+    return chooseMsgType.get(byteMsg[0],ignoreMsg)(msg)
