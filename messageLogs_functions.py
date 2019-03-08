@@ -67,6 +67,7 @@ def generate_sequence(frame):
     # These two will hold the smaller lists (sequence and send_only)
     list_of_sequences = []
     list_of_send_only = []
+    list_of_empty = []
 
     # These two hold indices as long as criteria are true and then are reset
     sequence = []
@@ -74,7 +75,12 @@ def generate_sequence(frame):
 
     # iterate through the DataFrame
     for index, row in frame.iterrows():
-        # first check if this is a send and if the next message also a send
+        # first remove any messages with an empty string
+        if row['raw_value'] == '':
+            list_of_empty.append(index)
+            continue
+
+        # check if this is a send and if the next message also a send
         nextIdx = min(index+1,len(frame)-1)
         secondIdx = min(index+2,len(frame)-1)
         if row['type'] == 'send' and frame.iloc[nextIdx]['type'] == 'send':
@@ -104,7 +110,7 @@ def generate_sequence(frame):
         if nextIdx == secondIdx and sequence != list_of_sequences[-1]:
             list_of_sequences.append(sequence)
 
-    return list_of_sequences, list_of_send_only
+    return list_of_sequences, list_of_send_only, list_of_empty
 
 # prepare of list of the number of individual commands in each sequence
 # this returns tuples of [number of commands in a sequence, number of sequences with that length]
