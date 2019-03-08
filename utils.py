@@ -1,5 +1,6 @@
 import pandas as pd
 import time
+from decimal import Decimal
 
 # new function (2/27/2019)
 def time_difference(df_column):
@@ -56,3 +57,9 @@ def printDict(thisDict):
 def printList(thisList):
     for item in thisList:
         print(item)
+
+def getUnitsFromPulses(pulses):
+    # given number of pulses convert to units of insulin
+    i = Decimal(0.05 * pulses)
+    insulin = round(i,2)
+    return insulin
