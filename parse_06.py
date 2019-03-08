@@ -1,10 +1,9 @@
 # file: parse_06 - is a request of a nonce resync returned from the pod
 
 from byteUtils import *
-import numpy as np
 
 def parse_06(msg):
-    # extract information from the 02 response and return as a dictionary
+    # pod response - indicates a nonce resync is required
     """
     My example:
      msg = '060314217881e4'
@@ -41,12 +40,14 @@ def parse_06(msg):
     msgDict = { }
     msgDict['message_type'] = '06'
     msgDict['raw_value']    = msg
+    msgDict['mtype'] = mtype
+    msgDict['mlen'] = mlen
     msgDict['is_nonce_resync'] = errorCode==0x14
     if msgDict['is_nonce_resync']:
         msgDict['nonce_reseed_word'] = wordCode
         msgDict['fault_code'] = 'nonceResync'
     else:
-        msgDict['nonce_reseed_word'] = np.nan
-        msgDict['fault_code'] = 'errorCode'
+        msgDict['nonce_reseed_word'] = 0
+        msgDict['fault_code'] = hex(errorCode)
 
     return msgDict

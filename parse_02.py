@@ -2,6 +2,7 @@
 #      NOTE - only parsing the Fault returned version Type 2
 
 from byteUtils import *
+from utils import *
 import numpy as np
 
 def parse_02(msg):
@@ -70,6 +71,7 @@ def parse_02(msg):
     msgDict = { }
     msgDict['message_type'] = '02'
     msgDict['raw_value']    = msg
+    msgDict['mtype'] = byte_0
     msgDict['fault_type'] = byte_2
     if msgDict['fault_type'] != 2:
         msgDict['fault_type'] = 'Not fault type 02, not parsed'
@@ -83,20 +85,21 @@ def parse_02(msg):
     msgDict['basal_active']            = (byte_4 & 0x1) != 0
 
     msgDict['pulses_not_delivered'] = word_L
-    msgDict['insulin_not_delivered'] = int(msgDict['pulses_not_delivered'])*0.05
+    msgDict['insulin_not_delivered'] = getUnitsFromPulses(word_L)
 
     msgDict['seq_byte_M']  = byte_M
 
     msgDict['total_pulses_delivered'] = word_N
-    msgDict['total_insulin_delivered'] = int(msgDict['total_pulses_delivered'])*0.05
+    msgDict['total_insulin_delivered'] = getUnitsFromPulses(word_N)
 
     msgDict['logged_fault'] = f'0x%X'%(byte_P)
 
     msgDict['fault_time_minutes_since_pod_activation']  = word_Q
-    if (word_R & 0x3FF) == 0x3FF:
+    pulses = word_R & 0x3FF
+    if pulses == 0x3FF:
         msgDict['reservoir_remaining'] = '>50 u'
     else:
-        msgDict['reservoir_remaining'] = '%.2f u remaining'%(int(word_R & 0x3FF) * 0.05)
+        msgDict['reservoir_remaining'] = getUnitsFromPulses(pulses)
 
     msgDict['pod_active_minutes'] = word_S
     msgDict['alerts_bit_mask'] = byte_T
@@ -109,10 +112,7 @@ def parse_02(msg):
     # but if logged_fault is 0x34, many registers are reset
     if msgDict['logged_fault'] == '0x34':
         msgDict['pulses_not_delivered'] = np.nan
-        msgDict['insulin_not_delivered'] = np.nan
-        msgDict['seq_byte_M'] = np.nan
         msgDict['total_pulses_delivered'] = np.nan
-        msgDict['total_insulin_delivered'] = np.nan
         msgDict['fault_time_minutes_since_pod_activation'] = np.nan
         msgDict['pod_active_minutes'] = np.nan
         msgDict['pulses_not_delivered'] = np.nan
