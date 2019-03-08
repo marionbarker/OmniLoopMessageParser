@@ -57,9 +57,11 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
     #   i.e., send receive exchanges within one radio-on time
     #   and another list of send only events grouped by adjacency
     #   each list_of is a list of grouped indices
-    list_of_sequence_indices, list_of_send_only_indices = generate_sequence(df)
+    list_of_sequence_indices, list_of_send_only_indices, list_of_empty = generate_sequence(df)
     number_of_sequences = len(list_of_sequence_indices)
     number_of_send_only_sequences = len(list_of_send_only_indices)
+    number_of_empty_messages = len(list_of_empty)
+    print('Empty indices = ', list_of_empty)
 
     # Prepare of list of the number of individual commands in each sequence
     #     tuples of [number of commands in a sequence, number of sequences with that length]
@@ -175,7 +177,7 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
     insulinNotDelivered = parsedMessage['insulin_not_delivered']
     specialComments = 'None'
 
-    if insulinDelivered == 0 or np.isnan(insulinDelivered):
+    if insulinDelivered == 0:
         # assume this is a fault that doesn't return this information
         # or a nonce Resync
         idx -= 1
@@ -262,6 +264,7 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
     print('Fault in MessageLog :', thisFault)
 
     print('Number send-only msg {:d} in {:d} sequences, longest series : {:d}'.format(total_messages_send_only, number_of_send_only_sequences, longestSendOnlyRun))
+    print('Number of messages with an empty string : {:d}'.format(number_of_empty_messages))
     print('\nDistribution of messages sent without a response:\n       #, command')
     for index, row in so_cmd_count.iterrows():
         print('   {:5d}, {}'.format(row['count'], row['command']))

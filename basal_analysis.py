@@ -1,5 +1,4 @@
 from utils import *
-import numpy as np
 from messagePatternParsing import *
 
 def basal_analysis(df):
@@ -42,42 +41,55 @@ def podStateAnalysis(frame):
     #   with Loop               always False      False/True    only one of these can be true
     # initialize current TB rate to nan and time
     thisIdx = 0
-    original_index = np.nan
-    timeLastEvent = frame.iloc[0]['time']
-    lastTB = np.nan
-    lastBolus = np.nan
-    extBo = False
+    timeStamp = frame.iloc[0]['time']
+    pod_progress = 0
+    total_insulin = getUnitsFromPulses(0)
+    message_type = 'unknown'
+    lastTB = getUnitsFromPulses(0)
+    lastBolus = getUnitsFromPulses(0)
+    #extBo = False # since extended bolus is always false, don't put into dataframe
     Bolus = False
     TB    = False
-    schBa = True
+    schBa = False
+    # add a time_delta column
+    frame['timeDelta'] = (frame['time']-frame['time'].shift()).dt.seconds.fillna(0).astype(float)
+
 
     list_of_states = []
 
-    colNames = ('seqDF_idx', 'df_idx', 'timeStamp', 'TB_u_per_hr', 'Bolus_u', 'extendedBolus','bolus','TB','SchBasal' )
+    colNames = ('original_index', 'timeStamp', 'timeDelta', 'pod_progress', 'total_insulin', 'message_type', 'lastTB', 'lastBolus', 'bolus','TB','SchBasal', 'raw_value' )
 
     # iterate through the DataFrame, should already be sorted into send-recv pairs
     for index, row in frame.iterrows():
+        #print(index, row['raw_value'])
         # reset each time
-        stateChanged = False
-        #print(index, row['type'], row['command'])
+        original_index = row['original_index']
+        timeStamp = row['time']
+        timeDelta = row['timeDelta']
+        msg = row['raw_value']
+        pmsg = processMsg(msg)
+        message_type = pmsg['message_type']
 
-        # first check if this is a send and if it is a 0x1a16
-        # if so, get current TB value
-        if row['type'] == 'send' and row['command'] == '1a16':
-            pmsg = processMsg(row['raw_value'])
-            thisIdx = index
-            original_index = row['original_index']
-            timeLastEvent = row['time']
+        # fill in pod state based on message_type
+        if message_type == '1a16':
             lastTB = pmsg['temp_basal_rate_u_per_hr']
-            currentBolus = np.nan
-            extBo = False
-            Bolus = False
-            TB    = True
-            schBa = False
-            stateChanged = True
 
-        if stateChanged:
-            list_of_states.append((thisIdx, original_index, timeLastEvent, lastTB, lastBolus, extBo, Bolus, TB, schBa))
+        elif message_type == '1a17':
+            lastBolus = pmsg['prompt_bolus_u']
+
+        elif message_type == '1d':
+            pod_progress = pmsg['pod_progress']
+            total_insulin = pmsg['total_insulin_delivered']
+            Bolus = pmsg['immediate_bolus_active']
+            TB    = pmsg['temp_basal_active']
+            schBa = pmsg['basal_active']
+
+        elif message_type == '1f':
+            Bolus = Bolus and not pmsg['cancelBolus']
+            TB    = TB and not pmsg['cancelTB']
+            schBa = schBa and not pmsg['suspend']
+
+        list_of_states.append((original_index, timeStamp, timeDelta, pod_progress, total_insulin, message_type, lastTB, lastBolus, Bolus, TB, schBa, msg))
 
     podState = pd.DataFrame(list_of_states, columns=colNames)
     return podState, list_of_states
