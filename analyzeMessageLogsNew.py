@@ -51,7 +51,7 @@ def analyzeMessageLogsNew(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, 
     podInit, emptyMessageList = getPodState(df, minPodProgress, maxPodProgress)
     setUpPodCommands = podInit[podInit.message_type=='0x3']
     numberOfSetUpPodCommands = len(setUpPodCommands)
-    print('\n  Pod was initialized with {:d} commands, {:d} SetUp (0x03) required'.format(len(podInit), \
+    print('\n  Pod was initialized with {:d} messages, {:d} SetUp (0x03) required'.format(len(podInit), \
        numberOfSetUpPodCommands))
     if emptyMessageList:
         print('    ***  Detected {:d} empty message(s) while initializing the pod'.format(len(emptyMessageList)))
@@ -69,7 +69,7 @@ def analyzeMessageLogsNew(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, 
     minPodProgress = 8
     maxPodProgress = 15
     podRun, emptyMessageList = getPodState(df, minPodProgress, maxPodProgress)
-    print('\n  Pod run (pod_progress>=8) included {:d} commands'.format(len(podRun)))
+    print('\n  Pod run (pod_progress>=8) included {:d} messages'.format(len(podRun)))
     if emptyMessageList:
         print('    ***  Detected {:d} empty message(s) while running the pod'.format(len(emptyMessageList)))
         print('    ***  indices:', emptyMessageList)
