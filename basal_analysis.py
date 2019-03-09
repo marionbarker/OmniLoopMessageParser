@@ -57,7 +57,7 @@ def podStateAnalysis(frame):
 
     list_of_states = []
 
-    colNames = ('original_index', 'timeStamp', 'timeDelta', 'pod_progress', 'total_insulin', 'message_type', 'lastTB', 'lastBolus', 'bolus','TB','SchBasal', 'raw_value' )
+    colNames = ('original_index', 'timeStamp', 'timeDelta', 'message_type', 'pod_progress', 'total_insulin', 'lastTB', 'lastBolus', 'bolus','TB','SchBasal', 'raw_value' )
 
     # iterate through the DataFrame, should already be sorted into send-recv pairs
     for index, row in frame.iterrows():
@@ -89,7 +89,7 @@ def podStateAnalysis(frame):
             TB    = TB and not pmsg['cancelTB']
             schBa = schBa and not pmsg['suspend']
 
-        list_of_states.append((original_index, timeStamp, timeDelta, pod_progress, total_insulin, message_type, lastTB, lastBolus, Bolus, TB, schBa, msg))
+        list_of_states.append((original_index, timeStamp, timeDelta, message_type, pod_progress, total_insulin, lastTB, lastBolus, Bolus, TB, schBa, msg))
 
     podState = pd.DataFrame(list_of_states, columns=colNames)
     return podState, list_of_states
