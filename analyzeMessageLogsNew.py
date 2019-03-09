@@ -4,32 +4,6 @@ from byteUtils import *
 from podStateAnalysis import *
 from messagePatternParsing import *
 
-def doThePrintRequest(dictList, frame):
-    if len(frame) == 0:
-        return
-    print('    Successful Basal, TB or Bolus:')
-    print('      Request(code)           : #Requests, mean, [ min, max ], response time (sec) ')
-    for key,value in dictList.items():
-        thisSel   = frame[frame.startMessage==key]
-        numberSel = len(thisSel)
-        if numberSel:
-            print('      {:14s} ({:4s})   : {:5d}, {:5.1f}, [ {:5.1f}, {:5.1f} ]'.format(value, \
-                key, numberSel, thisSel['responseTime'].mean(), \
-                thisSel['responseTime'].min(), thisSel['responseTime'].max() ))
-    return
-
-
-def doThePrintOther(dictList, frame):
-    if len(frame) == 0:
-        return
-    print('      Message(code)  : #Messages')
-    for key,value in dictList.items():
-        thisSel   = frame[frame.startMessage==key]
-        numberSel = len(thisSel)
-        if numberSel:
-            print('      {:14s} ({:4s})   : {:5d}'.format(value, key, numberSel))
-    return
-
 def analyzeMessageLogsNew(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, numRowsEnd):
 
     # This is time (sec) radio on Pod stays awake once comm is initiated
@@ -70,28 +44,6 @@ def analyzeMessageLogsNew(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, 
     print(f' Summary for {thisFile} with {thisFinish} ending')
     print('  There were a total of {:d} messages in the log'.format(len(df)))
 
-    # this is the list of commands that getPodSuccessfulActions uses
-    requestDict = { \
-      '1a13' : 'Basal', \
-      '1a16' : 'TB' , \
-      '1a17': 'Bolus'}
-    otherDict = { \
-      '0x1'  : 'Version', \
-      '0x3'  : 'Setup', \
-      '0x7'  : 'AssignID', \
-      '0x8'  : 'CnfgDelivFlags', \
-      '0e'   : 'Status Request', \
-      '0x11' : 'Acknwl Alerts', \
-      '0x19' : 'Cnfg Alerts', \
-      '0x1c' : 'Deactivate Pod', \
-      '0x1e' : 'Diagnose Pod', \
-      '1f'   : 'CancelDelivery', \
-      '1a13' : 'Basal', \
-      '1a16' : 'TB', \
-      '1a17' : 'Bolus',
-      '06'   : 'NonceResync', \
-      '02'   : 'Fault'}
-
     # Process the dataframes and update the pod state
     # First get the pair and insert frames
     minPodProgress = 0
@@ -104,6 +56,9 @@ def analyzeMessageLogsNew(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, 
     if emptyMessageList:
         print('    ***  Detected {:d} empty message(s) while initializing the pod'.format(len(emptyMessageList)))
         print('    ***  indices:', emptyMessageList)
+
+    # use a common function to configure requestDict, otherDict
+    requestDict, otherDict = getHandledRequests()
 
     # Iterate through the podState to determine successful commands for requestDict
     podInitSuccessfulActions, podInitOtherMessages = getPodSuccessfulActions(podInit)
@@ -122,8 +77,9 @@ def analyzeMessageLogsNew(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, 
     # Iterate through the podState to determine successful commands for requestDict
     podSuccessfulActions, podOtherMessages = getPodSuccessfulActions(podRun)
     doThePrintRequest(requestDict, podSuccessfulActions)
-    print('#TB after schBasal  :  {:5d}'.format( -99))
-    print('#schBasal < 30 sec  :  {:5d}'.format( -99))
+
+    # add other analysis here  like TB timing etc
+
     print('Insulin delivered   : {:6.2f} u'.format(podRun.iloc[-1]['total_insulin']))
 
     # see if there is a fault
@@ -133,10 +89,10 @@ def analyzeMessageLogsNew(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, 
         pmsg = processMsg(msg)
         printDict(pmsg)
 
-    print('\nCount of other message types during pod run')
+    print('\nReport other message types during pod run')
     doThePrintOther(otherDict, podOtherMessages)
 
-    print('\nCount of other message types during pod init')
+    print('\nReport other message types during pod init')
     doThePrintOther(otherDict, podInitOtherMessages)
 
     return df, podInit, podRun

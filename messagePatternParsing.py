@@ -20,8 +20,6 @@ def ignoreMsg(msg):
     msgDict['mtype'] = byteMsg[0]
     msgDict['message_type'] = hex(byteMsg[0])
     msgDict['raw_value']    = msg
-    msgDict['total_insulin_delivered']    = round(Decimal(0),2)
-    msgDict['insulin_not_delivered']      = round(Decimal(0),2)
     return msgDict
 
 def parse_1a(msg):

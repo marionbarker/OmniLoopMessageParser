@@ -1,5 +1,6 @@
 # run the most recent file and append to master csv
 from analyzeMessageLogs import *
+from analyzeMessageLogsNew import *
 from get_file_list import *
 
 verboseFlag =  1   # if this is 1 then more print stmts
@@ -12,3 +13,6 @@ fileDateList = get_file_list(filePath)
 
 ## last runs to csv file
 df = analyzeMessageLogs(filePath, fileDateList[-1][0], outFile, verboseFlag, numRowsBeg, numRowsEnd)
+
+## new analysis
+df, podInit, podRun = analyzeMessageLogsNew(filePath, fileDateList[-1][0], outFile, verboseFlag, numRowsBeg, numRowsEnd)

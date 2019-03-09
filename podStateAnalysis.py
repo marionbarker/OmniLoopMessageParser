@@ -101,6 +101,36 @@ def getPodState(frame, minPodProgress, maxPodProgress):
     podStateFrame = pd.DataFrame(list_of_states, columns=colNames)
     return podStateFrame, emptyMessageList
 
+def getHandledRequests():
+    # this is the list of commands that getPodSuccessfulActions uses
+    # This should be cleaned up - for now when you add to requestDict
+    #   list_of_requests must correspond to requestDict
+    requestDict = { \
+      '0e'   : 'Status Request', \
+      '1a13' : 'Basal', \
+      '1a16' : 'TB' , \
+      '1a17' : 'Bolus', \
+      '1f'   : 'CancelDelivery'}
+
+    otherDict = { \
+      '0x1'  : 'Version', \
+      '0x3'  : 'Setup', \
+      '0x7'  : 'AssignID', \
+      '0x8'  : 'CnfgDelivFlags', \
+      '0e'   : 'Status Request', \
+      '0x11' : 'Acknwl Alerts', \
+      '0x19' : 'Cnfg Alerts', \
+      '0x1c' : 'Deactivate Pod', \
+      '0x1e' : 'Diagnose Pod', \
+      '1f'   : 'CancelDelivery', \
+      '1a13' : 'Basal', \
+      '1a16' : 'TB', \
+      '1a17' : 'Bolus',
+      '06'   : 'NonceResync', \
+      '02'   : 'Fault'}
+
+    return requestDict, otherDict
+
 def getPodSuccessfulActions(podStateFrame):
     """
     Purpose: Evaluate each request for Basal, TB or Bolus ['1a13', '1a16', '1a17']
@@ -116,7 +146,7 @@ def getPodSuccessfulActions(podStateFrame):
     list_of_other   = []  # all other or unpaired messages
     nextIndex = -1;
     thisIndex = 0;
-    list_of_requests = ['1a13', '1a16', '1a17']
+    list_of_requests = ['1a13', '1a16', '1a17', '0e', '1f']
 
     successColumnNames = ('start_df_idx', 'start_podState_idx', 'end_podState_idx', \
       'startTimeStamp', 'startMessage', 'endMessage', 'responseTime', 'total_insulin', \
@@ -125,7 +155,7 @@ def getPodSuccessfulActions(podStateFrame):
 
     # iterate looking for requests and successful responses
     for index, row in podStateFrame.iterrows():
-        if index <= nextIndex:
+        if index <= nextIndex or index >= len(podStateFrame)-1:
             continue
         # set up params we need for either case
         start_df_idx   = row['df_idx']
@@ -139,19 +169,24 @@ def getPodSuccessfulActions(podStateFrame):
         else:
             # set the success criteria
             if startMessage == '1a16':
-                colName = 'TB'
-                colValue = True
                 respMessage = '1d'
+                colNameValue = {'TB' : True}
 
             elif startMessage == '1a17':
-                colName = 'Bolus'
-                colValue = True
                 respMessage = '1d'
+                colNameValue = {'Bolus' : True}
 
             elif startMessage == '1a13':
-                colName = False
-                colValue = True
                 respMessage = '1d'
+                colNameValue = {'SchBasal' : True}
+
+            elif startMessage == '0e':
+                respMessage = '1d'
+                colNameValue = {}
+
+            elif startMessage == '1f':
+                respMessage = '1d'
+                colNameValue = {'TB' : False}
 
             nextIndex = index + 1
             didSucceed = False
@@ -159,10 +194,13 @@ def getPodSuccessfulActions(podStateFrame):
             newRow = podStateFrame.iloc[nextIndex]
             timeToResponse = newRow['timeDelta']
             if  newRow['message_type'] == respMessage:
-                if colName and newRow[colName]==colValue:
-                    didSucceed = True
-                if not colName:
-                    didSucceed = True
+                # set to true if the correct message detected
+                didSucceed = True
+                for key, value in colNameValue.items():
+                    logicCheck = newRow[key] == value
+                    if not logicCheck:
+                        # if failed logic check, set to False
+                        didSucceed = False
 
             if didSucceed:
                 list_of_success.append((start_df_idx, index, nextIndex, startTimeStamp, \
@@ -176,3 +214,31 @@ def getPodSuccessfulActions(podStateFrame):
     podOtherMessages = pd.DataFrame(list_of_other, columns=otherColumnNames)
 
     return podRequestSuccess, podOtherMessages
+
+
+def doThePrintRequest(dictList, frame):
+    if len(frame) == 0:
+        return
+    print('    Successful Request with Appropriate Pod Response:')
+    print('      Request(code)           : #Requests, mean, [ min, max ], response time (sec) ')
+    for key,value in dictList.items():
+        thisSel   = frame[frame.startMessage==key]
+        numberSel = len(thisSel)
+        if numberSel:
+            print('      {:14s} ({:4s})   : {:5d}, {:5.1f}, [ {:5.1f}, {:5.1f} ]'.format(value, \
+                key, numberSel, thisSel['responseTime'].mean(), \
+                thisSel['responseTime'].min(), thisSel['responseTime'].max() ))
+    return
+
+
+def doThePrintOther(dictList, frame):
+    if len(frame) == 0:
+        return
+    print('    Request without Appropriate Pod Response (or not yet being checked):')
+    print('      Message(code)  : #Messages')
+    for key,value in dictList.items():
+        thisSel   = frame[frame.startMessage==key]
+        numberSel = len(thisSel)
+        if numberSel:
+            print('      {:14s} ({:4s})   : {:5d}'.format(value, key, numberSel))
+    return
