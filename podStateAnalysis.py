@@ -44,7 +44,7 @@ def getPodState(frame, minPodProgress, maxPodProgress):
 
     """
     # initialize values for pod states that we will update
-    timeStamp = frame.iloc[0]['time']
+    timeCumSec = 0
     pod_progress = 0
     total_insulin = getUnitsFromPulses(0)
     lastTB = getUnitsFromPulses(0)
@@ -57,13 +57,14 @@ def getPodState(frame, minPodProgress, maxPodProgress):
 
     list_of_states = []
 
-    colNames = ('df_idx', 'timeStamp', 'timeDelta', 'message_type', 'pod_progress', 'total_insulin', 'lastTB', 'lastBolus', 'Bolus','TB','SchBasal', 'raw_value' )
+    colNames = ('df_idx', 'timeStamp', 'timeDelta', 'timeCumSec', 'message_type', 'pod_progress', 'total_insulin', 'lastTB', 'lastBolus', 'Bolus','TB','SchBasal', 'raw_value' )
 
     # iterate through the DataFrame, should already be sorted into send-recv pairs
     for index, row in frame.iterrows():
         # reset each time
         timeStamp = row['time']
         timeDelta = row['timeDelta']
+        timeCumSec += timeDelta
         msg = row['raw_value']
         if msg == '':
             #print('Empty command for {} at dataframe index of {:d}'.format(row['type'], index))
@@ -93,6 +94,8 @@ def getPodState(frame, minPodProgress, maxPodProgress):
             Bolus = Bolus and not pmsg['cancelBolus']
             TB    = TB and not pmsg['cancelTB']
             schBa = schBa and not pmsg['suspend']
+            # rename the message_type per Joe's request
+            message_type = '1f0{:d}'.format(pmsg['cancelByte'])
 
         # check pod_progress
         if pod_progress < minPodProgress:
@@ -100,7 +103,7 @@ def getPodState(frame, minPodProgress, maxPodProgress):
         elif pod_progress >= maxPodProgress:
             break
 
-        list_of_states.append((index, timeStamp, timeDelta, message_type, pod_progress, total_insulin, lastTB, lastBolus, Bolus, TB, schBa, msg))
+        list_of_states.append((index, timeStamp, timeDelta, timeCumSec, message_type, pod_progress, total_insulin, lastTB, lastBolus, Bolus, TB, schBa, msg))
 
     podStateFrame = pd.DataFrame(list_of_states, columns=colNames)
     return podStateFrame, emptyMessageList
@@ -121,7 +124,12 @@ def getMessageDict():
       '1a13' : ('1d', 'Basal'), \
       '1a16' : ('1d', 'TB'), \
       '1a17' : ('1d', 'Bolus'),
-      '1f'   : ('1d', 'CancelDelivery') }
+      '1f'   : ('1d', 'CancelDelivery'),
+      '1f01'   : ('1d', 'CancelBasal'),
+      '1f02'   : ('1d', 'CancelTB'),
+      '1f04'   : ('1d', 'CancelBolus'),
+      '1f07'   : ('1d', 'Suspend')
+       }
 
     recvDict = { \
       '0x1'  : 'VersionResponse', \
