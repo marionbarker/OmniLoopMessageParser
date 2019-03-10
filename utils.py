@@ -1,6 +1,5 @@
 import pandas as pd
 import time
-from decimal import Decimal
 
 # new function (2/27/2019)
 def time_difference(df_column):
@@ -28,6 +27,20 @@ def createSubsetDataFrame (frame, indexList):
     newFrame = pd.DataFrame(newData, columns = newCol)
     return newFrame
 
+def printDict(thisDict):
+    for keys,values in thisDict.items():
+        print('  {} =   {}'.format(keys, values))
+
+def printList(thisList):
+    for item in thisList:
+        print(item)
+
+def listFromDict(thisDict):
+    list_of_keys = []
+    for keys, values in thisDict.items():
+        list_of_keys.append(keys)
+    return list_of_keys
+
 def getPodProgessMeaning(thisInt):
     """ convert the value for pod progess into it's meaning """
     podProgress = { \
@@ -50,16 +63,8 @@ def getPodProgessMeaning(thisInt):
 
     return podProgress[thisInt]
 
-def printDict(thisDict):
-    for keys,values in thisDict.items():
-        print('  {} =   {}'.format(keys, values))
-
-def printList(thisList):
-    for item in thisList:
-        print(item)
-
 def getUnitsFromPulses(pulses):
     # given number of pulses convert to units of insulin
-    i = Decimal(0.05 * pulses)
-    insulin = round(i,2)
+    #i = Decimal(0.05 * pulses)
+    insulin = round(0.05 * pulses,2)
     return insulin

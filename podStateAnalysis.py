@@ -1,6 +1,9 @@
 from utils import *
 from messagePatternParsing import *
 
+## This file has pod-specific functions
+
+# This is from Eelke
 def basal_analysis(df):
   # add analysis per Eelke (2/27 and 3/2/2019 )
 
@@ -21,6 +24,7 @@ def basal_analysis(df):
 
   return df_basals, df2
 
+# marion's code starts here
 # iterate through all messages and apply parsers to update the pod state
 # The initial negotiations are not parsed
 # Typically called once for pod_progress 0 through 7
@@ -101,35 +105,42 @@ def getPodState(frame, minPodProgress, maxPodProgress):
     podStateFrame = pd.DataFrame(list_of_states, columns=colNames)
     return podStateFrame, emptyMessageList
 
-def getHandledRequests():
-    # this is the list of commands that getPodSuccessfulActions uses
-    # This should be cleaned up - for now when you add to requestDict
-    #   list_of_requests must correspond to requestDict
-    requestDict = { \
-      '0e'   : 'Status Request', \
-      '1a13' : 'Basal', \
-      '1a16' : 'TB' , \
-      '1a17' : 'Bolus', \
-      '1f'   : 'CancelDelivery'}
+def getMessageDict():
+    # this is the list of messages that might be sent or recieved
+    # sendDict { 'sendMsg' : ('expectedRecvMsg', 'sendName')}
 
-    otherDict = { \
-      '0x1'  : 'Version', \
-      '0x3'  : 'Setup', \
-      '0x7'  : 'AssignID', \
-      '0x8'  : 'CnfgDelivFlags', \
-      '0e'   : 'Status Request', \
-      '0x11' : 'Acknwl Alerts', \
-      '0x19' : 'Cnfg Alerts', \
-      '0x1c' : 'Deactivate Pod', \
-      '0x1e' : 'Diagnose Pod', \
-      '1f'   : 'CancelDelivery', \
-      '1a13' : 'Basal', \
-      '1a16' : 'TB', \
-      '1a17' : 'Bolus',
+    sendDict = { \
+      '0x3'  : ('0x1', 'SetupPod'), \
+      '0x7'  : ('0x1', 'AssignID'), \
+      '0x8'  : ('1d', 'CnfgDelivFlags'), \
+      '0e'   : ('1d', 'StatusRequest'), \
+      '0x11' : ('1d', 'AcknwlAlerts'), \
+      '0x19' : ('1d', 'CnfgAlerts'), \
+      '0x1c' : ('1d', 'DeactivatePod'), \
+      '0x1e' : ('1d', 'DiagnosePod'), \
+      '1a13' : ('1d', 'Basal'), \
+      '1a16' : ('1d', 'TB'), \
+      '1a17' : ('1d', 'Bolus'),
+      '1f'   : ('1d', 'CancelDelivery') }
+
+    recvDict = { \
+      '0x1'  : 'VersionResponse', \
+      '1d'   : 'StatusResponse', \
       '06'   : 'NonceResync', \
       '02'   : 'Fault'}
 
-    return requestDict, otherDict
+    return sendDict, recvDict
+
+def getCompleteDict():
+    sendDict, recvDict = getMessageDict()
+    completeDict = {}
+    sendDictNames = {}
+    for keys, values in sendDict.items():
+        completeDict[keys] = values[1]
+        sendDictNames[keys] = values[1]
+    for keys, values in recvDict.items():
+        completeDict[keys] = values
+    return completeDict, sendDictNames, recvDict
 
 def getPodSuccessfulActions(podStateFrame):
     """
@@ -146,7 +157,12 @@ def getPodSuccessfulActions(podStateFrame):
     list_of_other   = []  # all other or unpaired messages
     nextIndex = -1;
     thisIndex = 0;
-    list_of_requests = ['1a13', '1a16', '1a17', '0e', '1f']
+    sendDict, recvDict = getMessageDict()
+    list_of_recv = listFromDict(recvDict)
+
+    #printDict(sendDict)
+    #printDict(recvDict)
+    #printList(list_of_recv)
 
     successColumnNames = ('start_df_idx', 'start_podState_idx', 'end_podState_idx', \
       'startTimeStamp', 'startMessage', 'endMessage', 'responseTime', 'total_insulin', \
@@ -161,32 +177,17 @@ def getPodSuccessfulActions(podStateFrame):
         start_df_idx   = row['df_idx']
         startTimeStamp = row['timeStamp']
         startMessage   = row['message_type']
-        # if not in list_of_requests, put it in other
-        if row['message_type'] not in list_of_requests:
+        # if a recieve is detected without a send, it goes here
+        if row['message_type'] in list_of_recv:
             list_of_other.append((start_df_idx, index, startTimeStamp, startMessage))
         # was in list_of_requests, look for successful return message
         # look for desired response, then once it's determined which this is, append to appropriate list
         else:
-            # set the success criteria
-            if startMessage == '1a16':
-                respMessage = '1d'
-                colNameValue = {'TB' : True}
-
-            elif startMessage == '1a17':
-                respMessage = '1d'
-                colNameValue = {'Bolus' : True}
-
-            elif startMessage == '1a13':
-                respMessage = '1d'
-                colNameValue = {'SchBasal' : True}
-
-            elif startMessage == '0e':
-                respMessage = '1d'
-                colNameValue = {}
-
-            elif startMessage == '1f':
-                respMessage = '1d'
-                colNameValue = {'TB' : False}
+            # use the sendDict to determine expected response
+            for keys, values in sendDict.items():
+              if startMessage == keys:
+                respMessage = values[0]
+                break
 
             nextIndex = index + 1
             didSucceed = False
@@ -194,13 +195,7 @@ def getPodSuccessfulActions(podStateFrame):
             newRow = podStateFrame.iloc[nextIndex]
             timeToResponse = newRow['timeDelta']
             if  newRow['message_type'] == respMessage:
-                # set to true if the correct message detected
                 didSucceed = True
-                for key, value in colNameValue.items():
-                    logicCheck = newRow[key] == value
-                    if not logicCheck:
-                        # if failed logic check, set to False
-                        didSucceed = False
 
             if didSucceed:
                 list_of_success.append((start_df_idx, index, nextIndex, startTimeStamp, \
@@ -216,29 +211,41 @@ def getPodSuccessfulActions(podStateFrame):
     return podRequestSuccess, podOtherMessages
 
 
-def doThePrintRequest(dictList, frame):
+def doThePrintSuccess(frame):
     if len(frame) == 0:
         return
     print('    Successful Request with Appropriate Pod Response:')
+    completeDict, sendDictNames, recvDict = getCompleteDict()
     print('      Request(code)           : #Requests, mean, [ min, max ], response time (sec) ')
-    for key,value in dictList.items():
-        thisSel   = frame[frame.startMessage==key]
+    for keys,values in completeDict.items():
+        thisSel   = frame[frame.startMessage==keys]
         numberSel = len(thisSel)
-        if numberSel:
-            print('      {:14s} ({:4s})   : {:5d}, {:5.1f}, [ {:5.1f}, {:5.1f} ]'.format(value, \
-                key, numberSel, thisSel['responseTime'].mean(), \
+        if numberSel == 1:
+            print('      {:14s} ({:4s})   : {:5d}, {:5.1f}'.format(values, \
+                keys, numberSel, thisSel['responseTime'].mean()))
+        elif numberSel > 1:
+            print('      {:14s} ({:4s})   : {:5d}, {:5.1f}, [ {:5.1f}, {:5.1f} ]'.format(values, \
+                keys, numberSel, thisSel['responseTime'].mean(), \
                 thisSel['responseTime'].min(), thisSel['responseTime'].max() ))
     return
 
 
-def doThePrintOther(dictList, frame):
+def doThePrintOther(frame):
     if len(frame) == 0:
         return
-    print('    Request without Appropriate Pod Response (or not yet being checked):')
+    completeDict, sendDictNames, recvDict = getCompleteDict()
+    print('    Send without expected Receive:')
     print('      Message(code)  : #Messages')
-    for key,value in dictList.items():
-        thisSel   = frame[frame.startMessage==key]
+    for keys,values in sendDictNames.items():
+        thisSel   = frame[frame.startMessage==keys]
         numberSel = len(thisSel)
         if numberSel:
-            print('      {:14s} ({:4s})   : {:5d}'.format(value, key, numberSel))
+            print('      {:14s} ({:4s})   : {:5d}'.format(values, keys, numberSel))
+    print('    Off-nominal Receive Messages:')
+    print('      Message(code)  : #Messages')
+    for keys,values in recvDict.items():
+        thisSel   = frame[frame.startMessage==keys]
+        numberSel = len(thisSel)
+        if numberSel:
+            print('      {:14s} ({:4s})   : {:5d}'.format(values, keys, numberSel))
     return

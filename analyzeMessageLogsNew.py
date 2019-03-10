@@ -38,11 +38,12 @@ def analyzeMessageLogsNew(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, 
     thisPerson, thisFinish, thisAntenna = parse_info_from_filename(thisFile)
     lastDate = last_command.date()
     lastTime = last_command.time()
+    deltaTime = (last_command - first_command)
+    podHrs = deltaTime.total_seconds()/3600
 
-    # print out summary information to command window
-    print('__________________________________________\n')
-    print(f' Summary for {thisFile} with {thisFinish} ending')
-    print('  There were a total of {:d} messages in the log'.format(len(df)))
+    # see if there is a fault or nonceResync
+    faultRow = df[df.command=='02']
+    nonceResync = df[df.command=='06']
 
     # Process the dataframes and update the pod state
     # First get the pair and insert frames
@@ -51,24 +52,31 @@ def analyzeMessageLogsNew(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, 
     podInit, emptyMessageList = getPodState(df, minPodProgress, maxPodProgress)
     setUpPodCommands = podInit[podInit.message_type=='0x3']
     numberOfSetUpPodCommands = len(setUpPodCommands)
+
+    # Iterate through the podState to determine successful commands for requestDict
+    podInitSuccessfulActions, podInitOtherMessages = getPodSuccessfulActions(podInit)
+
+    # Now get the rest of the pod states while in pod_progress 8 and beyond
+    minPodProgress = 8
+    maxPodProgress = 15
+    podRun, emptyMessageList = getPodState(df, minPodProgress, maxPodProgress)
+
+
+    # print out summary information to command window
+    print('__________________________________________\n')
+    print(f' Summary for {thisFile} with {thisFinish} ending')
+    print('  Total elapsed time in log (hrs) : {:6.1f}'.format(podHrs))
+    print('        Number of messages        : {:6d}'.format(len(df)))
+    print('        Number of nonce resyncs   : {:6d}'.format(len(nonceResync)))
+    print('        Insulin delivered (u)     : {:6.2f}'.format(podRun.iloc[-1]['total_insulin']))
+    if len(faultRow):
+        print('    An 0x0202 message was reported - details later')
     print('\n  Pod was initialized with {:d} messages, {:d} SetUp (0x03) required'.format(len(podInit), \
        numberOfSetUpPodCommands))
     if emptyMessageList:
         print('    ***  Detected {:d} empty message(s) while initializing the pod'.format(len(emptyMessageList)))
         print('    ***  indices:', emptyMessageList)
 
-    # use a common function to configure requestDict, otherDict
-    requestDict, otherDict = getHandledRequests()
-
-    # Iterate through the podState to determine successful commands for requestDict
-    podInitSuccessfulActions, podInitOtherMessages = getPodSuccessfulActions(podInit)
-
-    doThePrintRequest(requestDict, podInitSuccessfulActions)
-
-    # Now get the rest of the pod states while in pod_progress 8 and beyond
-    minPodProgress = 8
-    maxPodProgress = 15
-    podRun, emptyMessageList = getPodState(df, minPodProgress, maxPodProgress)
     print('\n  Pod run (pod_progress>=8) included {:d} messages'.format(len(podRun)))
     if emptyMessageList:
         print('    ***  Detected {:d} empty message(s) while running the pod'.format(len(emptyMessageList)))
@@ -76,23 +84,22 @@ def analyzeMessageLogsNew(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, 
 
     # Iterate through the podState to determine successful commands for requestDict
     podSuccessfulActions, podOtherMessages = getPodSuccessfulActions(podRun)
-    doThePrintRequest(requestDict, podSuccessfulActions)
+    doThePrintSuccess(podSuccessfulActions)
 
     # add other analysis here  like TB timing etc
 
-    print('Insulin delivered   : {:6.2f} u'.format(podRun.iloc[-1]['total_insulin']))
-
-    # see if there is a fault
-    faultRow = df[df.command=='02']
     if len(faultRow):
         msg = faultRow.iloc[0]['raw_value']
         pmsg = processMsg(msg)
         printDict(pmsg)
 
     print('\nReport other message types during pod run')
-    doThePrintOther(otherDict, podOtherMessages)
+    doThePrintOther(podOtherMessages)
+
+    print('\nReport expected message types during pod init')
+    doThePrintSuccess(podInitSuccessfulActions)
 
     print('\nReport other message types during pod init')
-    doThePrintOther(otherDict, podInitOtherMessages)
+    doThePrintOther(podInitOtherMessages)
 
     return df, podInit, podRun
