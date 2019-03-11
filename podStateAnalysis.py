@@ -26,17 +26,13 @@ def basal_analysis(df):
 
 # marion's code starts here
 # iterate through all messages and apply parsers to update the pod state
-# The initial negotiations are not parsed
-# Typically called once for pod_progress 0 through 7
-# Then called again for pod_progress 8 through 15
-def getPodState(frame, minPodProgress, maxPodProgress):
+# some messages are not parsed (they show up as 0x##)
+def getPodState(frame):
     """
     Purpose: Evaluate state changes while the pod_progress is in range
 
     Input:
         frame: DataFrame with all messages
-        minPodProgress: ignore any pod_progress < minPodProgress
-        maxPodProgress: once the pod_progress reaches this value, return
 
     Output:
        podStateFrame    dataframe with pod state extracted from messages
@@ -54,17 +50,24 @@ def getPodState(frame, minPodProgress, maxPodProgress):
     TB    = False
     schBa = False
     emptyMessageList = []
+    sendDict, recvDict = getMessageDict()
+    list_of_recv = listFromDict(recvDict)
+    radio_on_time = 30 # radio is on for 30 seconds every time pod wakes up
+    radioOnCumTime = radio_on_time
 
     list_of_states = []
 
-    colNames = ('df_idx', 'timeStamp', 'timeDelta', 'timeCumSec', 'message_type', 'pod_progress', 'total_insulin', 'lastTB', 'lastBolus', 'Bolus','TB','SchBasal', 'raw_value' )
+    colNames = ('df_idx', 'timeStamp', 'time_delta', 'timeCumSec', \
+                'message_type', 'pod_progress', 'radioOnCumTime',\
+                'total_insulin', 'lastTB', \
+                'lastBolus', 'Bolus','TB','SchBasal', 'raw_value' )
 
     # iterate through the DataFrame, should already be sorted into send-recv pairs
     for index, row in frame.iterrows():
         # reset each time
         timeStamp = row['time']
-        timeDelta = row['timeDelta']
-        timeCumSec += timeDelta
+        time_delta = row['time_delta']
+        timeCumSec += time_delta
         msg = row['raw_value']
         if msg == '':
             #print('Empty command for {} at dataframe index of {:d}'.format(row['type'], index))
@@ -74,7 +77,14 @@ def getPodState(frame, minPodProgress, maxPodProgress):
             continue
         else:
             pmsg = processMsg(msg)
+
         message_type = pmsg['message_type']
+
+        timeAsleep = row['time_asleep']
+        if np.isnan(timeAsleep):
+            radioOnCumTime += time_delta
+        else:
+            radioOnCumTime += time_delta - timeAsleep
 
         # fill in pod state based on message_type
         if message_type == '1a16':
@@ -97,13 +107,10 @@ def getPodState(frame, minPodProgress, maxPodProgress):
             # rename the message_type per Joe's request
             message_type = '1f0{:d}'.format(pmsg['cancelByte'])
 
-        # check pod_progress
-        if pod_progress < minPodProgress:
-            continue
-        elif pod_progress >= maxPodProgress:
-            break
-
-        list_of_states.append((index, timeStamp, timeDelta, timeCumSec, message_type, pod_progress, total_insulin, lastTB, lastBolus, Bolus, TB, schBa, msg))
+        list_of_states.append((index, timeStamp, time_delta, timeCumSec, \
+                              message_type, pod_progress, radioOnCumTime, \
+                              total_insulin, lastTB, \
+                              lastBolus, Bolus, TB, schBa, msg))
 
     podStateFrame = pd.DataFrame(list_of_states, columns=colNames)
     return podStateFrame, emptyMessageList
@@ -125,10 +132,10 @@ def getMessageDict():
       '1a16' : ('1d', 'TB'), \
       '1a17' : ('1d', 'Bolus'),
       '1f'   : ('1d', 'CancelDelivery'),
-      '1f01'   : ('1d', 'CancelBasal'),
-      '1f02'   : ('1d', 'CancelTB'),
-      '1f04'   : ('1d', 'CancelBolus'),
-      '1f07'   : ('1d', 'Suspend')
+      '1f01' : ('1d', 'CancelBasal'),
+      '1f02' : ('1d', 'CancelTB'),
+      '1f04' : ('1d', 'CancelBolus'),
+      '1f07' : ('1d', 'CancelAll')
        }
 
     recvDict = { \
@@ -152,10 +159,12 @@ def getCompleteDict():
 
 def getPodSuccessfulActions(podStateFrame):
     """
-    Purpose: Evaluate each request for Basal, TB or Bolus ['1a13', '1a16', '1a17']
+    WARNING - podStateFrame must start with 0 index or iterrows index is out of sycn
+              probably a better way to get the next row
+    Purpose: Evaluate each request from the dictionary
 
     Input:
-        podStateFrame: Should be the pod running frames (pod_progress>=8)
+        podStateFrame: output from getPodState code applied to all messages (df)
 
     Output:
         podRequestSuccess  dataframe with successful responses to requests
@@ -163,17 +172,13 @@ def getPodSuccessfulActions(podStateFrame):
     """
     list_of_success = []  # success for items in list_of_requests
     list_of_other   = []  # all other or unpaired messages
-    nextIndex = -1;
-    thisIndex = 0;
+    nextIndex = -1
     sendDict, recvDict = getMessageDict()
     list_of_recv = listFromDict(recvDict)
 
-    #printDict(sendDict)
-    #printDict(recvDict)
-    #printList(list_of_recv)
-
     successColumnNames = ('start_df_idx', 'start_podState_idx', 'end_podState_idx', \
-      'startTimeStamp', 'startMessage', 'endMessage', 'responseTime', 'total_insulin', \
+      'startTimeStamp', 'start_timeCumSec', 'startMessage', 'endMessage', \
+      'end_pod_progress', 'responseTime', 'radioOnCumTime', 'total_insulin', \
       'lastTB', 'lastBolus', 'Bolus','TB','SchBasal' )
     otherColumnNames = ('start_df_idx', 'start_podState_idx', 'startTimeStamp', 'startMessage' )
 
@@ -185,33 +190,41 @@ def getPodSuccessfulActions(podStateFrame):
         start_df_idx   = row['df_idx']
         startTimeStamp = row['timeStamp']
         startMessage   = row['message_type']
+        start_timeCumSec = row['timeCumSec']
         # if a recieve is detected without a send, it goes here
-        if row['message_type'] in list_of_recv:
+        if startMessage in list_of_recv:
+            nextIndex = index
             list_of_other.append((start_df_idx, index, startTimeStamp, startMessage))
         # was in list_of_requests, look for successful return message
         # look for desired response, then once it's determined which this is, append to appropriate list
         else:
             # use the sendDict to determine expected response
+            # reset the response message (avoid getting out sync)
+            respMessage = []
             for keys, values in sendDict.items():
               if startMessage == keys:
                 respMessage = values[0]
                 break
 
+            # increment to read next message
             nextIndex = index + 1
+            # initialize for failure, then change if next message is correct
             didSucceed = False
+            newRow = podStateFrame.iloc[nextIndex] ## << bad code, works iff podStateFrame starts with 0 index and indices are sequential
 
-            newRow = podStateFrame.iloc[nextIndex]
-            timeToResponse = newRow['timeDelta']
+            # was the next message the expected response
             if  newRow['message_type'] == respMessage:
                 didSucceed = True
 
             if didSucceed:
                 list_of_success.append((start_df_idx, index, nextIndex, startTimeStamp, \
-                  startMessage, respMessage, timeToResponse, newRow['total_insulin'], newRow['lastTB'], \
-                  newRow['lastBolus'], newRow['Bolus'], newRow['TB'], newRow['SchBasal']))
+                  start_timeCumSec, startMessage, respMessage, row['pod_progress'], \
+                  newRow['time_delta'], newRow['radioOnCumTime'], newRow['total_insulin'], \
+                  newRow['lastTB'], newRow['lastBolus'], \
+                  newRow['Bolus'], newRow['TB'], newRow['SchBasal']))
             else:
                 list_of_other.append((start_df_idx, index, startTimeStamp, startMessage))
-                nextIndex = index
+                nextIndex = index # decrement so we don't skip the next message
 
     podRequestSuccess = pd.DataFrame(list_of_success, columns=successColumnNames)
     podOtherMessages = pd.DataFrame(list_of_other, columns=otherColumnNames)
