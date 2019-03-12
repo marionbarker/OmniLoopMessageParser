@@ -56,6 +56,9 @@ def analyzeMessageLogsNew(thisPath, thisFile, outFile, printReport, verboseFlag)
 
     if printReport:
         # print out summary information to command window
+        print('    First command in Log          :', first_command)
+        print('    Last  command in Log          :', last_command)
+        print('  Make sure these make sense (otherwise check maxChars in read_file)\n')
         print('__________________________________________\n')
         print(f' Summary for {thisFile} with {thisFinish} ending')
         print('  Total elapsed time in log (hrs) : {:6.1f}'.format(msgLogHrs))
@@ -71,6 +74,7 @@ def analyzeMessageLogsNew(thisPath, thisFile, outFile, printReport, verboseFlag)
             print('    ***  Detected {:d} empty message(s) during life of the pod'.format(len(emptyMessageList)))
             print('    ***  indices:', emptyMessageList)
 
+        print('\n  While running pod (pod_progress>=8)')
         doThePrintSuccess(podRunSuccessfulActions)
 
         print('\n  Using all messages:')
@@ -88,7 +92,7 @@ def analyzeMessageLogsNew(thisPath, thisFile, outFile, printReport, verboseFlag)
         thisFault = 'n/a'
 
     if verboseFlag:
-        print('\nReport other message that did not get desired response (includes 02 and 06)')
+        print('\nReport other message (all pod_progress values) that did not get desired response (includes 02 and 06)')
         doThePrintOther(podOtherMessages)
 
         print('\nReport expected message types during pod init')
