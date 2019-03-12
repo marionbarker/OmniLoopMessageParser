@@ -68,12 +68,7 @@ def analyzeMessageLogsNew(thisPath, thisFile, outFile, printReport, verboseFlag)
         print('\n  Pod was initialized with {:d} messages, {:d} SetUp (0x03) required'.format(len(podInit), \
            numberOfSetUpPodCommands))
         if emptyMessageList:
-            print('    ***  Detected {:d} empty message(s) while initializing the pod'.format(len(emptyMessageList)))
-            print('    ***  indices:', emptyMessageList)
-
-        print('\n  Pod run (pod_progress>=8) included {:d} messages'.format(len(podRun)))
-        if emptyMessageList:
-            print('    ***  Detected {:d} empty message(s) while running the pod'.format(len(emptyMessageList)))
+            print('    ***  Detected {:d} empty message(s) during life of the pod'.format(len(emptyMessageList)))
             print('    ***  indices:', emptyMessageList)
 
         doThePrintSuccess(podRunSuccessfulActions)
@@ -93,11 +88,13 @@ def analyzeMessageLogsNew(thisPath, thisFile, outFile, printReport, verboseFlag)
         thisFault = 'n/a'
 
     if verboseFlag:
+        print('\nReport other message that did not get desired response (includes 02 and 06)')
+        doThePrintOther(podOtherMessages)
+
         print('\nReport expected message types during pod init')
         doThePrintSuccess(podInitSuccessfulActions)
 
-        print('\nReport other message that did not get desired response (includes 02 and 06)')
-        doThePrintOther(podOtherMessages)
+        print('')
 
     # if an output filename is provided - write out summary to it (csv format)
     if outFile:
