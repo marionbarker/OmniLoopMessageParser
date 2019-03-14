@@ -173,7 +173,7 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
     thisMessage = seqDF.iloc[idx]['raw_value']
     parsedMessage = processMsg(thisMessage)
 
-    insulinDelivered = parsedMessage['total_insulin_delivered']
+    insulinDelivered = parsedMessage['insulinDelivered_delivered']
     insulinNotDelivered = parsedMessage['insulin_not_delivered']
     specialComments = 'None'
 
@@ -197,7 +197,7 @@ def analyzeMessageLogs(thisPath, thisFile, outFile, verboseFlag, numRowsBeg, num
         print(' parsedPriorMessage message_type = ', parsedPriorMessage['message_type'])
         print(' parsedPriorMessage raw_value = ', parsedPriorMessage['raw_value'])
 
-        insulinDelivered = parsedPriorMessage['total_insulin_delivered']
+        insulinDelivered = parsedPriorMessage['insulinDelivered_delivered']
         insulinNotDelivered = parsedPriorMessage['insulin_not_delivered']
         specialComments = 'Insulin from {:d} pod message before last'.format(-idx-1)
 

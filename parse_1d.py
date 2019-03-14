@@ -69,7 +69,7 @@ def parse_1d(msg):
     pulses = (dword_3 >> 15) & 0x1FFF
     insulin = getUnitsFromPulses(pulses)
     msgDict['total_pulses_delivered'] = pulses
-    msgDict['total_insulin_delivered']  = insulin
+    msgDict['insulinDelivered_delivered']  = insulin
 
     msgDict['sequence']  = (dword_3 >> 11) & 0xF
 

@@ -29,6 +29,14 @@ def analyzeMessageLogsNew(thisPath, thisFile, outFile, printReport, verboseFlag)
     faultRow = df[df.command=='02']
     nonceResync = df[df.command=='06']
 
+    if len(faultRow):
+        msg = faultRow.iloc[0]['raw_value']
+        faultProcessedMessage = processMsg(msg)
+        thisFault = msg
+        thisFinish = faultProcessedMessage['logged_fault']
+    else:
+        thisFault = 'n/a'
+
     # new from Eelke 2/27/2019 and updated 3/2/2019 - use as it
     df_basals, df2 = basal_analysis(df)
     numberScheduleBeforeTempBasal = df_basals["command"].count()
@@ -37,7 +45,7 @@ def analyzeMessageLogsNew(thisPath, thisFile, outFile, printReport, verboseFlag)
     # Process the dataframes and update the pod state
     podState, emptyMessageList = getPodState(df)
     msgLogHrs = podState.iloc[-1]['timeCumSec']/3600
-    radioOnHrs = podState.iloc[-1]['radioOnCumTime']/3600
+    radioOnHrs = podState.iloc[-1]['radioOnCumSec']/3600
 
     # now combine requests (send) that match with desired response (recv)
     # note that undesired responses such as 02 or 06 show up in podOtherMessages
@@ -45,8 +53,8 @@ def analyzeMessageLogsNew(thisPath, thisFile, outFile, printReport, verboseFlag)
 
     # split into the initialization portion and the run portion
     runPodProgressValue = 8
-    podInitSuccessfulActions = podSuccessfulActions[podSuccessfulActions.end_pod_progress < runPodProgressValue]
-    podRunSuccessfulActions = podSuccessfulActions[podSuccessfulActions.end_pod_progress >= runPodProgressValue]
+    podInitSuccessfulActions = podSuccessfulActions[podSuccessfulActions.endPodProgress < runPodProgressValue]
+    podRunSuccessfulActions = podSuccessfulActions[podSuccessfulActions.endPodProgress >= runPodProgressValue]
 
     podInit = podState[podState.pod_progress < runPodProgressValue]
     podRun  = podState[podState.pod_progress >= runPodProgressValue]
@@ -65,10 +73,10 @@ def analyzeMessageLogsNew(thisPath, thisFile, outFile, printReport, verboseFlag)
         print('        Radio on estimate         : {:6.1f}, {:5.1f}%'.format(radioOnHrs, 100*radioOnHrs/msgLogHrs))
         print('        Number of messages        : {:6d}'.format(len(df)))
         print('        Number of nonce resyncs   : {:6d}'.format(len(nonceResync)))
-        print('        Insulin delivered (u)     : {:6.2f}'.format(podRun.iloc[-1]['total_insulin']))
+        print('        Insulin delivered (u)     : {:6.2f}'.format(podRun.iloc[-1]['insulinDelivered']))
         if len(faultRow):
             print('    An 0x0202 message was reported - details later')
-        print('\n  Pod was initialized with {:d} messages, {:d} SetUp (0x03) required'.format(len(podInit), \
+        print('\n  Pod was initialized with {:d} messages, {:d} SetUp (0x03) required'.format(2*len(podInit)+1, \
            numberOfSetUpPodCommands))
         if emptyMessageList:
             print('    ***  Detected {:d} empty message(s) during life of the pod'.format(len(emptyMessageList)))
@@ -84,12 +92,7 @@ def analyzeMessageLogsNew(thisPath, thisFile, outFile, printReport, verboseFlag)
     # add other analysis here  like TB timing etc
 
     if len(faultRow):
-        msg = faultRow.iloc[0]['raw_value']
-        pmsg = processMsg(msg)
-        printDict(pmsg)
-        thisFault = msg
-    else:
-        thisFault = 'n/a'
+        printDict(faultProcessedMessage)
 
     if verboseFlag:
         print('\nReport other message (all pod_progress values) that did not get desired response (includes 02 and 06)')
@@ -123,7 +126,7 @@ def analyzeMessageLogsNew(thisPath, thisFile, outFile, printReport, verboseFlag)
             stream_out.write('\n')
 
         # Calculate items not yet generated
-        insulinDelivered = podRun.iloc[-1]['total_insulin']
+        insulinDelivered = podRun.iloc[-1]['insulinDelivered']
         numberOfStatusRequests = len(podSuccessfulActions[podSuccessfulActions.startMessage=='0e'])
         numberOfBasal = len(podSuccessfulActions[podSuccessfulActions.startMessage=='1a13'])
         numberOfTB = len(podSuccessfulActions[podSuccessfulActions.startMessage=='1a16'])

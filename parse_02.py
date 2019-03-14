@@ -90,7 +90,7 @@ def parse_02(msg):
     msgDict['seq_byte_M']  = byte_M
 
     msgDict['total_pulses_delivered'] = word_N
-    msgDict['total_insulin_delivered'] = getUnitsFromPulses(word_N)
+    msgDict['insulinDelivered_delivered'] = getUnitsFromPulses(word_N)
 
     msgDict['logged_fault'] = f'0x%X'%(byte_P)
 
