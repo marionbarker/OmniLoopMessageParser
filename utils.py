@@ -10,10 +10,16 @@ def time_difference(df_column):
 def to_time(df_time_column):
     return time.strftime("%H:%M:%S",time.gmtime(df_time_column))
 
-# new function (MDB) (3/1/2019)
-def flatten(list_of_lists):
-    flat_list = [item for sublist in list_of_lists for item in sublist]
-    return flat_list
+# new function (MDB) (3/15/2019) - updated to recursive version to handle single items (not lists) up
+# through multi-layered lists (lol = list of lists)
+def flatten(lol):
+    if type(lol) is list:
+        if len(lol) == 1:
+            return flatten(lol[0])
+        else:
+            return flatten(lol[0]) + flatten(lol[1:])
+    else:
+        return [lol]
 
 # return a new DataFrame of just the selected indices in the original DataFrame
 # maintain the original index as a new column in the returned DataFrame
