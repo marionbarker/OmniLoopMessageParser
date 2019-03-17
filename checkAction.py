@@ -20,57 +20,47 @@ def checkAction(frame):
     """
     actionDict, nonce, fault = getActionDict()
 
+    # initial thought was to remove the Fault, nonce and init lines from frame
+    #  but that messes up the adjacency check when going through the actionDict
+    #  The only lines that should be removed are the successful action ones
+
     # first identify fault, if present
     frFault = frame[frame.message_type==fault]
     faultIdx = frFault.index.to_list()
 
-    # remove the fault for further analysis
-    frameBalance = frame.drop(faultIdx)
-
-    # search for nonce frames, then check for the prior message
-    nonceFrame = frameBalance[frameBalance.message_type==nonce]
+    # search for nonce rows
+    nonceFrame = frame[frame.message_type==nonce]
     nonceIdx = np.array(nonceFrame.index.to_list())
-    # send-recv before and after the nonce replies
-    nonceList = np.unique(flatten([nonceIdx, nonceIdx-1, nonceIdx+1]))
-    nonceFrame = frame.loc[nonceList]
-    # drop just the send/nonce values for next analysis
-    nonceDropList = np.unique(flatten([nonceIdx, nonceIdx-1]))
 
-    frameBalance = frameBalance.drop(nonceDropList)
-
-    # select just the init sequences
-    podInit = frameBalance[frameBalance.pod_progress < 8]
+    # determine initIdx from pod_progress value
+    podInit = frame[frame.pod_progress < 8]
     # get list of indices for initializing the pod
-    initIdx = podInit.index.to_list()
+    initIdx = np.array(podInit.index.to_list())
     # need to add the next row too - but need to protect that it wasn't removed with nonce drop
     checkIdx = initIdx[-1]+1
-    while checkIdx in nonceDropList:
-        checkIdx += 1
-    initIdx.append(checkIdx)
-    podInit = frame.iloc[initIdx,:]
-
-    frameBalance = frameBalance.drop(initIdx)
-    podRun = frameBalance
+    initIdx = np.append(initIdx, checkIdx)
 
     # prepare to search by actions
+    frameBalance = frame
 
-    # now search the balance for actions:
+    # now search the frame for actions:
     #    actionName from actionDic
-    #    list of lists of the df_idx for that action,
+    #    list of lists of the completedList for that action,
     #             e.g., (34, 35, 36, 37), (60, 61, 62, 63)
     #    responseTime calculated by taking timeCumSec at end - timeCumSec at end
     #    SchBasal is the scheduled basal state at the beginning of the action
     # if all the expected messages are found in the correct order, then the
     #     indices for all the messages are removed from frameBalance before
     #     searching for the next actionDict item
-    successColumnNames = ('actionName', 'msgPerAction', 'cumStartSec', 'responseTime' , 'SchBasalState', 'failureList','df_idx' )
+    successColumnNames = ('actionName', 'msgPerAction', 'cumStartSec', \
+      'responseTime' , 'SchBasalState', 'incompleteList','completedList' )
 
     actionList = []
 
+
     for keys,values in actionDict.items():
-        badIdx = []      # used for each message that is part of the action
-        removeIdx = []   # used for the entire action
-        failureList = [] # convert list to df_idx
+        badIdx = []         # accumulate action identifier indices that don't have all their messages
+        incompleteList = [] # list of badIdx lists by action
         thisAction = keys
         thisID = values[0]           # used to index into matchList, identifier for Action
         matchList = values[1]
@@ -78,79 +68,96 @@ def checkAction(frame):
         thisFrame = frameBalance[frameBalance.message_type == matchList[thisID]]
         if len(thisFrame) == 0:
             continue
-        idx = np.array(thisFrame.index.to_list())
+        thisIdx = np.array(thisFrame.index.to_list())
         # go thru adjacent messages to ensure they match the matchList
         for ii in range (-thisID, msgPerAction-thisID):
             if ii == thisID:
-                # we already know if matches the ID for this action
+                # we already know it matches the ID for this action
                 continue
-            thisList = idx+ii
-            checkFrame=frameBalance.loc[thisList,:]
+            thisList = thisIdx+ii
+            # to avoid missing indices already removed from frameBalance, use frame here
+            checkFrame=frame.loc[thisList,:]
             # identify any mismatches with respect to action message
             badFrame = checkFrame[checkFrame.message_type != matchList[ii+thisID]]
             if len(badFrame) > 0:
-                thisBad = badFrame.index.values
+                thisBad = np.array(badFrame.index.to_list())
                 thisBad = thisBad-ii
-                badIdx.append(thisBad)
+                badIdx  = np.append(badIdx, thisBad)
 
         # all required messages in the action have now been checked
         if len(badIdx):
-            removeIdx = np.unique(flatten(badIdx))
-            failureList = thisFrame.loc[removeIdx,'df_idx'].to_list()
-            thisFrame = thisFrame.drop(removeIdx)
+            # need to remove the "bad" aka incomplete action indices from thisIdx
+            badIdx = np.unique(badIdx)
+            incompleteList = thisFrame.loc[badIdx,'df_idx'].to_list()
+            # use thisFrame to transfer completed indices in next step
+            thisFrame = thisFrame.drop(badIdx)
 
         # now work on success
         idx = np.array(thisFrame.index.to_list())
         if len(idx) == 0:
             continue
 
-        # print('Status: ', thisAction, 'Success for ', len(idx), 'Failures for ', len(removeIdx))
+        print('Status: ', thisAction, 'Complete: ', len(idx), 'Incomplete: ', len(badIdx))
 
         if msgPerAction == 4:
             thisList = np.unique(flatten([idx-2, idx-1, idx, idx+1 ]))
-            t0 = np.array(frameBalance.loc[idx-2,'timeCumSec'].to_list())
-            t1 = np.array(frameBalance.loc[idx+1,'timeCumSec'].to_list())
+            t0 = np.array(frame.loc[idx-2,'timeCumSec'].to_list())
+            t1 = np.array(frame.loc[idx+1,'timeCumSec'].to_list())
             responseTime = t1-t0
-            SchBasalState = frameBalance.loc[idx-2,'SchBasal'].to_list()
+            SchBasalState = frame.loc[idx-2,'SchBasal'].to_list()
         else:
             thisList = np.unique(flatten([idx, idx+1]))
-            t0 = np.array(frameBalance.loc[idx,'timeCumSec'].to_list())
-            t1 = np.array(frameBalance.loc[idx+1,'timeCumSec'].to_list())
+            t0 = np.array(frame.loc[idx,'timeCumSec'].to_list())
+            t1 = np.array(frame.loc[idx+1,'timeCumSec'].to_list())
             responseTime = t1-t0
-            SchBasalState = frameBalance.loc[idx,'SchBasal'].to_list()
-        # We need to return the df_idx index, not the reset values
-        dfIdxList = frameBalance.loc[thisList,'df_idx'].to_list()
+            SchBasalState = frame.loc[idx,'SchBasal'].to_list()
 
         # append this action to the list
-        actionList.append(( thisAction, msgPerAction, t0, responseTime, SchBasalState, failureList, dfIdxList))
+        actionList.append(( thisAction, msgPerAction, t0, \
+          responseTime, SchBasalState, incompleteList, thisList))
 
         # remove these indices from the frameBalance, reset and keep going
         frameBalance = frameBalance.drop(thisList)
 
     actionFrame = pd.DataFrame(actionList, columns=successColumnNames)
-    return podRun, actionFrame, podInit, nonceFrame, frFault
+    return actionFrame, initIdx, nonceIdx, faultIdx
 
 
 def printActionFrame(actionFrame):
     if len(actionFrame) == 0:
         return
-    print('\n  Action Summary with sequential 2 or 4 message sequences. Response times in sec')
-    print('      Action         : #Success, mean, [ min, max ]   : #Failed  : SchBasalRunning(beforeTB), #<30Sec Long ')
+    actionSummary = []
+    totalCompletedMessages = 0
+    print('\n  Action Summary with sequential 4 or 2 message sequences with action response times in sec')
+    #print('      Action        : #Success,  mean, [  min,  max  ]  : #Incomplete  : SchBasalRunning(beforeTB), #<30Sec Long ')
+    print('      Action        : #Success,  mean, [  min,  max  ] : #Incomplete : SchBasalRunning(beforeTB)')
     for index, row in actionFrame.iterrows():
+        respTime = row['responseTime']
+        totalCompletedMessages += len(row['completedList'])
+        numGood = len(row['completedList'])/row['msgPerAction']
         if row['actionName'] == 'TB':
-            respTime = row['responseTime']
             startTime = row['cumStartSec']
             deltaTime = startTime[1:-1]-startTime[0:-2]
-            numLT30secDelta = np.sum(deltaTime<30)
-            print('    {:14s}   : {:5.0f}, {:5.1f}, [ {:5.1f}, {:5.1f} ] : {:5d}    :  {:5d}, {:5d}'.format( \
-              row['actionName'], len(row['df_idx'])/row['msgPerAction'], \
-              np.mean(respTime), np.min(respTime), np.max(respTime), \
-              len(row['failureList']), np.sum(row['SchBasalState']), numLT30secDelta))
+            # not too sure of numShortTB calc - so don't put in report yet
+            # it can go in spreadsheet, so calculate it - come back later
+            numShortTB = np.sum(deltaTime<30)
+            numSchBasalbeforeTB = np.sum(row['SchBasalState'])
+            actionSummary.append((row['actionName'], (numGood, numSchBasalbeforeTB, numShortTB)))
+            if False:
+                print('    {:14s}  :  {:5.0f},  {:5.0f},  [{:5.0f}, {:5.0f} ] : {:5d}    :  {:5d}, {:5d}'.format( \
+                  row['actionName'], numGood, \
+                  np.mean(respTime), np.min(respTime), np.max(respTime), \
+                  len(row['incompleteList']), numSchBasalbeforeTB, numShortTB))
+            else:
+                print('    {:14s}  :  {:5.0f},  {:5.0f},  [{:5.0f}, {:5.0f} ] : {:5d}       :  {:5d}'.format( \
+                  row['actionName'], numGood, \
+                  np.mean(respTime), np.min(respTime), np.max(respTime), \
+                  len(row['incompleteList']), numSchBasalbeforeTB))
         else:
-            respTime = row['responseTime']
-            print('    {:14s}   : {:5.0f}, {:5.1f}, [ {:5.1f}, {:5.1f} ] : {:5d}'.format( \
-              row['actionName'], len(row['df_idx'])/row['msgPerAction'], \
+            actionSummary.append((row['actionName'], (numGood)))
+            print('    {:14s}  :  {:5.0f},  {:5.0f},  [{:5.0f}, {:5.0f} ] : {:5d}'.format( \
+              row['actionName'], numGood, \
               np.mean(respTime), np.min(respTime), np.max(respTime), \
-              len(row['failureList'])))
+              len(row['incompleteList'])))
 
-    return
+    return actionSummary, totalCompletedMessages
