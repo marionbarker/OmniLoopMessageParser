@@ -4,6 +4,18 @@ python code to parse the messages found in Loop Reports from loop-priv
 ## Origins
 Some of the intial work done by Eelke Jager on the Jupyter workbook was copied to my local computer to enable batch processing and easy reprocessing (https://omnikit-lab.herokuapp.com/lab?)
 
+## 3/16/2019: Even better version WIP
+
+Create an action dictionary that associates messages together.  For example, a temporary basal (with current version of code) requires a cancel TB (1f02), with 1d status return, followed by set the new TB (1a16), followed by another 1d status return.  If these 4 do not line up, then that TB (identified by the 1a16 row) is treated as a "failure".  If they do line up, then the start time (in sec from start of pod) and response time (from 1f02 to final 1d) is tabulated along with the state of the pod - is it running a schedule basal (True) or not (False).
+
+This enables better reporting of various results.  The lower level functions are working.  Need more testing and the main reporting function to call the new stuff.
+
+New files:
+
+checkAction.py
+
+podUtils.py
+
 ## 3/10/2019: NEW VERSION - WIP
 
 New code takes every message read from the Loop_Report file and then parses it.
