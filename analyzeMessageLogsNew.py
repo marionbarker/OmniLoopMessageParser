@@ -1,6 +1,7 @@
 import pandas as pd
 from messageLogs_functions import *
 from byteUtils import *
+from basal_analysis import *
 from podStateAnalysis import *
 from messagePatternParsing import *
 
@@ -75,8 +76,13 @@ def analyzeMessageLogsNew(thisPath, thisFile, outFile, printReport, verboseFlag)
         print('        Number of nonce resyncs   : {:6d}'.format(len(nonceResync)))
         print('        Insulin delivered (u)     : {:6.2f}'.format(podRun.iloc[-1]['insulinDelivered']))
         if len(faultRow):
-            print('    An 0x0202 message was reported - details later')
-        print('\n  Pod was initialized with {:d} messages, {:d} SetUp (0x03) required'.format(2*len(podInit)+1, \
+            if thisFinish == '0x1C':
+                print('    An 0x0202 message of {:s} reported - 80 hour time limit'.format(thisFinish))
+            elif thisFinish == '0x18':
+                print('    An 0x0202 message of {:s} reported - out of insulin'.format(thisFinish))
+            else:
+                print('    An 0x0202 message was reported - details later')
+        print('\n  Pod was initialized with {:d} messages, {:d} SetUp (0x03) required'.format(len(podInit)+1, \
            numberOfSetUpPodCommands))
         if emptyMessageList:
             print('    ***  Detected {:d} empty message(s) during life of the pod'.format(len(emptyMessageList)))
