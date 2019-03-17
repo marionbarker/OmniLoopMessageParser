@@ -44,7 +44,7 @@ def analyzeMessageLogsNew(thisPath, thisFile, outFile, printReport, verboseFlag)
     numberScheduleBasalLessThan30sec = df_basals["command"].loc[(df_basals["normal_basal_running_seconds"] < 30)].count()
 
     # Process the dataframes and update the pod state
-    podState, emptyMessageList = getPodState(df)
+    podState, emptyMessageList, faultProcessedMsg = getPodState(df)
     msgLogHrs = podState.iloc[-1]['timeCumSec']/3600
     radioOnHrs = podState.iloc[-1]['radioOnCumSec']/3600
 

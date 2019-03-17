@@ -14,13 +14,15 @@ def getPodState(frame):
         frame: DataFrame with all messages
 
     Output:
-       podStateFrame    dataframe with pod state extracted from messages
-       emptyMessageList indices of any messages with blank commands
+       podStateFrame       dataframe with pod state extracted from messages
+       emptyMessageList    indices of any messages with blank commands
+       faultProcessedMsg   dictionary for the fault message
 
     """
     # initialize values for pod states that we will update
     timeCumSec = 0
     pod_progress = 0
+    faultProcessedMsg = {}
     insulinDelivered = getUnitsFromPulses(0)
     reqTB = getUnitsFromPulses(0)
     reqBolus = getUnitsFromPulses(0)
@@ -53,11 +55,13 @@ def getPodState(frame):
             pmsg = {}
             pmsg['message_type'] = 'unknown'
             emptyMessageList.append(index)
-            continue
+            #continue
         else:
             pmsg = processMsg(msg)
 
         message_type = pmsg['message_type']
+        if message_type == '02':
+            faultProcessedMsg = pmsg
 
         timeAsleep = row['time_asleep']
         if np.isnan(timeAsleep):
@@ -92,7 +96,7 @@ def getPodState(frame):
                               reqBolus, Bolus, TB, schBa, msg))
 
     podStateFrame = pd.DataFrame(list_of_states, columns=colNames)
-    return podStateFrame, emptyMessageList
+    return podStateFrame, emptyMessageList, faultProcessedMsg
 
 def getPodSuccessfulActions(frame):
     """
