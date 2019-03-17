@@ -1,18 +1,10 @@
 # run the most recent file and append to master csv
-from analyzeMessageLogs import *
-from analyzeMessageLogsNew import *
+from analyzeMessageLogsRev3 import *
 from get_file_list import *
 
-verboseFlag =  1   # if this is 1 then more print stmts
-numRowsBeg  =  10   # if >0, print this many messages from beginning of record
-numRowsEnd  =  10   # if >0, print this many messages from end of record
-
 filePath = 'm:/SharedFiles/LoopReportFiles'
-outFile = 'm:/SharedFiles/LoopReportPythonAnalysis/output_master.csv'
 fileDateList = get_file_list(filePath)
 
-## last runs to csv file
-df = analyzeMessageLogs(filePath, fileDateList[-1][0], outFile, verboseFlag, numRowsBeg, numRowsEnd)
-
-## new analysis
-df, podInit, podRun = analyzeMessageLogsNew(filePath, fileDateList[-1][0], outFile, verboseFlag, numRowsBeg, numRowsEnd)
+## Rev3 analysis
+outFile = 'm:/SharedFiles/LoopReportPythonAnalysis/output_master_rev3.csv'
+df, podState, actionFrame, actionSummary = analyzeMessageLogsRev3(filePath, fileDateList[-1][0], outFile)
