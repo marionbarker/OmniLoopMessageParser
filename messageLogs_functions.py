@@ -22,7 +22,10 @@ def read_file(filename):
     file = open(filename)
     # limit the number of characters to read
     # this seems to be required from some files, ad-hoc maxChars to work
-    maxChars = 100*2900
+    #maxChars = 100*2900 # needed this for someone - but not enough for Theresa on 3/12/2019
+    # so restore the 3400 I had earlier - see if Eelke can help with this one
+    maxChars = 100*3400
+    maxChars = 100*4000 # for theresa 3/15 report 
     xcode_log_text = file.read(maxChars)
     # print(xcode_log_text)
     regex = r"\* ([0-9-:\s]*)\s.*\s(send|receive)\s([a-z0-9]*)\n*"
