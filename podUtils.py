@@ -29,7 +29,7 @@ def getUnitsFromPulses(pulses):
     return insulin
 
 def getMessageDict():
-    # this is the list of messages that might be sent or recieved
+    # this is the list of messages that might be sent or received
     # sendDict { 'sendMsg' : ('expectedRecvMsg', 'sendName')}
 
     sendDict = { \
@@ -98,8 +98,4 @@ def getActionDict():
       'CancelAll'       : (0, ('1f07', '1d')) \
        }
 
-    nonceMsgType = '06'
-
-    faultMsgType = '02'
-
-    return actionDict, nonceMsgType, faultMsgType
+    return actionDict

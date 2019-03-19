@@ -1,3 +1,4 @@
 *.pyc
 __pycache__
 archive
+Keep_ButNotInGit

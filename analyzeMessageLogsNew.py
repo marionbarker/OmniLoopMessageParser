@@ -3,6 +3,7 @@ from messageLogs_functions import *
 from byteUtils import *
 from basal_analysis import *
 from podStateAnalysis import *
+from deprecated_podSuccess import *
 from messagePatternParsing import *
 
 def analyzeMessageLogsNew(thisPath, thisFile, outFile, printReport, verboseFlag):

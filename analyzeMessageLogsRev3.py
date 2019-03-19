@@ -28,53 +28,67 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
     send_receive_commands = df.groupby(['type']).size()
     number_of_messages = len(df)
     thisPerson, thisFinish, thisAntenna = parse_info_from_filename(thisFile)
+    thisFinish2 = 'Success'
     lastDate = last_command.date()
 
-    # Process the dataframes and update the pod state
+    # Process df to generate the podState associated with every message
+    #   Updates to states occur with pod message (mostly 1d) status
+    #     (the state for extended_bolus_active is NOT included (always False))
+    #   Includes values for requested bolus and TB
+    # Note that .iloc for df and podState are identical
     podState, emptyMessageList, faultProcessedMsg = getPodState(df)
+
+    # From the podState, extract some values to use in reports
     msgLogHrs = podState.iloc[-1]['timeCumSec']/3600
     radioOnHrs = podState.iloc[-1]['radioOnCumSec']/3600
-
-    # Use checkAction to return all the information about this pod
-    #  Note - may rearrange / drop some of these returns later
-    #   actionFrame  dataframe of processed analysis from podState (by action)
-    #   initIdx      indices in podState to extract pod init
-    #   nonceIdx     indices in podState to extract every Nonce
-    #   faultIdx     indices in podState to extract Fault
-    actionFrame, initIdx, nonceIdx, faultIdx = checkAction(podState)
-
     numberOfAssignID = len(podState[podState.message_type=='0x7'])
     numberOfSetUpPod = len(podState[podState.message_type=='0x3'])
+    numberOfNonceResync = len(podState[podState.message_type=='06'])
     insulinDelivered = podState.iloc[-1]['insulinDelivered']
     sourceString = 'from last 0x1d'
 
+    # special handling if an 0x02 messages aka fault was received
     if len(faultProcessedMsg):
+        hasFault = True
         thisFault = faultProcessedMsg['logged_fault']
         checkInsulin = faultProcessedMsg['insulinDelivered']
+        rawFault = faultProcessedMsg['raw_value']
         if checkInsulin > insulinDelivered:
             insulinDelivered = checkInsulin
             sourceString = 'from 0x02 msg'
     else:
-        thisFault = 'n/a'
+        hasFault = False
+        rawFault = 'n/a'
+
+    # checkAction returns actionFrame with indices and times for every action
+    #     completed actions and incomplete requests are separate columns
+    #     see also function getActionDict
+    #   actionFrame  dataframe of processed analysis from podState (by action)
+    #   initIdx      indices in podState to extract pod initilization
+    actionFrame, initIdx = checkAction(podState)
 
     if True:
         # print out summary information to command window
-        print('    First command in Log          :', first_command)
+        # need this True to get the actionSummary used to fill csv file
+        print('\n    First command in Log          :', first_command)
         print('    Last  command in Log          :', last_command)
         print('  Make sure these make sense (otherwise check maxChars in read_file)\n')
         print('__________________________________________\n')
         print(f' Summary for {thisFile} with {thisFinish} ending')
         print('  Total elapsed time in log (hrs) : {:6.1f}'.format(msgLogHrs))
         print('        Radio on estimate         : {:6.1f}, {:5.1f}%'.format(radioOnHrs, 100*radioOnHrs/msgLogHrs))
-        print('        Number of messages        : {:6d}'.format(len(df)))
-        print('        Number of nonce resyncs   : {:6d}'.format(len(nonceIdx)))
+        print('        Number of messages        : {:6d}'.format(number_of_messages))
+        print('        Number of nonce resyncs   : {:6d}'.format(numberOfNonceResync))
         print('        Insulin delivered (u)     : {:6.2f} ({:s})'.format(insulinDelivered, sourceString))
-        if len(faultProcessedMsg):
+        if hasFault:
             thisFinish = thisFault
+            thisFinish2 = 'Fault'
             if thisFault == '0x1C':
                 print('    An 0x0202 message of {:s} reported - 80 hour time limit'.format(thisFault))
+                thisFinish2 = 'Success'
             elif thisFault == '0x18':
                 print('    An 0x0202 message of {:s} reported - out of insulin'.format(thisFault))
+                thisFinish2 = 'Success'
             else:
                 print('    An 0x0202 message was reported - details later')
         print('\n  Pod was initialized with {:d} messages, {:d} AssignID, {:d} SetUpPod required'.format(len(initIdx), \
@@ -83,27 +97,19 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
             print('    ***  Detected {:d} empty message(s) during life of the pod'.format(len(emptyMessageList)))
             print('    ***  indices:', emptyMessageList)
 
+        # TODO: clean up code logic:
         actionSummary, totalCompletedMessages = printActionFrame(actionFrame)
-        percentCompleted = 100*totalCompletedMessages/len(df)
-        print('\n  Messages part of a completed action  :          {:d} : {:.1f}%'.format( \
+
+        percentCompleted = 100*totalCompletedMessages/number_of_messages
+        print('  #Messages in completed actions : {:5d} : {:.1f}%'.format( \
             totalCompletedMessages, percentCompleted))
 
-    if len(faultProcessedMsg):
+    if hasFault:
         print('\nFault Details')
         printDict(faultProcessedMsg)
 
-    # if an output filename is provided - write out summary to it (csv format)
-    # note that printReport must also be true
+    # if an output filename is provided - write statistics to it (csv format)
     if outFile:
-        # set up a table format order
-        headerString = 'Who, finish State, antenna, lastMsg Date, podOn (hrs), radioOn (hrs), radioOn (%), ' + \
-           '#Messages, #Completed, % Completed, #Send, #Recv, ' + \
-           '#Nonce Resync, #TB, #Bolus, ' \
-           '#Basal, #Status Check, ' + \
-           '#Schedule Before TempBasal, #Schedule BasalLess Than30sec, ' + \
-           ' insulin Delivered, #faultInFile, filename'
-
-        # if file doesn't exist, write the header, otherwise append the data
         # check if file exists
         isItThere = os.path.isfile(outFile)
 
@@ -112,15 +118,24 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
 
         # write the column headers if this is a new file
         if not isItThere:
+            # set up a table format order
+            headerString = 'Who, finish State, Finish2, lastMsg Date, podOn (hrs), radioOn (hrs), radioOn (%), ' + \
+               '#Messages, #Completed, % Completed, #Send, #Recv, ' + \
+               '#Nonce Resync, #TB, #Bolus, ' \
+               '#Basal, #Status Check, ' + \
+               '#Schedule Before TempBasal, #TB Spaced <30s, ' + \
+               ' insulin Delivered, #faultInFile, filename'
             stream_out.write(headerString)
             stream_out.write('\n')
 
         # Extract items from actionSummary - not all are always present
+        #  WARNING - if order of actions in actionDict changes - so does this
+        #  TODO clean up logic:
         idx = 0
         if actionSummary[idx][0] == 'TB':
            numberOfTB = actionSummary[idx][1][0]
            numberScheduleBeforeTempBasal = actionSummary[idx][1][1]
-           numberScheduleBasalLessThan30sec = actionSummary[idx][1][2]
+           numberTBSepLessThan30sec = actionSummary[idx][1][2]
            idx += 1
         if actionSummary[idx][0] == 'Bolus':
             numberOfBolus = actionSummary[idx][1]
@@ -139,14 +154,18 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
             numberOfStatusRequests = 0
 
         # write out the information for csv (don't want extra spaces for this )
-        stream_out.write(f'{thisPerson},{thisFinish},{thisAntenna},{lastDate},{msgLogHrs},')
-        stream_out.write(f'{radioOnHrs},{100*radioOnHrs/msgLogHrs},{number_of_messages},')
-        stream_out.write(f'{totalCompletedMessages},{percentCompleted},')
+        stream_out.write(f'{thisPerson},{thisFinish},{thisFinish2},{lastDate},')
+        stream_out.write('{:.1f},'.format(msgLogHrs))
+        stream_out.write('{:.2f},'.format(radioOnHrs))
+        stream_out.write('{:.2f},'.format(100*radioOnHrs/msgLogHrs))
+        stream_out.write('{:d},'.format(number_of_messages))
+        stream_out.write(f'{totalCompletedMessages},')
+        stream_out.write('{:.2f},'.format(percentCompleted))
         stream_out.write(f'{send_receive_commands[1]},{send_receive_commands[0]},')
-        stream_out.write(f'{len(nonceIdx)},{numberOfTB},{numberOfBolus},{numberOfBasal},')
-        stream_out.write(f'{numberOfStatusRequests},{numberScheduleBeforeTempBasal},{numberScheduleBasalLessThan30sec},')
-        stream_out.write(f'{insulinDelivered},')
-        stream_out.write(f'{thisFault},{thisFile}')
+        stream_out.write(f'{numberOfNonceResync},{numberOfTB},{numberOfBolus},{numberOfBasal},')
+        stream_out.write(f'{numberOfStatusRequests},{numberScheduleBeforeTempBasal},{numberTBSepLessThan30sec},')
+        stream_out.write('{:.2f},'.format(insulinDelivered))
+        stream_out.write(f'{rawFault},{thisFile}')
         stream_out.write('\n')
         stream_out.close()
 

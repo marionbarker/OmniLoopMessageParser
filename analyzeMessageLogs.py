@@ -1,5 +1,6 @@
 import pandas as pd
 from messageLogs_functions import *
+from deprecated_podSequence import *
 from byteUtils import *
 from basal_analysis import *
 from messagePatternParsing import *

@@ -5,40 +5,45 @@ import numpy as np
 def checkAction(frame):
     """
     Purpose: Perform an improved check on the podState dataframe
-             (will replace getPodSuccessfulActions)
 
     Input:
-        frame: output from getPodState code
+        frame       output from getPodState function
 
     Output:
-        a series of podState frames segregated by action or error
-        use the actionDict for which send-recv patterns go with actions
+        actionFrame  dataframe of processed analysis from podState (by action)
+        initIdx      indices in podState to extract pod initilization
 
-        First identify (and remove from frameBalance): Fault, Nonce, Empty messages
-        Then go thru actionDict in order, identify indices that match pattern,
-            then remove those from frameBalance and go onto next
+    Method:
+        actionFrame is a dataframe with indices and times for every action
+        Uses the actionDict for which send-recv patterns go with actions
+        Steps:
+            # - identify the indices associated with initilizing the pod
+                (use pod_progress < 8) plus next 1d messages
+            # - build up actionFrame
+                (note that incompleteList remain in frameBalance)
+                frameBalance = frame
+                for each item in actionDict
+                    * find prime-indices for action, e.g., for 'TB' find all '1a16'
+                    * check adjacent indices for correct message types
+                    * incorrect adjacency => prime-index into incompleteList
+                    * the completedList includes prime + adjacent msg indices
+                    * fill in the actionFrame row for these column headers
+                    ['actionName', 'msgPerAction', 'cumStartSec', 'responseTime', \
+                        'SchBasalState', 'incompleteList', 'completedList']
+                    frameBalance = frame.drop(completedList)
     """
-    actionDict, nonce, fault = getActionDict()
 
-    # initial thought was to remove the Fault, nonce and init lines from frame
-    #  but that messes up the adjacency check when going through the actionDict
-    #  The only lines that should be removed are the successful action ones
-
-    # first identify fault, if present
-    frFault = frame[frame.message_type==fault]
-    faultIdx = frFault.index.to_list()
-
-    # search for nonce rows
-    nonceFrame = frame[frame.message_type==nonce]
-    nonceIdx = np.array(nonceFrame.index.to_list())
+    actionDict = getActionDict()
 
     # determine initIdx from pod_progress value
     podInit = frame[frame.pod_progress < 8]
     # get list of indices for initializing the pod
     initIdx = np.array(podInit.index.to_list())
-    # need to add the next row too - but need to protect that it wasn't removed with nonce drop
-    checkIdx = initIdx[-1]+1
-    initIdx = np.append(initIdx, checkIdx)
+    # need to add the next row too - but keep going until it is a '1d'
+    checkIdx = initIdx[-1]
+    while (frame.loc[checkIdx,'message_type']) != '1d':
+        checkIdx += 1
+        initIdx = np.append(initIdx, checkIdx)
 
     # prepare to search by actions
     frameBalance = frame
@@ -56,7 +61,6 @@ def checkAction(frame):
       'responseTime' , 'SchBasalState', 'incompleteList','completedList' )
 
     actionList = []
-
 
     for keys,values in actionDict.items():
         badIdx = []         # accumulate action identifier indices that don't have all their messages
@@ -120,7 +124,7 @@ def checkAction(frame):
         frameBalance = frameBalance.drop(thisList)
 
     actionFrame = pd.DataFrame(actionList, columns=successColumnNames)
-    return actionFrame, initIdx, nonceIdx, faultIdx
+    return actionFrame, initIdx
 
 
 def printActionFrame(actionFrame):
@@ -128,9 +132,11 @@ def printActionFrame(actionFrame):
         return
     actionSummary = []
     totalCompletedMessages = 0
+    numShortTB = np.nan
+    numSchBasalbeforeTB = np.nan
     print('\n  Action Summary with sequential 4 or 2 message sequences with action response times in sec')
-    #print('      Action        : #Success,  mean, [  min,  max  ]  : #Incomplete  : SchBasalRunning(beforeTB), #<30Sec Long ')
-    print('      Action        : #Success,  mean, [  min,  max  ] : #Incomplete : SchBasalRunning(beforeTB)')
+    print('      Action        : #Success,  mean, [  min,  max  ] : #Incomplete')
+    #print('      Action        : #Success,  mean, [  min,  max  ] : #Incomplete : SchBasalRunning(beforeTB)')
     for index, row in actionFrame.iterrows():
         respTime = row['responseTime']
         totalCompletedMessages += len(row['completedList'])
@@ -149,15 +155,18 @@ def printActionFrame(actionFrame):
                   np.mean(respTime), np.min(respTime), np.max(respTime), \
                   len(row['incompleteList']), numSchBasalbeforeTB, numShortTB))
             else:
-                print('    {:14s}  :  {:5.0f},  {:5.0f},  [{:5.0f}, {:5.0f} ] : {:5d}       :  {:5d}'.format( \
+                print('    {:14s}  :  {:5.0f},  {:5.0f},  [{:5.0f}, {:5.0f} ] : {:5d}'.format( \
                   row['actionName'], numGood, \
                   np.mean(respTime), np.min(respTime), np.max(respTime), \
-                  len(row['incompleteList']), numSchBasalbeforeTB))
+                  len(row['incompleteList'])))
         else:
             actionSummary.append((row['actionName'], (numGood)))
             print('    {:14s}  :  {:5.0f},  {:5.0f},  [{:5.0f}, {:5.0f} ] : {:5d}'.format( \
               row['actionName'], numGood, \
               np.mean(respTime), np.min(respTime), np.max(respTime), \
               len(row['incompleteList'])))
+
+    print('\n    #TB with SchBasal before     : {:5d}'.format(numSchBasalbeforeTB))
+    print('    #TB sent at <30s interval    : {:5d}'.format(numShortTB))
 
     return actionSummary, totalCompletedMessages
