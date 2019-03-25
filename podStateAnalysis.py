@@ -31,8 +31,6 @@ def getPodState(frame):
     TB    = False
     schBa = False
     emptyMessageList = []
-    sendDict, recvDict = getMessageDict()
-    list_of_recv = listFromDict(recvDict)
     radio_on_time = 30 # radio is on for 30 seconds every time pod wakes up
     radioOnCumSec = radio_on_time
 
