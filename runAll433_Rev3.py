@@ -1,9 +1,9 @@
 # runAll LoopReportFiles in the associated folder
 from analyzeMessageLogsRev3 import *
 from get_file_list import *
+from getAnalysisIO import *
 
-filePath = 'm:/SharedFiles/LoopReportFiles'
-outFile = 'm:/SharedFiles/LoopReportPythonAnalysis/output_master_rev3.csv'
+filePath, outFile = getAnalysisIO(1,1)
 fileDateList = get_file_list(filePath)
 
 count=0
