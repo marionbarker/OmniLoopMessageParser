@@ -101,7 +101,7 @@ def checkAction(frame):
         if len(idx) == 0:
             continue
 
-        print('Status: ', thisAction, 'Complete: ', len(idx), 'Incomplete: ', len(badIdx))
+        #print('Status: ', thisAction, 'Complete: ', len(idx), 'Incomplete: ', len(badIdx))
 
         if msgPerAction == 4:
             thisList = np.unique(flatten([idx-2, idx-1, idx, idx+1 ]))
