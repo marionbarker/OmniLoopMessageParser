@@ -57,7 +57,7 @@ def checkAction(frame):
     # if all the expected messages are found in the correct order, then the
     #     indices for all the messages are removed from frameBalance before
     #     searching for the next actionDict item
-    successColumnNames = ('actionName', 'msgPerAction', 'cumStartSec', \
+    actionColumnNames = ('actionName', 'msgPerAction', 'cumStartSec', \
       'responseTime' , 'SchBasalState', 'incompleteList','completedList' )
 
     actionList = []
@@ -123,7 +123,7 @@ def checkAction(frame):
         # remove these indices from the frameBalance, reset and keep going
         frameBalance = frameBalance.drop(thisList)
 
-    actionFrame = pd.DataFrame(actionList, columns=successColumnNames)
+    actionFrame = pd.DataFrame(actionList, columns=actionColumnNames)
     return actionFrame, initIdx
 
 
