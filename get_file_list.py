@@ -1,5 +1,5 @@
 import os
-from os import listdir 
+from os import listdir
 
 def get_file_list(thisPath):
     """
@@ -16,8 +16,12 @@ def get_file_list(thisPath):
     list_of_dates = []
 
     for x in listdir(thisPath):
+        if x == '.DS_Store':
+            continue
         #print(x)
         for y in listdir(thisPath + '/' + x):
+            if y == '.DS_Store':
+                continue
             thisFile = x + '/' + y
             list_of_reports.append(thisFile)
             list_of_dates.append(os.path.getmtime(thisPath + '/' + thisFile))
