@@ -15,7 +15,7 @@ def read_file(filename):
     commands = []
     # some of the files have 'charmap' codec can't decode byte 0x8d in position # XXX
     #  where locations changes but is always after MessageLogs section
-    #  read line at a time until reaching PodComms then quit
+    #  read a line at a time until reaching PodComms then quit
     file = open(filename)
     while file.readline() != '### MessageLog\n':
         continue
