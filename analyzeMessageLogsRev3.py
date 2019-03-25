@@ -53,7 +53,7 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
         thisFault = faultProcessedMsg['logged_fault']
         checkInsulin = faultProcessedMsg['insulinDelivered']
         rawFault = faultProcessedMsg['raw_value']
-        if checkInsulin > insulinDelivered:
+        if checkInsulin >= insulinDelivered:
             insulinDelivered = checkInsulin
             sourceString = 'from 0x02 msg'
     else:
@@ -72,7 +72,6 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
         # need this True to get the actionSummary used to fill csv file
         print('\n    First command in Log          :', first_command)
         print('    Last  command in Log          :', last_command)
-        print('  Make sure these make sense (otherwise check maxChars in read_file)\n')
         print('__________________________________________\n')
         print(f' Summary for {thisFile} with {thisFinish} ending')
         print('  Total elapsed time in log (hrs) : {:6.1f}'.format(msgLogHrs))
@@ -89,10 +88,12 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
             elif thisFault == '0x18':
                 print('    An 0x0202 message of {:s} reported - out of insulin'.format(thisFault))
                 thisFinish2 = 'Success'
+            elif thisFault == '0x34':
+                print('    An 0x0202 message of {:s} reported - this wipes out registers'.format(thisFault))
             else:
-                print('    An 0x0202 message was reported - details later')
+                print('    An 0x0202 message of {:s} reported - details later'.format(thisFault))
         print('\n  Pod was initialized with {:d} messages, {:d} AssignID, {:d} SetUpPod required'.format(len(initIdx), \
-           numberOfSetUpPod, numberOfAssignID))
+           numberOfAssignID, numberOfSetUpPod))
         if emptyMessageList:
             print('    ***  Detected {:d} empty message(s) during life of the pod'.format(len(emptyMessageList)))
             print('    ***  indices:', emptyMessageList)
@@ -124,7 +125,8 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
                '#Nonce Resync, #TB, #Bolus, ' \
                '#Basal, #Status Check, ' + \
                '#Schedule Before TempBasal, #TB Spaced <30s, ' + \
-               ' insulin Delivered, #faultInFile, filename'
+               'insulin Delivered, # AssignID (0x07), # SetUpPod (0x03), ' + \
+               'raw fault, filename'
             stream_out.write(headerString)
             stream_out.write('\n')
 
@@ -165,6 +167,7 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
         stream_out.write(f'{numberOfNonceResync},{numberOfTB},{numberOfBolus},{numberOfBasal},')
         stream_out.write(f'{numberOfStatusRequests},{numberScheduleBeforeTempBasal},{numberTBSepLessThan30sec},')
         stream_out.write('{:.2f},'.format(insulinDelivered))
+        stream_out.write('{:d}, {:d},'.format(numberOfAssignID, numberOfSetUpPod))
         stream_out.write(f'{rawFault},{thisFile}')
         stream_out.write('\n')
         stream_out.close()
