@@ -9,6 +9,26 @@ import re
 import pandas as pd
 import os
 
+# add more information read for Loop Reports
+def getPodDict (omnipodInfo):
+    podDict = { \
+      'piVersion' : '', \
+      'pmVersion' : '', \
+      'lot' : '', \
+      'tid' : ''}
+    idxStart = 0
+    for keys in podDict.keys():
+        strToSearch = '* ' + keys + ': '
+        thisStart = omnipodInfo.find(strToSearch, idxStart)
+        nextStart = thisStart + len(strToSearch)
+        thisStop = omnipodInfo.find('\n', nextStart)
+        values = omnipodInfo[nextStart:thisStop]
+        podDict[keys]=values
+        idxStart = thisStop
+
+    return podDict
+
+
 # read the file from the file_path (replace Eelke's original load_file(file_url))
 
 def read_file(filename):
@@ -17,9 +37,13 @@ def read_file(filename):
     #  where locations changes but is always after MessageLogs section
     #  read a line at a time until reaching PodComms then quit
     file = open(filename)
-    while file.readline() != '### MessageLog\n':
-        continue
-    y = file.readline()
+    y=file.readline()
+    while y != '## OmnipodPumpManager\n':
+        y = file.readline()
+    omnipodInfo = y
+    while y != '### MessageLog\n':
+        y = file.readline()
+        omnipodInfo = omnipodInfo + y
     xcode_log_text = y
     while y != '## PodComms\n':
         y=file.readline()
@@ -30,7 +54,8 @@ def read_file(filename):
     select_1a_commands = re.findall(regex, xcode_log_text, re.MULTILINE)
     for line in select_1a_commands:
         commands.append({"time": line[0], "type": line[1], "raw_value": line[2][12:]})
-    return commands
+    podDict = getPodDict(omnipodInfo)
+    return commands, podDict
 
 def select_extra_command(raw_value):
     if raw_value[:2]=='1a':

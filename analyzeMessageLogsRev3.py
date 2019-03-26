@@ -17,7 +17,7 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
     filename = thisPath + '/' + thisFile
 
     # read the MessageLogs from the file
-    commands = read_file(filename)
+    commands, podDict = read_file(filename)
 
     # add more stuff and return as a DataFrame
     df = generate_table(commands, radio_on_time)
@@ -73,7 +73,8 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
         print('\n    First command in Log          :', first_command)
         print('    Last  command in Log          :', last_command)
         print('__________________________________________\n')
-        print(f' Summary for {thisFile} with {thisFinish} ending')
+        print(' Summary for {:s} with {:s} ending'.format(thisFile, thisFinish))
+        print('  Pod Lot: {:s}, PI: {:s}, PM: {:s}'.format(podDict['lot'], podDict['piVersion'], podDict['pmVersion']))
         print('  Total elapsed time in log (hrs) : {:6.1f}'.format(msgLogHrs))
         print('        Radio on estimate         : {:6.1f}, {:5.1f}%'.format(radioOnHrs, 100*radioOnHrs/msgLogHrs))
         print('        Number of messages        : {:6d}'.format(number_of_messages))
@@ -126,6 +127,7 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
                '#Basal, #Status Check, ' + \
                '#Schedule Before TempBasal, #TB Spaced <30s, ' + \
                'insulin Delivered, # AssignID (0x07), # SetUpPod (0x03), ' + \
+               'Pod Lot, PI Version, PM Version, ' + \
                'raw fault, filename'
             stream_out.write(headerString)
             stream_out.write('\n')
@@ -168,6 +170,7 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
         stream_out.write(f'{numberOfStatusRequests},{numberScheduleBeforeTempBasal},{numberTBSepLessThan30sec},')
         stream_out.write('{:.2f},'.format(insulinDelivered))
         stream_out.write('{:d}, {:d},'.format(numberOfAssignID, numberOfSetUpPod))
+        stream_out.write('{:s}, {:s}, {:s},'.format(podDict['lot'], podDict['piVersion'], podDict['pmVersion']))
         stream_out.write(f'{rawFault},{thisFile}')
         stream_out.write('\n')
         stream_out.close()
