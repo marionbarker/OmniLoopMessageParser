@@ -99,8 +99,11 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
             print('    ***  Detected {:d} empty message(s) during life of the pod'.format(len(emptyMessageList)))
             print('    ***  indices:', emptyMessageList)
 
-        # TODO: clean up code logic:
-        actionSummary, totalCompletedMessages = printActionFrame(actionFrame)
+        # WIP: clean up code logic 
+        #actionSummary, totalCompletedMessages = printActionFrame(actionFrame)
+
+        actionSummary, totalCompletedMessages = processActionFrame(actionFrame, podState)
+        printActionSummary(actionSummary)
 
         percentCompleted = 100*totalCompletedMessages/number_of_messages
         print('  #Messages in completed actions : {:5d} : {:.1f}%'.format( \
@@ -125,35 +128,41 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
                '#Messages, #Completed, % Completed, #Send, #Recv, ' + \
                '#Nonce Resync, #TB, #Bolus, ' \
                '#Basal, #Status Check, ' + \
-               '#Schedule Before TempBasal, #TB Spaced <30s, ' + \
+               '#Schedule Before TempBasal, #TB Spaced <30s, #Repeat TB Value, ' + \
                'insulin Delivered, # AssignID (0x07), # SetUpPod (0x03), ' + \
                'Pod Lot, PI Version, PM Version, ' + \
                'raw fault, filename'
             stream_out.write(headerString)
             stream_out.write('\n')
 
-        # Extract items from actionSummary - not all are always present
-        #  WARNING - if order of actions in actionDict changes - so does this
-        #  TODO clean up logic:
-        idx = 0
-        if actionSummary[idx][0] == 'TB':
-           numberOfTB = actionSummary[idx][1][0]
-           numberScheduleBeforeTempBasal = actionSummary[idx][1][1]
-           numberTBSepLessThan30sec = actionSummary[idx][1][2]
-           idx += 1
-        if actionSummary[idx][0] == 'Bolus':
-            numberOfBolus = actionSummary[idx][1]
-            idx += 1
+        # Extract items from actionSummary
+        if actionSummary.get('TB'):
+            subDict = actionSummary.get('TB')
+            numberOfTB = subDict['countCompleted']
+            numberScheduleBeforeTempBasal = subDict['numSchBasalbeforeTB']
+            numberTBSepLessThan30sec = subDict['numShortTB']
+            numRepeatedTB = subDict['numRepeatedTB']
+        else:
+            numberOfTB = 0
+            numberScheduleBeforeTempBasal = 0
+            numberTBSepLessThan30sec = 0
+            numRepeatedTB = 0
+
+        if actionSummary.get('Bolus'):
+            subDict = actionSummary.get('Bolus')
+            numberOfBolus = subDict['countCompleted']
         else:
             numberOfBolus = 0
-        if actionSummary[idx][0] == 'Basal':
-            numberOfBasal = actionSummary[idx][1]
-            idx += 1
+
+        if actionSummary.get('Basal'):
+            subDict = actionSummary.get('Basal')
+            numberOfBasal = subDict['countCompleted']
         else:
             numberOfBasal = 0
-        if actionSummary[idx][0] == 'StatusCheck':
-            numberOfStatusRequests = actionSummary[idx][1]
-            idx += 1
+
+        if actionSummary.get('StatusCheck'):
+            subDict = actionSummary.get('StatusCheck')
+            numberOfStatusRequests = subDict['countCompleted']
         else:
             numberOfStatusRequests = 0
 
@@ -167,7 +176,8 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
         stream_out.write('{:.2f},'.format(percentCompleted))
         stream_out.write(f'{send_receive_commands[1]},{send_receive_commands[0]},')
         stream_out.write(f'{numberOfNonceResync},{numberOfTB},{numberOfBolus},{numberOfBasal},')
-        stream_out.write(f'{numberOfStatusRequests},{numberScheduleBeforeTempBasal},{numberTBSepLessThan30sec},')
+        stream_out.write(f'{numberOfStatusRequests},{numberScheduleBeforeTempBasal},')
+        stream_out.write(f'{numberTBSepLessThan30sec},{numRepeatedTB},')
         stream_out.write('{:.2f},'.format(insulinDelivered))
         stream_out.write('{:d}, {:d},'.format(numberOfAssignID, numberOfSetUpPod))
         stream_out.write('{:s}, {:s}, {:s},'.format(podDict['lot'], podDict['piVersion'], podDict['pmVersion']))

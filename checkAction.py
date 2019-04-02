@@ -117,6 +117,7 @@ def checkAction(frame):
             SchBasalState = frame.loc[idx,'SchBasal'].to_list()
 
         # append this action to the list
+        # go from np.array to list as appropriate
         actionList.append(( thisAction, msgPerAction, t0, \
           responseTime, SchBasalState, incompleteList, thisList))
 
@@ -125,6 +126,78 @@ def checkAction(frame):
 
     actionFrame = pd.DataFrame(actionList, columns=actionColumnNames)
     return actionFrame, initIdx
+
+def processActionFrame(actionFrame, podState):
+    if len(actionFrame) == 0:
+        return
+    actionSummary = {}
+    totalCompletedMessages = 0
+    numShortTB = np.nan
+    numSchBasalbeforeTB = np.nan
+    for index, row in actionFrame.iterrows():
+        respTime = row['responseTime']
+        totalCompletedMessages += len(row['completedList'])
+        numCompleted = len(row['completedList'])/row['msgPerAction']
+        numIncomplete = len(row['incompleteList'])
+        thisName = row['actionName']
+        subDict = { \
+          'msgPerAction': row['msgPerAction'], \
+          'countCompleted': numCompleted, \
+          'countIncomplete': numIncomplete, \
+          'meanResponseTime': np.mean(respTime), \
+          'minResponseTime':  np.min(respTime), \
+          'maxResponseTime': np.max(respTime) }
+        # for Temp Basal, add a few more items to the subDict
+        if thisName == 'TB':
+            startTime = row['cumStartSec']
+            deltaTime = startTime[1:-1]-startTime[0:-2]
+            numShortTB = np.sum(deltaTime<30)
+            numSchBasalbeforeTB = np.sum(row['SchBasalState'])
+            SchBasalState = row['SchBasalState']
+            completedList = row['completedList']
+            # find TB that are enacted while SchBasalState is false
+            # with initial TB and final TB the same value
+            priorIdx   = list(range(1,len(completedList), 4))
+            postIdx    = list(range(3, len(completedList), 4))
+            priorReqTB = np.array(podState.loc[completedList[priorIdx]]['reqTB'])
+            postReqTB  = np.array(podState.loc[completedList[postIdx]]['reqTB'])
+            deltaReqTB = postReqTB - priorReqTB
+            # by definition, prior and post TB are same, so only need to include one value along with time
+            repeatedTB = [x[2:4] for x in zip(SchBasalState, deltaReqTB, startTime, priorReqTB) if (not x[0] and x[1]==0)]
+            subDict['numShortTB'] = numShortTB
+            subDict['numSchBasalbeforeTB'] = numSchBasalbeforeTB
+            subDict['numRepeatedTB'] = len(repeatedTB)
+            subDict['repeatedTB'] = repeatedTB
+            #subDict['numRepeatedTB'] = np.nan
+
+        actionSummary[thisName] = subDict
+
+    return actionSummary, totalCompletedMessages
+
+def printActionSummary(actionSummary):
+    # initialize values just in case
+    numShortTB = np.nan
+    numSchBasalbeforeTB = np.nan
+    numRepeatedTB = np.nan
+    print('\n  Action Summary with sequential 4 or 2 message sequences with action response times in sec')
+    print('      Action        : #Success,  mean, [  min,  max  ] : #Incomplete')
+    #actionSummary
+    #printDict(actionSummary)
+
+    for keys, values in actionSummary.items():
+        subDict = values
+        print('    {:14s}  :  {:5.0f},  {:5.0f},  [{:5.0f}, {:5.0f} ] : {:5d}'.format( \
+          keys, subDict['countCompleted'], subDict['meanResponseTime'], \
+          subDict['minResponseTime'], subDict['maxResponseTime'], \
+          subDict['countIncomplete']))
+        if keys=='TB':
+            numShortTB          = subDict['numShortTB']
+            numSchBasalbeforeTB = subDict['numSchBasalbeforeTB']
+            numRepeatedTB       = subDict['numRepeatedTB']
+
+    print('\n    #TB with SchBasal before     : {:5d}'.format(numSchBasalbeforeTB))
+    print('    #TB sent at <30s interval    : {:5d}'.format(numShortTB))
+    print('    #TB repeated value           : {:5.0f}'.format(numRepeatedTB))
 
 
 def printActionFrame(actionFrame):
