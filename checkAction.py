@@ -157,18 +157,17 @@ def processActionFrame(actionFrame, podState):
             completedList = row['completedList']
             # find TB that are enacted while SchBasalState is false
             # with initial TB and final TB the same value
-            priorIdx   = list(range(1,len(completedList), 4))
-            postIdx    = list(range(3, len(completedList), 4))
+            priorIdx   = list(range(0,len(completedList), 4)) # current status before cancel
+            postIdx    = list(range(2, len(completedList), 4)) # req TB
             priorReqTB = np.array(podState.loc[completedList[priorIdx]]['reqTB'])
             postReqTB  = np.array(podState.loc[completedList[postIdx]]['reqTB'])
             deltaReqTB = postReqTB - priorReqTB
-            # by definition, prior and post TB are same, so only need to include one value along with time
-            repeatedTB = [x[2:4] for x in zip(SchBasalState, deltaReqTB, startTime, priorReqTB) if (not x[0] and x[1]==0)]
+                # by definition, prior and post TB are same, so only need to include one value along with time
+            repeatedTB = [x[2:5] for x in zip(SchBasalState, deltaReqTB, startTime, priorReqTB, completedList[postIdx]) if (not x[0] and x[1]==0)]
             subDict['numShortTB'] = numShortTB
             subDict['numSchBasalbeforeTB'] = numSchBasalbeforeTB
             subDict['numRepeatedTB'] = len(repeatedTB)
             subDict['repeatedTB'] = repeatedTB
-            #subDict['numRepeatedTB'] = np.nan
 
         actionSummary[thisName] = subDict
 
