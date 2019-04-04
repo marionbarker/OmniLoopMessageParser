@@ -99,7 +99,7 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
             print('    ***  Detected {:d} empty message(s) during life of the pod'.format(len(emptyMessageList)))
             print('    ***  indices:', emptyMessageList)
 
-        # WIP: clean up code logic 
+        # WIP: clean up code logic
         #actionSummary, totalCompletedMessages = printActionFrame(actionFrame)
 
         actionSummary, totalCompletedMessages = processActionFrame(actionFrame, podState)
@@ -129,6 +129,7 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
                '#Nonce Resync, #TB, #Bolus, ' \
                '#Basal, #Status Check, ' + \
                '#Schedule Before TempBasal, #TB Spaced <30s, #Repeat TB Value, ' + \
+               '#incomplete TB, ' + \
                'insulin Delivered, # AssignID (0x07), # SetUpPod (0x03), ' + \
                'Pod Lot, PI Version, PM Version, ' + \
                'raw fault, filename'
@@ -166,6 +167,12 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
         else:
             numberOfStatusRequests = 0
 
+        if actionSummary.get('CancelTB'):
+            subDict = actionSummary.get('CancelTB')
+            numIncomplCancelTB = subDict['countIncomplete']
+        else:
+            numIncomplCancelTB = 0
+
         # write out the information for csv (don't want extra spaces for this )
         stream_out.write(f'{thisPerson},{thisFinish},{thisFinish2},{lastDate},')
         stream_out.write('{:.1f},'.format(msgLogHrs))
@@ -177,7 +184,7 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
         stream_out.write(f'{send_receive_commands[1]},{send_receive_commands[0]},')
         stream_out.write(f'{numberOfNonceResync},{numberOfTB},{numberOfBolus},{numberOfBasal},')
         stream_out.write(f'{numberOfStatusRequests},{numberScheduleBeforeTempBasal},')
-        stream_out.write(f'{numberTBSepLessThan30sec},{numRepeatedTB},')
+        stream_out.write(f'{numberTBSepLessThan30sec},{numRepeatedTB},{numIncomplCancelTB},')
         stream_out.write('{:.2f},'.format(insulinDelivered))
         stream_out.write('{:d}, {:d},'.format(numberOfAssignID, numberOfSetUpPod))
         stream_out.write('{:s}, {:s}, {:s},'.format(podDict['lot'], podDict['piVersion'], podDict['pmVersion']))
