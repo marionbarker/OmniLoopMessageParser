@@ -14,9 +14,9 @@ For example, a temporary basal (with current version of code) requires:
 >> set new TB (1a16)
 >> pod status response (1d)
 
-If these 4 do not line up as sequential messages for any TB in the podState dataframe, identified by the index for the associated 1a16 row, those indices are put in an incompleteList for that action.
+If these 4 do not line up as sequential messages for any TB in the podState dataframe, identified by the index for the associated 1a16 row, that '1a16' index is inserted in an incompleteList for that action.
 
-If they do line up, then the start time (in sec from start of pod) and response time (from 1f02 to final 1d) is tabulated along with the state of the pod - i.e., is it running a scheduled basal (True) or not (False) prior to the initial cancel TB message. All 4 of the indices for each of this action instance are combined into a completedList.
+If they do line up, then the start time (in sec from start of pod) and response time (from 1f02 to final 1d) is tabulated along with the state of the pod - i.e., is it running a scheduled basal (True) or not (False) prior to the initial cancel TB message. All 4 of the indices for each complete action instance are combined into a completedList.
 
 This enables better reporting of various results and enables easier additions of requested analysis tasks.
 
@@ -24,7 +24,7 @@ This enables better reporting of various results and enables easier additions of
 
 ## Updates to output_master_rev3.csv
 
-Download one Loop Report from Zulip and place in folder for that person; insert _Nominal or _0xFF for the FF fault type
+Download one Loop Report from Zulip and place in folder for that person; insert _0xFF if there was a FF fault reported (even if the 0x0202 message was not captured)
 
 >> python whatIsLastReport.py  # to make sure file is in right place
 
@@ -34,9 +34,11 @@ If there is anything off-nominal or interesting, copy and paste that to the zuli
 
 Repeat until all new reports have been downloaded
 
+Copy the new lines from the csv and Paste Values (Shift-Ctrl-V) to end of the Current Uploaded tab of the google sheet (link is in Zulip)
+
 ## Replace output_master_rev3.csv following code improvements
 
-First delete or archive output_master_rev3,csv
+First delete or archive output_master_rev3.csv
 
 Run python runAll433_Rev3.py which ignores any report with original antenna
 
