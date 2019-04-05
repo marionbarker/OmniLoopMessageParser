@@ -99,9 +99,7 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
             print('    ***  Detected {:d} empty message(s) during life of the pod'.format(len(emptyMessageList)))
             print('    ***  indices:', emptyMessageList)
 
-        # WIP: clean up code logic
-        #actionSummary, totalCompletedMessages = printActionFrame(actionFrame)
-
+        # process the action frame (returns a dictionary plus total completed message count)
         actionSummary, totalCompletedMessages = processActionFrame(actionFrame, podState)
         printActionSummary(actionSummary)
 
