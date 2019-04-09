@@ -150,8 +150,12 @@ def processActionFrame(actionFrame, podState):
         # for Temp Basal, add a few more items to the subDict
         if thisName == 'TB':
             startTime = row['cumStartSec']
-            deltaTime = startTime[1:-1]-startTime[0:-2]
-            numShortTB = np.sum(deltaTime<30)
+            deltaTime = np.diff(startTime)
+            deltaTime = list(deltaTime)
+            # insert 399 as the first index result for timeSinceLastTB
+            deltaTime[:0] = [399]
+            timeSinceLastTB = np.array(deltaTime)
+            numShortTB = np.sum(timeSinceLastTB<30)
             numSchBasalbeforeTB = np.sum(row['SchBasalState'])
             SchBasalState = row['SchBasalState']
             completedList = row['completedList']
@@ -163,11 +167,18 @@ def processActionFrame(actionFrame, podState):
             postReqTB  = np.array(podState.loc[completedList[postIdx]]['reqTB'])
             deltaReqTB = postReqTB - priorReqTB
                 # by definition, prior and post TB are same, so only need to include one value along with time
-            repeatedTB = [x[2:5] for x in zip(SchBasalState, deltaReqTB, startTime, priorReqTB, completedList[postIdx]) if (not x[0] and x[1]==0)]
+            repeatedTB = [x[2:6] for x in zip(SchBasalState, deltaReqTB, startTime, priorReqTB, completedList[postIdx], timeSinceLastTB) if (not x[0] and x[1]==0)]
             subDict['numShortTB'] = numShortTB
             subDict['numSchBasalbeforeTB'] = numSchBasalbeforeTB
             subDict['numRepeatedTB'] = len(repeatedTB)
             subDict['repeatedTB'] = repeatedTB
+            repeatedShortTB = [x[2:6] for x in zip(SchBasalState, deltaReqTB, startTime, priorReqTB, completedList[postIdx], timeSinceLastTB) if (not x[0] and x[1]==0 and x[5]<30)]
+            subDict['numRepeatedShortTB'] = len(repeatedShortTB)
+            subDict['repeatedShortTB'] = repeatedShortTB
+            # in practice - there were many repeated TB that were just under 20 min, so change to 19 min
+            repeated19MinTB = [x[2:6] for x in zip(SchBasalState, deltaReqTB, startTime, priorReqTB, completedList[postIdx], timeSinceLastTB) if (not x[0] and x[1]==0 and (x[5]>=30 and x[5]<1140))]
+            subDict['numrepeated19MinTB'] = len(repeated19MinTB)
+            subDict['repeated19MinTB'] = repeated19MinTB
 
         actionSummary[thisName] = subDict
 
@@ -193,7 +204,11 @@ def printActionSummary(actionSummary):
             numShortTB          = subDict['numShortTB']
             numSchBasalbeforeTB = subDict['numSchBasalbeforeTB']
             numRepeatedTB       = subDict['numRepeatedTB']
+            numRepeatedShortTB  = subDict['numRepeatedShortTB']
+            numrepeated19MinTB  = subDict['numrepeated19MinTB']
 
     print('\n    #TB with SchBasal before     : {:5d}'.format(numSchBasalbeforeTB))
     print('    #TB sent at <30s interval    : {:5d}'.format(numShortTB))
     print('    #TB repeated value           : {:5.0f}'.format(numRepeatedTB))
+    print('    #TB repeated value <30s      : {:5.0f}'.format(numRepeatedShortTB))
+    print('    #TB rep value >=30s & <19min : {:5.0f}'.format(numrepeated19MinTB))

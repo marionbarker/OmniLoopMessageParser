@@ -126,8 +126,9 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
                '#Messages, #Completed, % Completed, #Send, #Recv, ' + \
                '#Nonce Resync, #TB, #Bolus, ' \
                '#Basal, #Status Check, ' + \
-               '#Schedule Before TempBasal, #TB Spaced <30s, #Repeat TB Value, ' + \
-               '#incomplete TB, ' + \
+               '#Schedule Before TempBasal, #TB Spaced <30s, ' + \
+               '#Repeat TB Value, #Repeat TB <30s, ' + \
+               ' #RepTB 30s to 19min, #incomplete TB, ' + \
                'insulin Delivered, # AssignID (0x07), # SetUpPod (0x03), ' + \
                'Pod Lot, PI Version, PM Version, ' + \
                'raw fault, filename'
@@ -141,6 +142,8 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
             numberScheduleBeforeTempBasal = subDict['numSchBasalbeforeTB']
             numberTBSepLessThan30sec = subDict['numShortTB']
             numRepeatedTB = subDict['numRepeatedTB']
+            numRepeatedShortTB = subDict['numRepeatedShortTB']
+            numrepeated19MinTB = subDict['numrepeated19MinTB']
         else:
             numberOfTB = 0
             numberScheduleBeforeTempBasal = 0
@@ -182,7 +185,8 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
         stream_out.write(f'{send_receive_commands[1]},{send_receive_commands[0]},')
         stream_out.write(f'{numberOfNonceResync},{numberOfTB},{numberOfBolus},{numberOfBasal},')
         stream_out.write(f'{numberOfStatusRequests},{numberScheduleBeforeTempBasal},')
-        stream_out.write(f'{numberTBSepLessThan30sec},{numRepeatedTB},{numIncomplCancelTB},')
+        stream_out.write(f'{numberTBSepLessThan30sec},{numRepeatedTB},{numRepeatedShortTB},')
+        stream_out.write(f'{numrepeated19MinTB},{numIncomplCancelTB},')
         stream_out.write('{:.2f},'.format(insulinDelivered))
         stream_out.write('{:d}, {:d},'.format(numberOfAssignID, numberOfSetUpPod))
         stream_out.write('{:s}, {:s}, {:s},'.format(podDict['lot'], podDict['piVersion'], podDict['pmVersion']))
