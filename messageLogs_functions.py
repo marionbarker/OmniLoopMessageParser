@@ -81,7 +81,7 @@ def parse_info_from_filename(filename):
     else:
         thisPerson = thisPerson[0] [0:-1]
 
-    finishValues = {'0x12', '0x14', '0x31', '0x34', '0x40', '0x42', '0x80', 'Nominal', '0x18', '0x1c', 'Unknown'}
+    finishValues = {'0x12', '0x14', '0x31', '0x34', '0x3d', '0x40', '0x42', '0x80', 'Nominal', '0x18', '0x1c', 'Unknown'}
     antennaValues = {'origAnt', 'adHocAnt'}
 
     for val in finishValues:
