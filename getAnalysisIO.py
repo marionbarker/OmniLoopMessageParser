@@ -7,9 +7,10 @@ def getAnalysisIO(pathOption, outputOption):
     #
     #    pathOption == 0 use folder for partial / special purpose / older LoopReportFiles
     #                  1 use folder with complete Loop Reports
+    #                  2 specify a specific users' folder by their name
     #
     #    outputOption == 0 return 0 for output file (.csv)
-    #                    1 return name for output_master_rev3.csv
+    #                    1 return name for output_master_rev4.csv (post public release)
     #                    2 return name for test.csv
 
     thisPlatform = platform.system()
@@ -26,6 +27,8 @@ def getAnalysisIO(pathOption, outputOption):
         filePath = topPath + '/' + 'Other_LoopReportFiles'
     elif pathOption == 1:
         filePath = topPath + '/' + 'LoopReportFiles'
+    elif type(pathOption) == str:
+        filePath = topPath + '/' + 'LoopReportFiles' + '/' + pathOption
     else:
         print(' pathOption not recognized for getAnalysisIO')
         filePath = ''
@@ -33,7 +36,7 @@ def getAnalysisIO(pathOption, outputOption):
     if outputOption == 0:
         outFile = 0
     elif outputOption == 1:
-        outFile = topPath + '/' + 'LoopReportPythonAnalysis' + '/' + 'output_master_rev3.csv'
+        outFile = topPath + '/' + 'LoopReportPythonAnalysis' + '/' + 'output_master_rev4.csv'
     elif outputOption == 2:
         outFile = topPath + '/' + 'LoopReportPythonAnalysis' + '/' + 'test.csv'
     else:
