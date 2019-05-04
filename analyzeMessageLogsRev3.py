@@ -28,7 +28,10 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
     send_receive_commands = df.groupby(['type']).size()
     number_of_messages = len(df)
     thisPerson, thisFinish, thisAntenna = parse_info_from_filename(thisFile)
-    thisFinish2 = 'Success'
+    thisFinish2 = 'Success' # default is 'Success'
+    if thisFinish == 'WIP':
+        thisFinish2 = 'WIP'  # pod is still running
+
     lastDate = last_command.date()
 
     # Process df to generate the podState associated with every message
@@ -59,6 +62,7 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
     else:
         hasFault = False
         rawFault = 'n/a'
+        thisFault = thisFinish
 
     # checkAction returns actionFrame with indices and times for every action
     #     completed actions and incomplete requests are separate columns
@@ -67,11 +71,21 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
     #   initIdx      indices in podState to extract pod initilization
     actionFrame, initIdx = checkAction(podState)
 
+    if outFile == 2:
+        # print a few things then returns
+        lot = podDict['lot']
+        tid = podDict['tid']
+        piv = podDict['piVersion']
+        print(f'{thisPerson},{thisAntenna},{thisFault},{first_command},{last_command},{msgLogHrs},{lot},{tid},{piv}')
+        actionSummary = []
+        return df, podState, actionFrame, actionSummary
+
     if True:
         # print out summary information to command window
         # need this True to get the actionSummary used to fill csv file
         print('\n    First command in Log          :', first_command)
         print('    Last  command in Log          :', last_command)
+        print('    Lot and TID                   :', podDict['lot'], podDict['tid'])
         print('__________________________________________\n')
         print(' Summary for {:s} with {:s} ending'.format(thisFile, thisFinish))
         print('  Pod Lot: {:s}, PI: {:s}, PM: {:s}'.format(podDict['lot'], podDict['piVersion'], podDict['pmVersion']))
@@ -129,8 +143,8 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
                '#Schedule Before TempBasal, #TB Spaced <30s, ' + \
                '#Repeat TB Value, #Repeat TB <30s, ' + \
                ' #RepTB 30s to 19min, #incomplete TB, ' + \
-               'insulin Delivered, # AssignID (0x07), # SetUpPod (0x03), ' + \
-               'Pod Lot, PI Version, PM Version, ' + \
+               'insulin Delivered, # Initialize Cmds, # AssignID (0x07), ' + \
+               '# SetUpPod (0x03), Pod Lot, PI Version, PM Version, ' + \
                'raw fault, filename'
             stream_out.write(headerString)
             stream_out.write('\n')
@@ -188,7 +202,7 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
         stream_out.write(f'{numberTBSepLessThan30sec},{numRepeatedTB},{numRepeatedShortTB},')
         stream_out.write(f'{numrepeated19MinTB},{numIncomplCancelTB},')
         stream_out.write('{:.2f},'.format(insulinDelivered))
-        stream_out.write('{:d}, {:d},'.format(numberOfAssignID, numberOfSetUpPod))
+        stream_out.write('{:d}, {:d}, {:d},'.format(len(initIdx), numberOfAssignID, numberOfSetUpPod))
         stream_out.write('{:s}, {:s}, {:s},'.format(podDict['lot'], podDict['piVersion'], podDict['pmVersion']))
         stream_out.write(f'{rawFault},{thisFile}')
         stream_out.write('\n')
