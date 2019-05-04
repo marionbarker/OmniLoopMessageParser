@@ -7,6 +7,7 @@ def get_file_list(thisPath):
 
     PARAMS:
         thisPath: path folder where the MessageLog files by person are stored
+                  if directory contains Loop Reports, then just return that list
 
     RETURNS:
         returnList list of filename(relative to thisPath), creation time for file
@@ -15,16 +16,27 @@ def get_file_list(thisPath):
     list_of_reports = []
     list_of_dates = []
 
-    for x in listdir(thisPath):
-        if x == '.DS_Store':
-            continue
-        #print(x)
-        for y in listdir(thisPath + '/' + x):
+    thisLevel = listdir(thisPath)
+
+    if thisLevel[0][0:4] == 'Loop':
+        for y in thisLevel:
             if y == '.DS_Store':
                 continue
-            thisFile = x + '/' + y
+            thisFile =  y
             list_of_reports.append(thisFile)
             list_of_dates.append(os.path.getmtime(thisPath + '/' + thisFile))
+
+    else:
+        for x in thisLevel:
+            if x == '.DS_Store':
+                continue
+            #print(x)
+            for y in listdir(thisPath + '/' + x):
+                if y == '.DS_Store':
+                    continue
+                thisFile = x + '/' + y
+                list_of_reports.append(thisFile)
+                list_of_dates.append(os.path.getmtime(thisPath + '/' + thisFile))
 
     zippedTuple = zip(list_of_reports, list_of_dates)
     zippedList = list(zippedTuple)
