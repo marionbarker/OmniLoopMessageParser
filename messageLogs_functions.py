@@ -8,54 +8,66 @@ import time
 import re
 import pandas as pd
 import os
+import markdown
+from bs4 import BeautifulSoup, NavigableString, Tag
+import re
 
-# add more information read for Loop Reports
-def getPodDict (omnipodInfo):
-    podDict = { \
-      'piVersion' : '', \
-      'pmVersion' : '', \
-      'lot' : '', \
-      'tid' : ''}
-    idxStart = 0
-    for keys in podDict.keys():
-        strToSearch = '* ' + keys + ': '
-        thisStart = omnipodInfo.find(strToSearch, idxStart)
-        nextStart = thisStart + len(strToSearch)
-        thisStop = omnipodInfo.find('\n', nextStart)
-        values = omnipodInfo[nextStart:thisStop]
-        podDict[keys]=values
-        idxStart = thisStop
+# Some markdown headings don't start on their own line. This regular expression
+# finds them so we can insert a newline.
+FIXME_RE = re.compile(r'(?!#).(##+.*)')
 
-    return podDict
+# Markdown headings we want to extract from the .md report
+MARKDOWN_HEADINGS_TO_EXTRACT = ['OmnipodPumpManager', 'MessageLog', 'PodState']
 
 
-# read the file from the file_path (replace Eelke's original load_file(file_url))
+def _parse_filehandle(filehandle):
+    """Given a filehandle, extract the content from below markdown headings.
+
+    Args:
+       filehandle: a python file object
+    Returns:
+       A dict of markdown heading -> list of text from that heading
+    """
+    content = filehandle.read()
+    for fixme in re.findall(FIXME_RE, content):
+        content = content.replace(fixme, '\n' + fixme, 1)
+    html = markdown.markdown(content)
+    soup = BeautifulSoup(html, features="html.parser")
+    data = {}
+    for header in soup.find_all(['h2', 'h3'], text=MARKDOWN_HEADINGS_TO_EXTRACT):
+        nextNode = header
+        data.setdefault(header.text, [])
+        while True:
+            nextNode = nextNode.nextSibling
+            if nextNode is None:
+                break
+            elif isinstance(nextNode, NavigableString):
+                data[header.text].append(nextNode.strip()) if nextNode.strip() else None
+            elif isinstance(nextNode, Tag):
+                if nextNode.name in ["h2", "h3"]:
+                    break
+                data[header.text].extend([text for text in nextNode.stripped_strings])
+    return data
+
+def _command_dict(data):
+    timestamp, direction, value = data.rsplit(' ', 2)
+    return dict(time=timestamp, type=direction, raw_value=value[12:])
+
+def _extract_pod_state(data):
+    return dict([[x.strip() for x in v.split(':', 1)]
+            for v in data['PodState']])
+
+def MassageFile(data):
+    commands = [_commandDict(m) for m in data['MessageLog']]
+    podDict = extractPodState(data)
+    return commands, podDict
 
 def read_file(filename):
-    commands = []
-    # some of the files have 'charmap' codec can't decode byte 0x8d in position # XXX
-    #  where locations changes but is always after MessageLogs section
-    #  read a line at a time until reaching PodComms then quit
     file = open(filename)
-    y=file.readline()
-    while y != '## OmnipodPumpManager\n':
-        y = file.readline()
-    omnipodInfo = y
-    while y != '### MessageLog\n':
-        y = file.readline()
-        omnipodInfo = omnipodInfo + y
-    xcode_log_text = y
-    while y != '## PodComms\n' and y != '':
-        y=file.readline()
-        xcode_log_text = xcode_log_text+y
-    file.close()
-    # end of section that replaces Eelke's original .read()
-    regex = r"\* ([0-9-:\s]*)\s.*\s(send|receive)\s([a-z0-9]*)\n*"
-    select_1a_commands = re.findall(regex, xcode_log_text, re.MULTILINE)
-    for line in select_1a_commands:
-        commands.append({"time": line[0], "type": line[1], "raw_value": line[2][12:]})
-    podDict = getPodDict(omnipodInfo)
-    return commands, podDict
+    parsed_content = _parse_filehandle(file)
+    commands = [_command_dict(m) for m in parsed_content['MessageLog']]
+    pod_dict = _extract_pod_state(parsed_content)
+    return commands, pod_dict
 
 def select_extra_command(raw_value):
     if raw_value[:2]=='1a':

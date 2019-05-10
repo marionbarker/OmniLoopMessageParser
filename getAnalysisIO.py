@@ -1,4 +1,5 @@
 # Determine the location (Mac or PC)
+import os
 import platform
 
 def getAnalysisIO(pathOption, outputOption):
@@ -16,7 +17,7 @@ def getAnalysisIO(pathOption, outputOption):
     thisPlatform = platform.system()
 
     if thisPlatform == 'Darwin':
-        topPath = '/Users/marion/dev/LoopReportRepository'
+        topPath = os.path.expanduser('~/dev/LoopReportRepository')
     elif thisPlatform == 'Windows':
         topPath = 'm:/SharedFiles'
     else:
