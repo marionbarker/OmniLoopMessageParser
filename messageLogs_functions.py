@@ -32,7 +32,7 @@ def _parse_filehandle(filehandle):
     for fixme in re.findall(FIXME_RE, content):
         content = content.replace(fixme, '\n' + fixme, 1)
     html = markdown.markdown(content)
-    soup = BeautifulSoup(html, features="html.parser")
+    soup = BeautifulSoup(html, features='html.parser')
     data = {}
     for header in soup.find_all(['h2', 'h3'], text=MARKDOWN_HEADINGS_TO_EXTRACT):
         nextNode = header
@@ -44,7 +44,7 @@ def _parse_filehandle(filehandle):
             elif isinstance(nextNode, NavigableString):
                 data[header.text].append(nextNode.strip()) if nextNode.strip() else None
             elif isinstance(nextNode, Tag):
-                if nextNode.name in ["h2", "h3"]:
+                if nextNode.name in ['h2', 'h3']:
                     break
                 data[header.text].extend([text for text in nextNode.stripped_strings])
     return data
@@ -56,11 +56,6 @@ def _command_dict(data):
 def _extract_pod_state(data):
     return dict([[x.strip() for x in v.split(':', 1)]
             for v in data['PodState']])
-
-def MassageFile(data):
-    commands = [_commandDict(m) for m in data['MessageLog']]
-    podDict = extractPodState(data)
-    return commands, podDict
 
 def read_file(filename):
     file = open(filename)
