@@ -58,7 +58,7 @@ def _extract_pod_state(data):
             for v in data['PodState']])
 
 def read_file(filename):
-    file = open(filename,"r",encoding='UTF8')
+    file = open(filename)
     parsed_content = _parse_filehandle(file)
     commands = [_command_dict(m) for m in parsed_content['MessageLog']]
     pod_dict = _extract_pod_state(parsed_content)
