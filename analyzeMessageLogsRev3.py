@@ -19,6 +19,11 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
     # read the MessageLogs from the file
     commands, podDict = read_file(filename)
 
+    # add quick and dirty fix for new Issue Reports (Aug 2019)
+    tempRaw = commands[-1]['raw_value']
+    lastRaw = tempRaw.replace('\nstatus:','')
+    commands[-1]['raw_value'] = lastRaw
+
     # add more stuff and return as a DataFrame
     df = generate_table(commands, radio_on_time)
 
