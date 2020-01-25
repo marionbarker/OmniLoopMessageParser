@@ -17,7 +17,9 @@ import re
 FIXME_RE = re.compile(r'(?!#).(##+.*)')
 
 # Markdown headings we want to extract from the .md report
-MARKDOWN_HEADINGS_TO_EXTRACT = ['OmnipodPumpManager', 'MessageLog', 'PodState']
+# Handle case where last line of messageLog is 'status: ##'
+# Add new ## PodInfoFaultEvent markdown heading
+MARKDOWN_HEADINGS_TO_EXTRACT = ['OmnipodPumpManager', 'MessageLog', 'PodState', 'PodInfoFaultEvent']
 
 
 def _parse_filehandle(filehandle):
@@ -60,9 +62,16 @@ def _extract_pod_state(data):
 def read_file(filename):
     file = open(filename, "r", encoding='UTF8')
     parsed_content = _parse_filehandle(file)
+    tmp = parsed_content['MessageLog'][-1]
+    if tmp=='status:':
+        parsed_content['MessageLog'] = parsed_content['MessageLog'][:-1]
     commands = [_command_dict(m) for m in parsed_content['MessageLog']]
     pod_dict = _extract_pod_state(parsed_content)
-    return commands, pod_dict
+    if 'PodInfoFaultEvent' in parsed_content:
+         fault_report = parsed_content['PodInfoFaultEvent']
+    else:
+         fault_report = 'none'
+    return commands, pod_dict, fault_report
 
 def select_extra_command(raw_value):
     if raw_value[:2]=='1a':
