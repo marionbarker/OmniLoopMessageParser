@@ -17,7 +17,8 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
     filename = thisPath + '/' + thisFile
 
     # read the MessageLogs from the file
-    commands, podDict = read_file(filename)
+    # Handle new fault_report (as of Jan 24, 2020 in special riley link branch)
+    commands, podDict, fault_report = read_file(filename)
 
     # add quick and dirty fix for new Issue Reports (Aug 2019)
     tempRaw = commands[-1]['raw_value']
@@ -64,10 +65,19 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
         if checkInsulin >= insulinDelivered:
             insulinDelivered = checkInsulin
             sourceString = 'from 0x02 msg'
+    #elseif fault_report==['none']:
+    #    hasFault = False
+    #    rawFault = 'n/a'
+    #    thisFault = thisFinish
     else:
-        hasFault = False
+        hasFault = True
         rawFault = 'n/a'
-        thisFault = thisFinish
+        thisFault = 'PodInfoFaultEvent'
+
+    # Temporary - print some extra stuff
+    print('## PodInfoFaultEvent\n')
+    printList(fault_report)
+
 
     # checkAction returns actionFrame with indices and times for every action
     #     completed actions and incomplete requests are separate columns
@@ -97,6 +107,8 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
         print('  Total elapsed time in log (hrs) : {:6.1f}'.format(msgLogHrs))
         print('        Radio on estimate         : {:6.1f}, {:5.1f}%'.format(radioOnHrs, 100*radioOnHrs/msgLogHrs))
         print('        Number of messages        : {:6d}'.format(number_of_messages))
+        print('               Number sent        : {:6d}'.format(send_receive_commands[1]))
+        print('               Number recv        : {:6d}'.format(send_receive_commands[0]))
         print('        Number of nonce resyncs   : {:6d}'.format(numberOfNonceResync))
         print('        Insulin delivered (u)     : {:6.2f} ({:s})'.format(insulinDelivered, sourceString))
         if hasFault:
@@ -125,6 +137,10 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
         percentCompleted = 100*totalCompletedMessages/number_of_messages
         print('  #Messages in completed actions : {:5d} : {:.1f}%'.format( \
             totalCompletedMessages, percentCompleted))
+
+        # add this printout to look for message types other than 14 for 06 responses
+        #  added message logging to record this around Dec 2, 2019
+        print('\n Search for non-type 14 in 06 messages\n',podState[podState.message_type=='06'])
 
     if hasFault:
         print('\nFault Details')
