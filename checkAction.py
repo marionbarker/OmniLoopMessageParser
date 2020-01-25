@@ -128,6 +128,11 @@ def checkAction(frame):
     return actionFrame, initIdx
 
 def processActionFrame(actionFrame, podState):
+    """
+       8/11/2019:
+           For calling function Rev4, add more dictionary items
+           This should not affect Rev3, which doesn't refer to new items
+    """
     if len(actionFrame) == 0:
         return
     actionSummary = {}
@@ -179,6 +184,24 @@ def processActionFrame(actionFrame, podState):
             repeated19MinTB = [x[2:6] for x in zip(SchBasalState, deltaReqTB, startTime, priorReqTB, completedList[postIdx], timeSinceLastTB) if (not x[0] and x[1]==0 and (x[5]>=30 and x[5]<1140))]
             subDict['numrepeated19MinTB'] = len(repeated19MinTB)
             subDict['repeated19MinTB'] = repeated19MinTB
+            ## new dictionary items start here - don't change any old ones
+            # Each of these is cummulative, e.g., lt30 - lt10 yield # between 10 and 30s
+            repeatedTBlt10s = [x[2:6] for x in zip(SchBasalState, deltaReqTB, startTime, priorReqTB, completedList[postIdx], timeSinceLastTB) if (not x[0] and x[1]==0 and x[5]<10)]
+            subDict['numrepTBlt10s'] = len(repeatedTBlt10s)
+            repeatedTBlt20s = [x[2:6] for x in zip(SchBasalState, deltaReqTB, startTime, priorReqTB, completedList[postIdx], timeSinceLastTB) if (not x[0] and x[1]==0 and(x[5]>=10 and x[5]<20))]
+            subDict['numrepTBlt20s'] = len(repeatedTBlt20s)
+            repeatedTBlt30s = [x[2:6] for x in zip(SchBasalState, deltaReqTB, startTime, priorReqTB, completedList[postIdx], timeSinceLastTB) if (not x[0] and x[1]==0 and (x[5]>=20 and x[5]<30))]
+            subDict['numrepTBlt30s'] = len(repeatedTBlt30s)
+            repeatedTBlt05m = [x[2:6] for x in zip(SchBasalState, deltaReqTB, startTime, priorReqTB, completedList[postIdx], timeSinceLastTB) if (not x[0] and x[1]==0 and (x[5]>=30 and x[5]<300))]
+            subDict['numrepTBlt05m'] = len(repeatedTBlt05m)
+            repeatedTBlt10m = [x[2:6] for x in zip(SchBasalState, deltaReqTB, startTime, priorReqTB, completedList[postIdx], timeSinceLastTB) if (not x[0] and x[1]==0 and (x[5]>=300 and x[5]<600))]
+            subDict['numrepTBlt10m'] = len(repeatedTBlt10m)
+            repeatedTBlt15m = [x[2:6] for x in zip(SchBasalState, deltaReqTB, startTime, priorReqTB, completedList[postIdx], timeSinceLastTB) if (not x[0] and x[1]==0 and (x[5]>=600 and x[5]<900))]
+            subDict['numrepTBlt15m'] = len(repeatedTBlt15m)
+            repeatedTBlt20m = [x[2:6] for x in zip(SchBasalState, deltaReqTB, startTime, priorReqTB, completedList[postIdx], timeSinceLastTB) if (not x[0] and x[1]==0 and (x[5]>=900 and x[5]<1200))]
+            subDict['numrepTBlt20m'] = len(repeatedTBlt20m)
+            repeatedTBlt30m = [x[2:6] for x in zip(SchBasalState, deltaReqTB, startTime, priorReqTB, completedList[postIdx], timeSinceLastTB) if (not x[0] and x[1]==0 and (x[5]>=1200 and x[5]<1800))]
+            subDict['numrepTBlt30m'] = len(repeatedTBlt30m)
 
         actionSummary[thisName] = subDict
 
