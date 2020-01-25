@@ -1,6 +1,21 @@
 # OmniLoopMessageParser
 python code to parse the messages found in Loop Reports from loop-priv
 
+## January 2020 Updates
+Set up tag v1.0 to be the August 2019 version, then begin updates.
+
+First wave is to update the parser so that it can handle having this format:
+    ## MessageLog
+    goodstuff
+
+    status: ## PumpManagerStatus
+And BeautifulSoup doesn't handle the status: the way I need it to - add a check and remove final parsed_content['MessageLog'] record if necessary
+
+Also, add to the parser: PodInfoFaultEvent - this is a WIP
+Modify all the files to be LF instead of CRLF so it matches the change Michael Pangborg made to the repo (don't want spurious diffs showing).
+
+Check in the interim version of 2020/01/25 - then update to handle the new parser of commands for updated rileylink_ios code.
+
 ## Origins
 Some of the intial work done by Eelke Jager on the Jupyter workbook was copied to my local computer to enable batch processing and easy reprocessing (https://omnikit-lab.herokuapp.com/lab?)
 
