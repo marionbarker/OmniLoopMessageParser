@@ -19,7 +19,10 @@ FIXME_RE = re.compile(r'(?!#).(##+.*)')
 # Markdown headings we want to extract from the .md report
 # Handle case where last line of messageLog is 'status: ##'
 # Add new ## PodInfoFaultEvent markdown heading
-MARKDOWN_HEADINGS_TO_EXTRACT = ['OmnipodPumpManager', 'MessageLog', 'PodState', 'PodInfoFaultEvent']
+# was:
+#    MARKDOWN_HEADINGS_TO_EXTRACT = ['OmnipodPumpManager', 'MessageLog', 'PodState', 'PodInfoFaultEvent']
+# is:
+MARKDOWN_HEADINGS_TO_EXTRACT = ['OmnipodPumpManager', 'MessageLog', 'PodState', 'PodInfoFaultEvent', 'Device Communication Log']
 
 
 def _parse_filehandle(filehandle):
@@ -55,22 +58,46 @@ def _command_dict(data):
     timestamp, direction, value = data.rsplit(' ', 2)
     return dict(time=timestamp, type=direction, raw_value=value[12:])
 
+def _device_command_dict(data):
+    # split from left to determine if omnipod line
+    date, timestamp, UTCDelta, device, theRestOfLine = data.split(' ', 4)
+    if device=="Omnipod":
+        timestamp, device, address, direction, value = data.rsplit(' ', 4)
+        value = value[12:]  # strip off first 12 characters
+    else:
+        address = theRestOfLine[:6];
+        direction = 'other';
+        value = theRestOfLine[6:];
+    return dict(time=timestamp, device=device, address=address, type=direction, raw_value=value)
+
 def _extract_pod_state(data):
     return dict([[x.strip() for x in v.split(':', 1)]
             for v in data['PodState']])
 
 def read_file(filename):
+    # set up defaults while building new parser
+    commands = ['testing']
+    pod_dict = ['testing']
+    fault_report = []
     file = open(filename, "r", encoding='UTF8')
     parsed_content = _parse_filehandle(file)
-    tmp = parsed_content['MessageLog'][-1]
-    if tmp=='status:':
-        parsed_content['MessageLog'] = parsed_content['MessageLog'][:-1]
-    commands = [_command_dict(m) for m in parsed_content['MessageLog']]
-    pod_dict = _extract_pod_state(parsed_content)
+    # can use .get('name') or if 'name' in parsed_content
+    if parsed_content.get('MessageLog'):
+      print('The file has MessageLog, calling _command_dict')
+      tmp = parsed_content['MessageLog'][-1]
+      if tmp=='status:':
+          parsed_content['MessageLog'] = parsed_content['MessageLog'][:-1]
+      commands = [_command_dict(m) for m in parsed_content['MessageLog']]
+    if parsed_content.get('OmnipodPumpManager'):
+      print('The file has OmnipodPumpManager')
+      pod_dict = _extract_pod_state(parsed_content)
+    if parsed_content.get('Device Communication Log'):
+      print('The file has Device Communication Log, calling _device_command_dict')
+      commands = [_device_command_dict(m) for m in parsed_content['Device Communication Log']]
     if 'PodInfoFaultEvent' in parsed_content:
          fault_report = parsed_content['PodInfoFaultEvent']
     else:
-         fault_report = 'none'
+         fault_report = []
     return commands, pod_dict, fault_report
 
 def select_extra_command(raw_value):
@@ -81,7 +108,10 @@ def select_extra_command(raw_value):
             return raw_value[32:34]
 
 def generate_table(commands, radio_on_time):
-    df = pd.DataFrame(commands)
+    # convert to a pandas dataframe
+    dfAll = pd.DataFrame(commands)
+    # remove any commands where type is "other" to handle the new Device Communication Log
+    df = dfAll[dfAll.type != 'other']
     df['time'] = pd.to_datetime(df['time'])
     df['command'] = df['raw_value'].str[:2].astype(str)+df['raw_value'].apply(select_extra_command).fillna('').astype(str)
     df['time_delta'] = (df['time']-df['time'].shift()).dt.seconds.fillna(0).astype(float)
