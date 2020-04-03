@@ -57,18 +57,23 @@ def analyzeMessageLogsRev3(thisPath, thisFile, outFile):
     sourceString = 'from last 0x1d'
 
     # special handling if an 0x02 messages aka fault was received
+    checkInsulin = 0
     if len(faultProcessedMsg):
+        print(faultProcessedMsg)
         hasFault = True
-        thisFault = faultProcessedMsg['logged_fault']
-        checkInsulin = faultProcessedMsg['insulinDelivered']
+        if 'logged_fault' in faultProcessedMsg:
+            thisFault = faultProcessedMsg['logged_fault']
+            checkInsulin = faultProcessedMsg['insulinDelivered']
+        else:
+            thisFault = faultProcessedMsg['fault_type']
         rawFault = faultProcessedMsg['raw_value']
         if checkInsulin >= insulinDelivered:
             insulinDelivered = checkInsulin
             sourceString = 'from 0x02 msg'
-    #elseif fault_report==['none']:
-    #    hasFault = False
-    #    rawFault = 'n/a'
-    #    thisFault = thisFinish
+    elif fault_report==[]:
+        hasFault = False
+        rawFault = 'n/a'
+        thisFault = thisFinish
     else:
         hasFault = True
         rawFault = 'n/a'
