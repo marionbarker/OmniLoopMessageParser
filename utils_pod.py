@@ -56,9 +56,3 @@ def getActionDict():
        }
 
     return actionDict
-
-def getUnitsFromPulses(pulses):
-    # given number of pulses convert to units of insulin
-    #i = Decimal(0.05 * pulses)
-    insulin = round(0.05 * pulses,2)
-    return insulin
