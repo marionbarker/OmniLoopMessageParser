@@ -6,6 +6,10 @@ The messageLog (omnipod only) has been replaced by Device Communication Log.
 Go back and completely rewrite some of the early code and clean up other functions to be more modular.
 
 Delete the deprecated code and remove references to it below.
+Rename some file names and structure:
+ * utils    : useful repeated actions
+ * utils_pd : useful repeated actions for pandas, typically DataFrame
+ * utils_pod: useful repeated actions specific to Omnipod
 
 ## January 2020 Updates
 Set up tag v1.0 to be the August 2019 version, then begin updates.
@@ -99,8 +103,6 @@ This uses the actionDict (from podUtils) to extract typical actions from podStat
 
 ## Lower Level functions
 
-* byteUtils.py : combine array of bytes into appropriate integer
-
 * get_file_list.py : given a path, find all the named subpaths with their associated Loop Report.md files, return list sorted from oldest to newest
 
 * utils.py : low level routines used by more than one function
@@ -117,8 +119,10 @@ The following functions parse the indicated command and return result in a msgDi
 * parse_06.py
 * parse_0e.py
 
-podUtils.py : contains various pod specific utilities:
-* getPodProgessMeaning
+utils_pd.py : contains various pandas DataFrame specific utilities
+
+utils_pod.py : contains various pod specific utilities:
+* getPodProgressMeaning
 * getUnitsFromPulses
 * getActionDict
 
