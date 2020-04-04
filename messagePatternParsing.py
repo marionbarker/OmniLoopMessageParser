@@ -1,6 +1,5 @@
 # file: messagePatternParsing
 import numpy as np
-from byteUtils import *
 from utils import *
 
 from parse_02 import *

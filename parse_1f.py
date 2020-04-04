@@ -1,5 +1,4 @@
 # file: parse_1f - does the parsing for cancel commond
-from byteUtils import *
 from utils import *
 from decimal import Decimal
 

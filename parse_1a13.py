@@ -1,5 +1,4 @@
 # file: parse_1a13 - does the parsing for basal commond to set scheduled rates
-from byteUtils import *
 from utils import *
 from decimal import Decimal
 

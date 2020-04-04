@@ -1,8 +1,8 @@
 # file: parse_02 - does the parsing for the 0x02 message returned from the pod
 #      NOTE - only parsing the Fault returned version Type 2
 
-from byteUtils import *
 from utils import *
+from utils_pod import *
 import numpy as np
 
 def parse_02(msg):
@@ -74,7 +74,7 @@ def parse_02(msg):
     msgDict['mtype'] = byte_0
     msgDict['fault_type'] = byte_2
     if msgDict['fault_type'] != 2:
-        msgDict['fault_type'] = 'Not fault type 02, not parsed'
+        msgDict['fault_type'] = 'Not fault type 02 not parsed yet'
         return msgDict
 
     msgDict['pod_progress_value']   = byte_3

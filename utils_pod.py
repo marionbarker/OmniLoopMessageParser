@@ -1,6 +1,6 @@
-# pod utils - lower level functions related to omnipod
+# utils_pod - lower level functions related to omnipod
 
-def getPodProgessMeaning(thisInt):
+def getPodProgressMeaning(thisInt):
     """ convert the value for pod progess into it's meaning """
     podProgress = { \
         0: 'Initial value', \
@@ -56,3 +56,9 @@ def getActionDict():
        }
 
     return actionDict
+
+def getUnitsFromPulses(pulses):
+    # given number of pulses convert to units of insulin
+    #i = Decimal(0.05 * pulses)
+    insulin = round(0.05 * pulses,2)
+    return insulin

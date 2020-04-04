@@ -1,6 +1,12 @@
 # OmniLoopMessageParser
 python code to parse the messages found in Loop Reports from loop-priv
 
+## March 3, 2020 updates
+The messageLog (omnipod only) has been replaced by Device Communication Log.
+Go back and completely rewrite some of the early code and clean up other functions to be more modular.
+
+Delete the deprecated code and remove references to it below.
+
 ## January 2020 Updates
 Set up tag v1.0 to be the August 2019 version, then begin updates.
 
@@ -104,7 +110,7 @@ This uses the actionDict (from podUtils) to extract typical actions from podStat
 The following functions parse the indicated command and return result in a msgDict dictionary:
 * parse_1a13.py
 * parse_1a16.py
-* parse_1a16.py
+* parse_1a17.py
 * parse_1d.py
 * parse_1f.py
 * parse_02.py
@@ -117,23 +123,3 @@ podUtils.py : contains various pod specific utilities:
 * getActionDict
 
 * getAnalysisIO: switches between Marion's configuration of files for Mac and PC without having to tweak the runLastLoopReport or runAll433_Rev3 code manually. For anyone pulling this repo to their machine, this should be the only function that requires editing.
-
-## DEPRECATED
-
-This code will still run. None of these functions are used by  analyzeMessageLogsRev3.py
-
-* analyzeMessageLogsNew.py :
-
-Deprecated main routine for processing and reporting results from Loop Report. Uses podStateAnalysis function.  But other code is found in deprecated .py functions.
-
-The deprecated_PodSuccess code takes every message read from the Loop_Report file and then parses it using the deprecated send, recv and complete message dictionaries.
-
-* analyzeMessageLogs.py :
-
-Deprecated (original) main routine for processing and reporting results from Loop Report. Started with work from Eelke and Marion on Jupyter then added a bunch of output without subtracting very much.  Uses functions found in deprecated_PodSequence (completely superceded by checkAction.)
-
-## Deprecated Low Level Utilities
-
-* basal_analysis.py : basal timing analysis added to Jupyter by Eelke and copied over on 3/2/2019
-* deprecated_PodSequence: initial idea - replaced by podStateAnalysis
-* deprecated_PodSuccess: replaced by checkAction

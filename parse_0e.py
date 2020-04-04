@@ -1,6 +1,6 @@
 # file: parse_0e - is a request of a nonce resync returned from the pod
 
-from byteUtils import *
+from utils import *
 
 def parse_0e(msg):
     # request status from the pod

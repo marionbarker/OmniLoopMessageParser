@@ -1,6 +1,6 @@
 # file: parse_1a17 - does the parsing for bolus commond
-from byteUtils import *
 from utils import *
+from utils_pod import *
 from decimal import Decimal
 
 def parse_1a17(msg):
