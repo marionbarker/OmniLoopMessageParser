@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from utils import *
+from utils_pd import *
 from analyzePodMessages import *
 
 """
@@ -17,58 +18,29 @@ def analyzeAllPodsInDeviceLog(thisFile, podFrame, podDict, fault_report, outFile
     # Put in debug printout grouped by vFlag
     vFlag = 1;
 
-    # find the unique pod addresses
-    podAddress = list(podFrame['address'].unique())
+    # break podFrame into chunks and process each chunk
+    podAddress, breakPoints = findBreakPoints(podFrame)
+
     frameLength = len(podFrame)
     if vFlag:
         print('Unique Pod Addresses, out of : {:6d} lines'.format(frameLength))
         print(podAddress)
-    """
-        If only one address is found,
-            then startRow and stopRow will have only one value
-        If noPod is found after first row,
-            append that to startRow List
-            pre-pend the previous row to stopRow List
-    """
-    firstRow = []
-    startRow = 0 # initial value
-    stopRow = frameLength # initial value
-    for x in podAddress:
-        mask = podFrame['address'] == x
-        idx = next(iter(mask.index[mask]), 0)
-        firstRow.append(idx)
+        print('Break Points are at rows:')
+        print(breakPoints)
 
-    if len(firstRow) == 1:
-        startRow = 0;
-        stopRow = frameLength;
-    else:
-        # by definition, if there is more than one address, one must be noPod
-        foundIt = 0;
-        for x in firstRow:
-            if podFrame['address'][x] == "noPod":
-                startRow = x
-                foundIt = 1
-                print('Found noPod')
-                print('startRow =', startRow)
-            elif foundIt == 1:
-                foundIt = foundIt+1
-                print('incrementing')
-            elif foundIt == 2:
-                stopRow = x
-                foundIt = 0
-                print('stopRow =', stopRow)
-                print('WARNING - more than on pod start in this file')
+    idx = 0
+    startRow = breakPoints[idx]
+    for val in breakPoints:
+        idx = idx+1
+        if idx >= len(breakPoints):
+            break
+        stopRow = breakPoints[idx]-1
+        thisFrame = podFrame.loc[startRow:stopRow][:]
+        startRow = stopRow+1
+        print(thisFrame.head(2))
+        print(thisFrame.tail(2))
 
-        # if noPod not found, this is an error
-        if startRow == -1:
-            print('ERROR - more than one address, did not find noPod')
-
-    # use the selected start and stop rows to limit messages to single pod
-    print('start and stopRows =', startRow, stopRow)
-
-    podFrame = podFrame.iloc[startRow:stopRow][:]
-
-    df, podState, actionFrame, actionSummary = analyzePodMessages(thisFile,
-        podFrame, podDict, fault_report, outFile)
+        df, podState, actionFrame, actionSummary = analyzePodMessages(thisFile,
+            thisFrame, podDict, fault_report, outFile)
 
     return df, podState, actionFrame, actionSummary
