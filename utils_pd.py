@@ -59,10 +59,8 @@ def findBreakPoints(podFrame):
         breakPoints = lastRow
 
     # check for special (and most important case), where podFrame ends in 'noPod'
-    print(breakPoints[-1])
     oldLast = breakPoints[-1]
     if podFrame.iloc[breakPoints[-1]-1]['address'] == 'noPod':
-        print('\nSpecial case = last address is noPod')
         thisIdx = breakPoints[-1]
         while thisIdx > breakPoints[-2]:
             if podFrame.iloc[thisIdx-1]['address'] != 'noPod':
