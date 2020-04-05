@@ -1,6 +1,7 @@
 import pandas as pd
 from messageLogs_functions import *
 from utils import *
+from utils_report import *
 from podStateAnalysis import *
 from messagePatternParsing import *
 from checkAction import *
@@ -10,8 +11,8 @@ analyzePodMessages
     This code analyzes a single Pod with available message dataframe
 """
 
-def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile):
-    # Rev5 uses updated file I/O to handle new persistent format
+def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag):
+    # preprocess podFrame to be from a single pod 
 
     # This is time (sec) radio on Pod stays awake once comm is initiated
     radio_on_time   = 30
@@ -24,11 +25,6 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile):
     last_command = df.iloc[-1]['time']
     send_receive_messages = df.groupby(['type']).size()
     number_of_messages = len(df)
-    thisPerson, thisFinish, thisAntenna = parse_info_from_filename(thisFile)
-    thisFinish2 = 'Success' # default is 'Success'
-    if thisFinish == 'WIP':
-        thisFinish2 = 'WIP'  # pod is still running
-
     lastDate = last_command.date()
 
     # Process df to generate the podState associated with every message
@@ -64,16 +60,11 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile):
     elif fault_report==[]:
         hasFault = False
         rawFault = 'n/a'
-        thisFault = thisFinish
+        thisFault = 'Nominal'
     else:
         hasFault = True
         rawFault = 'n/a'
         thisFault = 'PodInfoFaultEvent'
-
-    # Temporary - print some extra stuff
-    print('## PodInfoFaultEvent\n')
-    printList(fault_report)
-
 
     # checkAction returns actionFrame with indices and times for every action
     #     completed actions and incomplete requests are separate columns
@@ -81,6 +72,10 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile):
     #   actionFrame  dataframe of processed analysis from podState (by action)
     #   initIdx      indices in podState to extract pod initilization
     actionFrame, initIdx = checkAction(podState)
+
+    # process the action frame (returns a dictionary plus total completed message count)
+    actionSummary, totalCompletedMessages = processActionFrame(actionFrame, podState)
+    percentCompleted = 100*totalCompletedMessages/number_of_messages
 
     if outFile == 2:
         # print a few things then returns
@@ -94,19 +89,16 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile):
     if True:
         # print out summary information to command window
         # need this True to get the actionSummary used to fill csv file
-        print('\n    First command in Log          :', first_command)
-        print('    Last  command in Log          :', last_command)
-        print('    Lot and TID                   :', podDict['lot'], podDict['tid'])
-        print('__________________________________________\n')
-        print(' Summary for {:s} with {:s} ending'.format(thisFile, thisFinish))
-        print('  Pod Lot: {:s}, PI: {:s}, PM: {:s}'.format(podDict['lot'], podDict['piVersion'], podDict['pmVersion']))
+        print('\n            First message for pod :', first_command)
+        print('            Last  message for pod :', last_command)
         print('  Total elapsed time in log (hrs) : {:6.1f}'.format(msgLogHrs))
-        print('        Radio on estimate         : {:6.1f}, {:5.1f}%'.format(radioOnHrs, 100*radioOnHrs/msgLogHrs))
-        print('        Number of messages        : {:6d}'.format(number_of_messages))
-        print('               Number sent        : {:6d}'.format(send_receive_messages[1]))
-        print('               Number recv        : {:6d}'.format(send_receive_messages[0]))
-        print('        Number of nonce resyncs   : {:6d}'.format(numberOfNonceResync))
-        print('        Insulin delivered (u)     : {:6.2f} ({:s})'.format(insulinDelivered, sourceString))
+        print('                Radio on estimate : {:6.1f}, {:5.1f}%'.format(radioOnHrs, 100*radioOnHrs/msgLogHrs))
+        print('   Number of messages (sent/recv) : {:6d} ({:4d} / {:4d})'.format(number_of_messages,
+            send_receive_messages[1], send_receive_messages[0]))
+        print('    Messages in completed actions : {:6d} : {:.1f}%'.format( \
+            totalCompletedMessages, percentCompleted))
+        print('          Number of nonce resyncs : {:6d}'.format(numberOfNonceResync))
+        print('            Insulin delivered (u) : {:6.2f} ({:s})'.format(insulinDelivered, sourceString))
         if hasFault:
             thisFinish = thisFault
             thisFinish2 = 'Fault'
@@ -120,23 +112,22 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile):
                 print('    An 0x0202 message of {:s} reported - this wipes out registers'.format(thisFault))
             else:
                 print('    An 0x0202 message of {:s} reported - details later'.format(thisFault))
-        print('\n  Pod was initialized with {:d} messages, {:d} AssignID, {:d} SetUpPod required'.format(len(initIdx), \
-           numberOfAssignID, numberOfSetUpPod))
+        if len(initIdx)>1:
+            print('\n   Pod was initialized with {:d} messages, {:d} AssignID, {:d} SetUpPod required'.format(len(initIdx),
+               numberOfAssignID, numberOfSetUpPod))
+        else:
+            print('\n  Pod already initialized before report was generated')
+
         if emptyMessageList:
             print('    ***  Detected {:d} empty message(s) during life of the pod'.format(len(emptyMessageList)))
-            print('    ***  indices:', emptyMessageList)
+            print('    ***  indices :', emptyMessageList)
 
-        # process the action frame (returns a dictionary plus total completed message count)
-        actionSummary, totalCompletedMessages = processActionFrame(actionFrame, podState)
-        printActionSummary(actionSummary)
 
-        percentCompleted = 100*totalCompletedMessages/number_of_messages
-        print('  #Messages in completed actions : {:5d} : {:.1f}%'.format( \
-            totalCompletedMessages, percentCompleted))
+        printActionSummary(actionSummary, vFlag)
 
         # add this printout to look for message types other than 14 for 06 responses
         #  added message logging to record this around Dec 2, 2019
-        print('\n Search for non-type 14 in 06 messages\n',podState[podState.message_type=='06'])
+        # print('\n Search for non-type 14 in 06 messages\n',podState[podState.message_type=='06'])
 
     if hasFault:
         print('\nFault Details')
@@ -206,7 +197,7 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile):
             numIncomplCancelTB = 0
 
         # write out the information for csv (don't want extra spaces for this )
-        stream_out.write(f'{thisPerson},{thisFinish},{thisFinish2},{lastDate},')
+        #stream_out.write(f'{thisPerson},{thisFinish},{thisFinish2},{lastDate},')
         stream_out.write('{:.1f},'.format(msgLogHrs))
         stream_out.write('{:.2f},'.format(radioOnHrs))
         stream_out.write('{:.2f},'.format(100*radioOnHrs/msgLogHrs))
