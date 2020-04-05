@@ -39,15 +39,19 @@ def checkAction(frame):
     # determine initIdx from pod_progress value
     podInit = frame[frame.pod_progress < 8]
     # get list of indices for initializing the pod
+    # note when first message is a send, no pod_progress state is set
     initIdx = np.array(podInit.index.to_list())
-    # need to add the next row too - but keep going until it is a '1d'
-    checkIdx = initIdx[-1]
-    while (frame.loc[checkIdx,'message_type']) != '1d':
-        checkIdx += 1
-        initIdx = np.append(initIdx, checkIdx)
+    if initIdx[-1] == 0:
+        initIdx = [];
+    else:
+        # need to add the next row too - but keep going until it is a '1d'
+        checkIdx = initIdx[-1]
+        while (frame.loc[checkIdx,'message_type']) != '1d':
+            checkIdx += 1
+            initIdx = np.append(initIdx, checkIdx)
 
     # prepare to search by actions
-    frameBalance = frame
+    frameBalance = frame.copy()
 
     # now search the frame for actions:
     #    actionName from actionDic
@@ -207,32 +211,3 @@ def processActionFrame(actionFrame, podState):
         actionSummary[thisName] = subDict
 
     return actionSummary, totalCompletedMessages
-
-def printActionSummary(actionSummary):
-    # initialize values just in case
-    numShortTB = np.nan
-    numSchBasalbeforeTB = np.nan
-    numRepeatedTB = np.nan
-    print('\n  Action Summary with sequential 4 or 2 message sequences with action response times in sec')
-    print('      Action        : #Success,  mean, [  min,  max  ] : #Incomplete')
-    #actionSummary
-    #printDict(actionSummary)
-
-    for keys, values in actionSummary.items():
-        subDict = values
-        print('    {:14s}  :  {:5.0f},  {:5.0f},  [{:5.0f}, {:5.0f} ] : {:5d}'.format( \
-          keys, subDict['countCompleted'], subDict['meanResponseTime'], \
-          subDict['minResponseTime'], subDict['maxResponseTime'], \
-          subDict['countIncomplete']))
-        if keys=='TB':
-            numShortTB          = subDict['numShortTB']
-            numSchBasalbeforeTB = subDict['numSchBasalbeforeTB']
-            numRepeatedTB       = subDict['numRepeatedTB']
-            numRepeatedShortTB  = subDict['numRepeatedShortTB']
-            numrepeated19MinTB  = subDict['numrepeated19MinTB']
-
-    print('\n    #TB with SchBasal before     : {:5d}'.format(numSchBasalbeforeTB))
-    print('    #TB sent at <30s interval    : {:5d}'.format(numShortTB))
-    print('    #TB repeated value           : {:5.0f}'.format(numRepeatedTB))
-    print('    #TB repeated value <30s      : {:5.0f}'.format(numRepeatedShortTB))
-    print('    #TB rep value >=30s & <19min : {:5.0f}'.format(numrepeated19MinTB))
