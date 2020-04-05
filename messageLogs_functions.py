@@ -202,7 +202,7 @@ def persist_pod_dict(parsed_content):
 
 def persist_fault_report(parsed_content):
     # set up default
-    fault_report = ['nil']
+    fault_report = []
     if parsed_content.get('OmnipodPumpManager'):
       pod_dict = _extract_pod_state(parsed_content)
     return fault_report
