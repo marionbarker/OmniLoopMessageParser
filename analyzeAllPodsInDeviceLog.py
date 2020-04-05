@@ -16,10 +16,15 @@ analyzeAllPodsInDeviceLog
 
 def analyzeAllPodsInDeviceLog(thisFile, podFrame, podDict, fault_report, outFile):
     # Put in debug printout grouped by vFlag
-    vFlag = 1;
+    vFlag = 0
+    # passedVFlag is handed off to next function for each pod address
+    # if only one address, then set to 1
+    passedVFlag = 1
 
     # break podFrame into chunks and process each chunk
     podAddress, breakPoints = findBreakPoints(podFrame)
+    if len(breakPoints) > 1:
+        passedVFlag = 0;
 
     frameLength = len(podFrame)
     if vFlag:
@@ -37,10 +42,14 @@ def analyzeAllPodsInDeviceLog(thisFile, podFrame, podDict, fault_report, outFile
         stopRow = breakPoints[idx]-1
         thisFrame = podFrame.loc[startRow:stopRow][:]
         startRow = stopRow+1
-        print(thisFrame.head(2))
-        print(thisFrame.tail(2))
+        if vFlag:
+            print(thisFrame.head(2))
+            print(thisFrame.tail(2))
+
+        print('__________________________________________\n')
+        print(f'      Information for pod address : {podAddress[idx-1]}')
 
         df, podState, actionFrame, actionSummary = analyzePodMessages(thisFile,
-            thisFrame, podDict, fault_report, outFile)
+            thisFrame, podDict, fault_report, outFile, passedVFlag)
 
     return df, podState, actionFrame, actionSummary
