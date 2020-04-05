@@ -46,4 +46,5 @@ chooseMsgType = {
 
 def processMsg(msg):
     byteMsg = bytearray.fromhex(msg)
-    return chooseMsgType.get(byteMsg[0],ignoreMsg)(msg)
+    thisMessage = chooseMsgType.get(byteMsg[0],ignoreMsg)(msg)
+    return thisMessage
