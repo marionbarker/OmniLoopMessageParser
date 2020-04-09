@@ -2,6 +2,7 @@
 import numpy as np
 from utils import *
 
+from parse_01 import *
 from parse_02 import *
 from parse_06 import *
 from parse_0e import *
@@ -36,6 +37,7 @@ def parse_1a(msg):
     return msgDict
 
 chooseMsgType = {
+    0x01: parse_01,
     0x02: parse_02,
     0x06: parse_06,
     0x0e: parse_0e,
