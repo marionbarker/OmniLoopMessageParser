@@ -33,3 +33,14 @@ def listFromDict(thisDict):
     for keys, values in thisDict.items():
         list_of_keys.append(keys)
     return list_of_keys
+
+"""
+  Convert a list of numbers to a string separated by '.'
+"""
+def versionString(thisNumList):
+    verStr = ""
+    for val in thisNumList:
+        verStr = verStr + "." + str(val)
+    # remove leading "."
+    verStr=verStr[1:]
+    return verStr

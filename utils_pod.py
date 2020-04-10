@@ -29,30 +29,73 @@ def getUnitsFromPulses(pulses):
     return insulin
 
 def getActionDict():
-    # this is the list of messages that should be sequential for a successful "action"
-    # actionDict {
-    #     'actionName' : (idxToNameForSearch list ('sendName', 'recvName','sendName', 'recvName'), \
-    #     'actionName' : (idxToNameForSearch list ('sendName', 'recvName') \
-    #             }
-    #  Note that this doesn't include any init only actions which are
-    #   handled by the pod_progress value
-    # These will be searched for in this order and those indices removed from
-    #   frameBalance before the next search (see checkAction)
+    """
+    This defines the list of messages that should be sequential
+    for a successful "action":
+        actionDict {
+           'actionName' : (idxToNameForSearch list ('sendName', 'recvName','sendName', 'recvName'), \
+           'actionName' : (idxToNameForSearch list ('sendName', 'recvName') \
+                 }
+    These will be searched for in this order and those indices removed from
+    pod frame before the next search (see getPodState in checkAction.py)
 
+    Ordering: with the exception of commands that are only used during
+            initialization, put the sequences of 4 messages first so that
+            getPodState pulls those out of the frame of sequential frames
+            first.  Then the sequences of 2 commands are identified next
+    """
     actionDict = { \
-      'TB'              : (2, ('1f02', '1d', '1a16', '1d')), \
-      'Bolus'           : (2, ('0e',   '1d', '1a17', '1d')), \
-      'Basal'           : (2, ('1f07', '1d', '1a13', '1d')), \
+      'AssignID'        : (0, ('0x7' , '01')), \
+      'SetupPod'        : (0, ('0x3' , '01')), \
+      'CnfgDelivFlg'    : (0, ('0x8' , '1d')), \
+      'CnxSetTmpBasal'  : (2, ('1f02', '1d', '1a16', '1d')), \
+      'Status&Bolus'    : (2, ('0e',   '1d', '1a17', '1d')), \
+      'CnxAllSetBasal'  : (2, ('1f07', '1d', '1a13', '1d')), \
       'StatusCheck'     : (0, ('0e'  , '1d')), \
       'AcknwlAlerts'    : (0, ('0x11', '1d')), \
       'CnfgAlerts'      : (0, ('0x19', '1d')), \
+      'SetBeeps'        : (0, ('0x1e', '1d')), \
+      'CnxDelivery'     : (0, ('1f'  , '1d')), \
+      'CnxBasal'        : (0, ('1f01', '1d')), \
+      'CnxTBAlone'      : (0, ('1f02', '1d')), \
+      'CnxBolus'        : (0, ('1f04', '1d')), \
+      'CnxAll'          : (0, ('1f07', '1d')), \
+      'BolusAlone'      : (0, ('1a17', '1d')), \
       'DeactivatePod'   : (0, ('0x1c', '1d')), \
-      'DiagnosePod'     : (0, ('0x1e', '1d')), \
-      'CancelDelivery'  : (0, ('1f'  , '1d')), \
-      'CancelBasal'     : (0, ('1f01', '1d')), \
-      'CancelTB'        : (0, ('1f02', '1d')), \
-      'CancelBolus'     : (0, ('1f04', '1d')), \
-      'CancelAll'       : (0, ('1f07', '1d')) \
+      'PrgBasalSch'     : (0, ('1a13', '1d'))
        }
-
     return actionDict
+
+
+def getPodInitDict():
+    """
+    This is the list of messages that should be sequential for a successful "action"
+        getPodInitDict {
+            seq# : ('initStepName', message_type, ppRange), \
+            ... \
+            }
+    The expected pod_progress (pp) for the 01 after 0x7 can be 1 or 2,
+    so had to set up as a range
+    """
+    podInitDict = { \
+            0           : ( 'assignID', '0x7',  [0]), \
+            1           : ( 'successID', '01',  [1, 2]), \
+            2           : ( 'setupPod', '0x3',  [1, 2]), \
+            3           : ( 'successSetup', '01',  [3]), \
+            4           : ( 'cnfgDelivFlags', '0x8',  [3]), \
+            5           : ( 'successDF', '1d',  [3]), \
+            6           : ( 'cnfgAlerts1', '0x19',  [3]), \
+            7           : ( 'successCA1', '1d',  [3]), \
+            8           : ( 'prime', '1a17',  [3]), \
+            9           : ( 'successPrime', '1d',  [4]), \
+            10          : ( 'programBasal', '1a13', [4]), \
+            11          : ( 'successBasal', '1d',  [6]), \
+            12          : ( 'cnfgAlerts2', '0x19',  [6]), \
+            13          : ( 'successCA2', '1d',  [6]), \
+            14          : ( 'insertCanu', '1a17',  [6]), \
+            15          : ( 'successIns', '1d',  [7]), \
+            16          : ( 'statusCheck', '0e',  [7]), \
+            17          : ( 'initSuccess', '1d',  [8])
+            }
+
+    return podInitDict
