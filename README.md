@@ -1,6 +1,14 @@
 # OmniLoopMessageParser
 python code to parse the messages found in Loop Reports from loop-priv
 
+## April 10, 2020
+Added parsing of the 0x01 pod responses during initialization and add flag to direct type of results posted (just init vs full analysis).  Have modularized part of the output stream (to terminal and or output file)
+
+ToDo:
+* fix the time parsing with the Device Communication log
+* add message sequence number to the pod message analysis
+* finish the modularization of output
+
 ## March 3, 2020
 Start modifying code - attempt to keep this always working with documentation not too out of date.  But this is a moving target for a bit.
 The messageLog (omnipod only) has been replaced by Device Communication Log.
