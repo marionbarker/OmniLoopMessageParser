@@ -158,7 +158,7 @@ def processActionFrame(actionFrame, podState):
           'minResponseTime':  np.min(respTime), \
           'maxResponseTime': np.max(respTime) }
         # for Temp Basal, add a few more items to the subDict
-        if thisName == 'TB':
+        if thisName == 'CnxSetTmpBasal':
             startTime = row['cumStartSec']
             deltaTime = np.diff(startTime)
             deltaTime = list(deltaTime)

@@ -14,42 +14,27 @@ analyzeAllPodsInDeviceLog
         noPod + address3: group 3, etc
 """
 
-def analyzeAllPodsInDeviceLog(thisFile, podFrame, podDict, fault_report, outFile):
-    # Put in debug printout grouped by vFlag
-    vFlag = 0
-    # passedVFlag is handed off to next function for each pod address
-    # if only one address, then set to 1
-    passedVFlag = 1
-
+def analyzeAllPodsInDeviceLog(thisFile, podFrame, podDict, fault_report, outFile, vFlag):
     # break podFrame into chunks and process each chunk
     podAddress, breakPoints = findBreakPoints(podFrame)
-    if len(breakPoints) > 1:
-        passedVFlag = 0;
 
-    frameLength = len(podFrame)
-    if vFlag:
-        print('Unique Pod Addresses, out of : {:6d} lines'.format(frameLength))
-        print(podAddress)
-        print('Break Points are at rows:')
-        print(breakPoints)
+    numChunks = len(breakPoints)-1
 
     idx = 0
     startRow = breakPoints[idx]
     for val in breakPoints:
         idx = idx+1
-        if idx >= len(breakPoints):
+        if idx > numChunks:
             break
         stopRow = breakPoints[idx]-1
         thisFrame = podFrame.loc[startRow:stopRow][:]
         startRow = stopRow+1
-        if vFlag:
-            print(thisFrame.head(2))
-            print(thisFrame.tail(2))
 
         print('__________________________________________\n')
-        print(f'      Information for pod address : {podAddress[idx-1]}')
+        print('  Report on Omnipod from {:s}'.format(thisFile))
+        print('     Block {:d} of {:d}\n'.format(idx, numChunks))
 
         df, podState, actionFrame, actionSummary = analyzePodMessages(thisFile,
-            thisFrame, podDict, fault_report, outFile, passedVFlag)
+            thisFrame, podDict, fault_report, outFile, vFlag)
 
     return df, podState, actionFrame, actionSummary

@@ -6,5 +6,8 @@ from getAnalysisIO import *
 filePath, outFile = getAnalysisIO(1,1)
 fileDateList = get_file_list(filePath)
 
+vFlag = 0
+outFile = 0
+
 ## Rev3 analysis
-df, podState, actionFrame, actionSummary = main(filePath, fileDateList[-1][0], outFile)
+df, podState, actionFrame, actionSummary = main(filePath, fileDateList[-1][0], outFile, vFlag)

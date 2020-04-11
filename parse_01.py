@@ -50,11 +50,10 @@ def parse_01(msg):
     mtype = byteList[0]
     mlen = byteList[1]
     msgDict = { }
-    msgDict['msg_type'] = '01_unkn'
+    msgDict['message_type'] = '0x1'
     msgDict['mlen'] = mlen
 
     if mlen == 0x15:
-        msg_type = '01_for07'
         pmVer = byteList[2:5]
         piVer = byteList[5:8]
         always2 = byteList[8]
@@ -66,10 +65,10 @@ def parse_01(msg):
         # mask gS
         gg = gS & 0xC0 >> 6
         ss = gS & 0x3F
+        msgDict['message_type'] = '0115'
         msgDict['recv_gain'] = gg
         msgDict['rssi_value'] = ss
     elif mlen == 0x1b:
-        msg_type = '01_for03'
         fixedWord = byteList[2:9]
         pmVer = byteList[9:12]
         piVer = byteList[12:15]
@@ -78,18 +77,17 @@ def parse_01(msg):
         podLot = combineByte(byteList[17:21])
         podTid = combineByte(byteList[21:25])
         podAddr = combineByte(byteList[25:29])
+        msgDict['message_type'] = '011b'
         msgDict['fixedWord'] = fixedWord
-    else:
-        return msgDict
 
-    # fill in rest of msgDict
-    msgDict['msg_type'] = msg_type
-    msgDict['pmVer'] = pmVer
-    msgDict['piVer'] = piVer
-    msgDict['pod_progress']  = pprog
-    msgDict['pod_lot']  = podLot
-    msgDict['pod_tid']  = podTid
-    msgDict['pod_addr']  = hex(podAddr)
-    msgDict['raw_value'] = msg
+    if mlen == 0x15 or mlen == 0x1b:
+        # fill in rest of common msgDict
+        msgDict['pmVersion'] = versionString(pmVer)
+        msgDict['piVersion'] = versionString(piVer)
+        msgDict['pod_progress']  = pprog
+        msgDict['lot']  = podLot
+        msgDict['tid']  = podTid
+        msgDict['address']  = hex(podAddr)
+        msgDict['raw_value'] = msg
 
     return msgDict

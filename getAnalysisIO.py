@@ -13,6 +13,7 @@ def getAnalysisIO(pathOption, outputOption):
     #    outputOption == 0 return 0 for output file (.csv)
     #                    1 return name for output_master_rev4.csv (post public release)
     #                    2 return name for test.csv
+    #                    3 return name for init_master.csv
 
     thisPlatform = platform.system()
 
@@ -40,6 +41,8 @@ def getAnalysisIO(pathOption, outputOption):
         outFile = topPath + '/' + 'LoopReportPythonAnalysis' + '/' + 'output_master_rev4.csv'
     elif outputOption == 2:
         outFile = topPath + '/' + 'LoopReportPythonAnalysis' + '/' + 'test.csv'
+    elif outputOption == 3:
+        outFile = topPath + '/' + 'LoopReportPythonAnalysis' + '/' + 'init_master.csv'
     else:
         print('  outputOption not recognized for getAnalysisIO')
         outFile = 0

@@ -24,7 +24,7 @@ def printActionSummary(actionSummary, vFlag):
           subDict['minResponseTime'], subDict['maxResponseTime'], \
           subDict['countIncomplete']))
         # deprecated (Pete fixed code)
-        if 0 and keys=='CnxSetTempBasal':
+        if keys=='CnxSetTmpBasal':
             numShortTB          = subDict['numShortTB']
             numSchBasalbeforeTB = subDict['numSchBasalbeforeTB']
             numRepeatedTB       = subDict['numRepeatedTB']
@@ -32,7 +32,7 @@ def printActionSummary(actionSummary, vFlag):
             numrepeated19MinTB  = subDict['numrepeated19MinTB']
 
     # deprecated (Pete fixed code)
-    if 0 and vFlag:
+    if vFlag==1:
         print('\n    #TB with SchBasal before     : {:5d}'.format(numSchBasalbeforeTB))
         print('    #TB sent at <30s interval    : {:5d}'.format(numShortTB))
         print('    #TB repeated value           : {:5.0f}'.format(numRepeatedTB))
@@ -40,11 +40,11 @@ def printActionSummary(actionSummary, vFlag):
         print('    #TB rep value >=30s & <19min : {:5.0f}'.format(numrepeated19MinTB))
 
 def printInitFrame(podInitFrame):
-    print('idx, timeCumSec, status, expectAction, expectMT, actualMT, ' \
+    print('\n  idx, CumSec, status,  expectAction, expectMT, actualMT, ' \
            'expectPP, actualPP, ppMeaning')
     for index, row in podInitFrame.iterrows():
-        print(' {:5d}, {:5.0f}, {:2d}, {:14s}, {:5s}, {:5s}, {:d}, ' \
-            '{:d}, {:14s}'.format(index,
+        print('  {:2d}, {:5.0f}, {:5d},   {:14s}, {:8s}, {:8s}, {:8d}, ' \
+            '{:8d}, {:14s}'.format(index,
             row['timeCumSec'], row['status'], row['expectAction'],
             row['expectMT'], row['actualMT'], row['expectPP'],
             row['actualPP'], row['ppMeaning']))
@@ -54,8 +54,9 @@ def writePodInfo(podInfo, nomNumSteps):
         if podInfo['numInitSteps'] > nomNumSteps:
             print('    *** pod exceeded nominal init steps of {:d}' \
                   ' ***'.format(nomNumSteps))
-        print('    Pod: Address {:s}, Lot {:s}, gain {:d}, rssi {:d}, ' \
-              'numInitSteps {:d}'.format(podInfo['pod_addr'], podInfo['lot'],
+        print('    Pod: Address {:s}, Lot {:s}, PI: {:s}, gain {:d}, rssi {:d}, ' \
+              'numInitSteps {:d}'.format(podInfo['address'], podInfo['lot'],
+              podInfo['piVersion'],
               podInfo['recv_gain'], podInfo['rssi_value'], podInfo['numInitSteps']))
     return
 
@@ -77,28 +78,7 @@ def writePodInfoToOutputFile(outFile, lastDate, thisFile, podInfo):
     stream_out.write('\n')
     stream_out.close()
 
-""" writePodDict is deprecated
-def writePodDict(thisFile, podDict, podInfo):
+def writePodDict(podDict):
     # print a few things then returns
-    print(' Extracted from ## OmnipodPumpManager')
-    if 'lot' in podDict:
-        lot = podDict['lot']
-        tid = podDict['tid']
-        piv = podDict['piVersion']
-    else:
-        lot = 'unknown'
-        tid = 'unknown'
-        piv = 'unknown'
-    print('  Pod Lot: {:s}, Pod TID: {:s}, PI: {:s}\n'.format(lot, tid, piv))
-
-    if 'rssi_value' in podInfo:
-        lot = podInfo['lot']
-        tid = podInfo['tid']
-        piv = podInfo['piVersion']
-        print(' Extracted from 0x01 Message')
-        print('  Pod Lot: {:s}, Pod TID: {:s}, PI: {:s}'.format(lot, tid, piv))
-        print('  More pod info: recv_gain: {:d}, rssi_value: {:d}, address: {:s}\n'.format(podInfo['recv_gain'],
-            podInfo['rssi_value'], podInfo['pod_addr']))
-
-    return lot, tid, piv
-"""
+    print('    Pod: Address {:s}, Lot {:s}, PI: {:s} (From Pod Manager, newest pod)'.format(podDict['address'],
+            podDict['lot'], podDict['piVersion']))

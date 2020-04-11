@@ -3,6 +3,7 @@ from messageLogs_functions import *
 from utils import *
 from utils_report import *
 from podStateAnalysis import *
+from podInitAnalysis import *
 from messagePatternParsing import *
 from checkAction import *
 
@@ -12,7 +13,11 @@ analyzePodMessages
 """
 
 def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag):
-    # preprocess podFrame to be from a single pod 
+    # preprocess podFrame to be from a single pod
+    # new use of vFlag.  If one, print out pod init lines then continue
+    # if 3, return after reporting pod init
+    REPORT_INIT_ONLY = 3
+    nomNumInitSteps = 18  # nominal number steps to initialize pod
 
     # This is time (sec) radio on Pod stays awake once comm is initiated
     radio_on_time   = 30
@@ -32,7 +37,45 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
     #     (the state for extended_bolus_active is NOT included (always False))
     #   Includes values for requested bolus and TB
     # Note that .iloc for df and podState are identical
-    podState, emptyMessageList, faultProcessedMsg = getPodState(df)
+    podState, emptyMessageList, faultProcessedMsg, podInfo = getPodState(df)
+
+    # checkAction returns actionFrame with indices and times for every action
+    #     completed actions and incomplete requests are separate columns
+    #     see also function getActionDict
+    #   actionFrame  dataframe of processed analysis from podState (by action)
+    #   initIdx      indices in podState to extract pod initilization
+    actionFrame, initIdx = checkAction(podState)
+
+    # if pod initialization exists, put that into podID, otherwise use podDict
+    podID, hasPodInit = returnPodID(podDict, podInfo)
+
+    # if pod initialization exists, get just the frames associated with it
+    if hasPodInit:
+        podInfo['numInitSteps'] = len(initIdx)
+        thisFrame = df.iloc[initIdx]
+        podInitFrame = getInitState(thisFrame)
+
+    # Special handling for vFlag = 3 (aka REPORT_INIT_ONLY)
+    if vFlag == REPORT_INIT_ONLY:
+        # If number of initializations steps not nominal, print initFrame
+        if hasPodInit and podInfo['numInitSteps']!=nomNumInitSteps:
+            printInitFrame(podInitFrame)
+        # output summary to outfile if provided
+        if hasPodInit and outFile:
+            writePodInfoToOutputFile(outFile, lastDate, thisFile, podInfo)
+        # return now, so set returned args not yet defined to []
+        actionSummary = []
+        return df, podState, actionFrame, actionSummary
+
+    # continue if vFlag is not 3 (aka REPORT_INIT_ONLY)
+    if hasPodInit:
+        writePodInfo(podInfo, nomNumInitSteps)
+    else:
+        writePodDict(podDict)
+
+    if vFlag == 2:
+        if hasPodInit:
+            printInitFrame(podInitFrame)
 
     # From the podState, extract some values to use in reports
     msgLogHrs = podState.iloc[-1]['timeCumSec']/3600
@@ -66,27 +109,24 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
         rawFault = 'n/a'
         thisFault = 'PodInfoFaultEvent'
 
-    # checkAction returns actionFrame with indices and times for every action
-    #     completed actions and incomplete requests are separate columns
-    #     see also function getActionDict
-    #   actionFrame  dataframe of processed analysis from podState (by action)
-    #   initIdx      indices in podState to extract pod initilization
-    actionFrame, initIdx = checkAction(podState)
-
     # process the action frame (returns a dictionary plus total completed message count)
     actionSummary, totalCompletedMessages = processActionFrame(actionFrame, podState)
     percentCompleted = 100*totalCompletedMessages/number_of_messages
 
+    # print(f') doesn't work with {dict items}
+    # fix this eventually, for not - rename them
+    lot = podID['lot']
+    tid = podID['tid']
+    piv = podID['piVersion']
+
     if outFile == 2:
         # print a few things then returns
-        lot = podDict['lot']
-        tid = podDict['tid']
-        piv = podDict['piVersion']
         print(f'{thisPerson},{thisAntenna},{thisFault},{first_command},{last_command},{msgLogHrs},{lot},{tid},{piv}')
         actionSummary = []
         return df, podState, actionFrame, actionSummary
 
     if True:
+        #
         # print out summary information to command window
         # need this True to get the actionSummary used to fill csv file
         print('\n            First message for pod :', first_command)
@@ -112,11 +152,6 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
                 print('    An 0x0202 message of {:s} reported - this wipes out registers'.format(thisFault))
             else:
                 print('    An 0x0202 message of {:s} reported - details later'.format(thisFault))
-        if len(initIdx)>1:
-            print('\n   Pod was initialized with {:d} messages, {:d} AssignID, {:d} SetUpPod required'.format(len(initIdx),
-               numberOfAssignID, numberOfSetUpPod))
-        else:
-            print('\n  Pod already initialized before report was generated')
 
         if emptyMessageList:
             print('    ***  Detected {:d} empty message(s) during life of the pod'.format(len(emptyMessageList)))
@@ -158,8 +193,8 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
             stream_out.write('\n')
 
         # Extract items from actionSummary
-        if actionSummary.get('TB'):
-            subDict = actionSummary.get('TB')
+        if actionSummary.get('CnxSetTmpBasal'):
+            subDict = actionSummary.get('CnxSetTmpBasal')
             numberOfTB = subDict['countCompleted']
             numberScheduleBeforeTempBasal = subDict['numSchBasalbeforeTB']
             numberTBSepLessThan30sec = subDict['numShortTB']
@@ -211,7 +246,7 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
         stream_out.write(f'{numrepeated19MinTB},{numIncomplCancelTB},')
         stream_out.write('{:.2f},'.format(insulinDelivered))
         stream_out.write('{:d}, {:d}, {:d},'.format(len(initIdx), numberOfAssignID, numberOfSetUpPod))
-        stream_out.write('{:s}, {:s}, {:s},'.format(podDict['lot'], podDict['piVersion'], podDict['pmVersion']))
+        stream_out.write('{:s}, {:s},'.format(lot, piv))
         stream_out.write(f'{rawFault},{thisFile}')
         stream_out.write('\n')
         stream_out.close()

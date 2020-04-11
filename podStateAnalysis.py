@@ -18,6 +18,7 @@ def getPodState(frame):
        podStateFrame       dataframe with pod state extracted from messages
        emptyMessageList    indices of any messages with blank commands
        faultProcessedMsg   dictionary for the fault message
+       podInfo             dictionary for pod
 
     """
     # initialize values for pod states that we will update
@@ -34,6 +35,7 @@ def getPodState(frame):
     emptyMessageList = []
     radio_on_time = 30 # radio is on for 30 seconds every time pod wakes up
     radioOnCumSec = radio_on_time
+    podInfo = {}
 
     list_of_states = []
 
@@ -82,6 +84,22 @@ def getPodState(frame):
             TB    = pmsg['temp_basal_active']
             schBa = pmsg['basal_active']
 
+        elif message_type == '0115':
+            pod_progress = pmsg['pod_progress']
+            podInfo['piVersion'] = pmsg['piVersion']
+            podInfo['lot']  = str(pmsg['lot'])
+            podInfo['tid']  = str(pmsg['tid'])
+            podInfo['address']  = pmsg['address']
+            podInfo['recv_gain']  = pmsg['recv_gain']
+            podInfo['rssi_value']  = pmsg['rssi_value']
+
+        elif message_type == '011b':
+            pod_progress = pmsg['pod_progress']
+            podInfo['piVersion'] = pmsg['piVersion']
+            podInfo['lot']  = str(pmsg['lot'])
+            podInfo['tid']  = str(pmsg['tid'])
+            podInfo['address']  = pmsg['address']
+
         elif message_type == '1f':
             #Bolus = Bolus and not pmsg['cancelBolus']
             #TB    = TB and not pmsg['cancelTB']
@@ -95,4 +113,4 @@ def getPodState(frame):
                               reqBolus, Bolus, TB, schBa, msg))
 
     podStateFrame = pd.DataFrame(list_of_states, columns=colNames)
-    return podStateFrame, emptyMessageList, faultProcessedMsg
+    return podStateFrame, emptyMessageList, faultProcessedMsg, podInfo

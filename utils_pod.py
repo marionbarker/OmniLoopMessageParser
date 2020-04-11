@@ -45,8 +45,8 @@ def getActionDict():
             first.  Then the sequences of 2 commands are identified next
     """
     actionDict = { \
-      'AssignID'        : (0, ('0x7' , '01')), \
-      'SetupPod'        : (0, ('0x3' , '01')), \
+      'AssignID'        : (0, ('0x7' , '0115')), \
+      'SetupPod'        : (0, ('0x3' , '011b')), \
       'CnfgDelivFlg'    : (0, ('0x8' , '1d')), \
       'CnxSetTmpBasal'  : (2, ('1f02', '1d', '1a16', '1d')), \
       'Status&Bolus'    : (2, ('0e',   '1d', '1a17', '1d')), \
@@ -57,7 +57,7 @@ def getActionDict():
       'SetBeeps'        : (0, ('0x1e', '1d')), \
       'CnxDelivery'     : (0, ('1f'  , '1d')), \
       'CnxBasal'        : (0, ('1f01', '1d')), \
-      'CnxTBAlone'      : (0, ('1f02', '1d')), \
+      'CnxTmpBasal'      : (0, ('1f02', '1d')), \
       'CnxBolus'        : (0, ('1f04', '1d')), \
       'CnxAll'          : (0, ('1f07', '1d')), \
       'BolusAlone'      : (0, ('1a17', '1d')), \
@@ -79,9 +79,9 @@ def getPodInitDict():
     """
     podInitDict = { \
             0           : ( 'assignID', '0x7',  [0]), \
-            1           : ( 'successID', '01',  [1, 2]), \
+            1           : ( 'successID', '0115',  [1, 2]), \
             2           : ( 'setupPod', '0x3',  [1, 2]), \
-            3           : ( 'successSetup', '01',  [3]), \
+            3           : ( 'successSetup', '011b',  [3]), \
             4           : ( 'cnfgDelivFlags', '0x8',  [3]), \
             5           : ( 'successDF', '1d',  [3]), \
             6           : ( 'cnfgAlerts1', '0x19',  [3]), \
@@ -99,3 +99,32 @@ def getPodInitDict():
             }
 
     return podInitDict
+
+def returnPodID(podDict, podInfo):
+    """
+    Some files have the OmnipodManager information (podDict)
+    Some files have the 0x011b message which has more details (podInfo)
+    Determine what is available and return the information in podID
+    """
+    # configure defaults:
+    podID = { \
+        'lot': 'unknown', \
+        'tid': 'unknown', \
+        'piVersion': 'unknown', \
+        'address': 'unknown'}
+    hasPodInit = False
+    # if captured initialization steps, update podInfo and  get podInitFrame
+    if podInfo.get('rssi_value'):
+        hasPodInit = True
+        podID['lot'] = podInfo['lot']
+        podID['tid'] = podInfo['tid']
+        podID['piVersion'] = podInfo['piVersion']
+        podID['address'] = podInfo['address']
+    # otherwise use podDict if OmnipodManager was found in file
+    elif podDict.get('lot'):
+        podID['lot'] = podDict['lot']
+        podID['tid'] = podDict['tid']
+        podID['piVersion'] = podDict['piVersion']
+        podID['address'] = podDict['address']
+
+    return podID, hasPodInit

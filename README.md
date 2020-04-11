@@ -42,17 +42,22 @@ Download one Loop Report from Zulip and place in folder for that person; insert 
 
 * python whatIsLastReport.py  # to make sure file is in right place
 
-* python runLastLoopReport.py # to report formatted information to the terminal window and add a row to the output_master_rev3.csv file
+* python runLastLoopReport.py # to report formatted information to the terminal window
 
 If there is anything off-nominal or interesting, copy and paste that to the zulip window, otherwise, just do a thumbs-up emoji to indicate report was captured.
-
-Repeat until all new reports have been downloaded
-
-Copy the new lines from the csv and Paste Values (Shift-Ctrl-V) to end of the Current Uploaded tab of the google sheet (link is in Zulip)
 
 # Main Code
 
 ## main.py :
+Input arguments:
+* thisPath  : top path where the Loop Reports are filed on local computer
+* thisFile  : folderName/reportName  (FolderName is the person's name)
+* outFile   : absolute filename for .csv output, output content depends on vFlag
+* vFlag
+**     : if 0: output analysis to terminal window
+**     : if 1: output pod session analysis to outFile
+**     : if 2: report init steps to terminal if available
+**     : if 3: output init summary to outFile, init steps if too many, skip rest of pod analysis
 
 Main routine for reading file and deciding what to do based off report contents
 
@@ -63,12 +68,13 @@ Top Level functions called by main:
 
 ## analyzeAllPodsInDeviceLog.py :
 
-WIP - don't put in documentation yet
+Break the pod messages by Pod address, with noPod going to next address
+Call analyzePodMessages for each chunk of messages
 
 ## analyzePodMessages.py :
 
 Routine for processing and reporting results for a single pod from Loop Report.
-WIP - plan to move some of the common stuff from here up to main
+Move some of the common stuff to utils
 
 Parses the message logs, prints a report and, if asked, outputs a row to a named csv file.
 
@@ -122,6 +128,7 @@ The following functions parse the indicated command and return result in a msgDi
 * parse_1a17.py
 * parse_1d.py
 * parse_1f.py
+* parse_01.py
 * parse_02.py
 * parse_06.py
 * parse_0e.py
