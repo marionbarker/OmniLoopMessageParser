@@ -27,8 +27,8 @@ def parse_1f(msg):
     """
 
     msgDict = { }
-    msgDict['message_type'] = '1f'
-    msgDict['raw_value']    = msg
+    msgDict['msg_type'] = '1f'
+    msgDict['msg_body']    = msg
 
     byteMsg = bytearray.fromhex(msg)
     byteList = list(byteMsg)
@@ -42,8 +42,8 @@ def parse_1f(msg):
     suspend     = (cancelByte & 0x01) != 0
 
     msgDict = { }
-    msgDict['message_type'] = '1f'
-    msgDict['raw_value']    = msg
+    msgDict['msg_type'] = '1f'
+    msgDict['msg_body']    = msg
     msgDict['mtype'] = mtype
     msgDict['mlen'] = mlen
     msgDict['nonce'] = nonce

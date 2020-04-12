@@ -70,8 +70,8 @@ def parse_1a13(msg):
     scheduleEntryIndex = byteList[mlen+5]
 
     msgDict = { }
-    msgDict['message_type'] = '1a13'
-    msgDict['raw_value']    = msg
+    msgDict['msg_type'] = '1a13'
+    msgDict['msg_body']    = msg
     msgDict['mtype'] = mtype
     msgDict['mlen'] = mlen
     msgDict['nonce'] = nonce

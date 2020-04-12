@@ -53,9 +53,9 @@ def parse_1d(msg):
     #print(combineByte(dword0) >> 15 & 0x1FFF)
 
     msgDict = { }
-    msgDict['message_type'] = '1d'
+    msgDict['msg_type'] = '1d'
     msgDict['mtype'] = byte_0
-    msgDict['raw_value']    = msg
+    msgDict['msg_body']    = msg
 
     msgDict['extended_bolus_active']   = (byte_1 >> 4 & 0x8) != 0
     msgDict['immediate_bolus_active']  = (byte_1 >> 4 & 0x4) != 0

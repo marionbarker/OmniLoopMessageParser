@@ -83,8 +83,8 @@ def parse_1a16(msg):
         print('Warning - temp basal not properly configured, # microsec')
 
     msgDict = { }
-    msgDict['message_type'] = '1a16'
-    msgDict['raw_value']    = msg
+    msgDict['msg_type'] = '1a16'
+    msgDict['msg_body']    = msg
     msgDict['mtype'] = mtype
     msgDict['mlen'] = mlen
     msgDict['nonce'] = nonce

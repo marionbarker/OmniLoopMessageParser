@@ -12,14 +12,14 @@ from parse_1a17 import *
 from parse_1d import *
 from parse_1f import *
 
-# note - parsers not finished return a hex string for 'message_type', e.g., '0x01'
+# note - parsers not finished return a hex string for 'msg_type', e.g., '0x01'
 #        whereas parsers that have been finished use '1a16' or '1d'
 def ignoreMsg(msg):
     msgDict = {}
     byteMsg = bytearray.fromhex(msg)
     msgDict['mtype'] = byteMsg[0]
-    msgDict['message_type'] = hex(byteMsg[0])
-    msgDict['raw_value']    = msg
+    msgDict['msg_type'] = hex(byteMsg[0])
+    msgDict['msg_body']    = msg
     return msgDict
 
 def parse_1a(msg):

@@ -48,8 +48,17 @@ def parse_02(msg):
 
     byteMsg = bytearray.fromhex(msg)
     byteList = list(byteMsg)
+    #print(byteMsg)
+    #print(byteList)
     byte_0 = byteList[0]
     byte_1 = byteList[1]
+    if byte_1 < 4:
+        msgDict = { }
+        msgDict['msg_type'] = '0x2'
+        msgDict['msg_body']    = msg
+        msgDict['mtype'] = byte_0
+        return msgDict
+
     byte_2 = byteList[2]
     byte_3 = byteList[3]
     byte_4 = byteList[4]
@@ -69,8 +78,8 @@ def parse_02(msg):
     cksm   = combineByte(byteList[24:26])
 
     msgDict = { }
-    msgDict['message_type'] = '02'
-    msgDict['raw_value']    = msg
+    msgDict['msg_type'] = '02'
+    msgDict['msg_body']    = msg
     msgDict['mtype'] = byte_0
     msgDict['fault_type'] = byte_2
     if msgDict['fault_type'] != 2:

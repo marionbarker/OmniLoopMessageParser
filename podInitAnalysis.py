@@ -21,9 +21,9 @@ def getInitState(frame):
     # initialize values for pod states that we will update
     list_of_states = []
     timeCumSec = 0
-    # increment initIdx upon success matching message_type and pod_progress
+    # increment initIdx upon success matching msg_type and pod_progress
     initIdx = 0
-    actualPP = 0
+    actualPP = -1
     podInitDict = getPodInitDict()
     statusOK = 1
     statusNotOK = 0
@@ -32,7 +32,7 @@ def getInitState(frame):
     colNames = ('df_idx', 'timeStamp', 'time_delta', 'timeCumSec', \
                 'status', 'expectAction', 'expectMT', 'actualMT', \
                 'expectPP', 'actualPP', 'ppRange', \
-                'ppMeaning', 'raw_value' )
+                'ppMeaning', 'msg_body' )
 
     # iterate through the DataFrame
     for index, row in frame.iterrows():
@@ -45,15 +45,15 @@ def getInitState(frame):
         expectMT = podInitDict[initIdx][1]
         ppRange = podInitDict[initIdx][2]
         expectPP = ppRange[0]
-        msg = row['raw_value']
+        msg = row['msg_body']
         if msg == '':
-            print('Empty command for {} at dataframe index of {:d}'.format(row['type'], index))
+            print('  *** During pod init: row {:4d}, Empty Message (ACK) {:s}'.format(index, row['type']))
             pmsg = {}
-            pmsg['message_type'] = 'unknown'
+            pmsg['msg_type'] = 'empty'
         else:
             pmsg = processMsg(msg)
 
-        actualMT = pmsg['message_type']
+        actualMT = pmsg['msg_type']
         if 'pod_progress' in pmsg:
             actualPP = pmsg['pod_progress']
             ppMeaning = getPodProgressMeaning(actualPP)

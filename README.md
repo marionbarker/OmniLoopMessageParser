@@ -1,5 +1,12 @@
 # OmniLoopMessageParser
-python code to parse the messages found in Loop Reports from loop-priv
+python code to parse the messages found in Loop Reports
+
+## April 11, 2020
+Add seqNum and CRC16 to DataFrame read from Loop Report.
+Refactor some names:
+* from command to msg
+* from message_type to msg_type
+* from raw_value to msg_body (the CRC16 is removed from omnipod messages)
 
 ## April 10, 2020
 Added parsing of the 0x01 pod responses during initialization and add flag to direct type of results posted (just init vs full analysis).  Have modularized part of the output stream (to terminal and or output file)

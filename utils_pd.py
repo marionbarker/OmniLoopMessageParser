@@ -29,45 +29,29 @@ def createSubsetDataFrame (frame, indexList):
   as the break point
 """
 def findBreakPoints(podFrame):
-    podAddress = list(podFrame['address'].unique())
-    if 'noPod' in podAddress:
-        podAddress.remove('noPod')
-    frameLength = len(podFrame)
-    # initialize firstRow as an empty list
-    firstRow = []
+    # get list of addresses
+    addressList = podFrame['address'].to_list()
 
-    for val in podAddress:
-        mask = podFrame['address'] == val
-        idx = next(iter(mask.index[mask]), False)
-        firstRow.append(idx)
+    # iterate to find breakPoints
+    frameLength = len(addressList)
+    breakPoints = [0]
+    idx = 0
+    noPodAddress = 'ffffffff'
+    thisAddress = addressList[idx]
+    for val in addressList:
+        if (thisAddress != val) and (thisAddress != noPodAddress):
+            breakPoints.append(idx)
+        thisAddress = val
+        idx = idx+1
 
-    # set up default breakPoint array (full podFrame)
-    breakPoints = [0, frameLength]
+    # special cases where final msg is noPodAddress
+    if breakPoints[-1] != frameLength:
+        breakPoints.append(frameLength)
 
-    # if 'noPod' split points exist, return them
-    if len(firstRow) > 1:
-        # use lastRow to accumlate row indices
-        lastRow = [frameLength]
-        idx = 0
-        for val in firstRow:
-            lastRow.insert(idx, val-2)
-            idx = idx+1
-
-        # replace the first value with 0 instead of -2
-        lastRow[0] = 0
-
-        breakPoints = lastRow
-
-    # check for special (and most important case), where podFrame ends in 'noPod'
-    oldLast = breakPoints[-1]
-    if podFrame.iloc[breakPoints[-1]-1]['address'] == 'noPod':
-        thisIdx = breakPoints[-1]
-        while thisIdx > breakPoints[-2]:
-            if podFrame.iloc[thisIdx-1]['address'] != 'noPod':
-                break
-            thisIdx = thisIdx-1
-        breakPoints[-1] = thisIdx
-        breakPoints.append(oldLast)
+    # get a list of the unique pod addresses in frame
+    podAddresses = list(podFrame['address'].unique())
+    if noPodAddress in podAddresses:
+        podAddresses.remove(noPodAddress)
 
     # all done, return list
-    return podAddress, breakPoints
+    return podAddresses, breakPoints

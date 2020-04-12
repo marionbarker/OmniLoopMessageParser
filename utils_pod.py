@@ -39,10 +39,10 @@ def getActionDict():
     These will be searched for in this order and those indices removed from
     pod frame before the next search (see getPodState in checkAction.py)
 
-    Ordering: with the exception of commands that are only used during
+    Ordering: with the exception of messages that are only used during
             initialization, put the sequences of 4 messages first so that
             getPodState pulls those out of the frame of sequential frames
-            first.  Then the sequences of 2 commands are identified next
+            first.  Then the sequences of 2 messages are identified next
     """
     actionDict = { \
       'AssignID'        : (0, ('0x7' , '0115')), \
@@ -71,14 +71,14 @@ def getPodInitDict():
     """
     This is the list of messages that should be sequential for a successful "action"
         getPodInitDict {
-            seq# : ('initStepName', message_type, ppRange), \
+            seq# : ('initStepName', msg_type, ppRange), \
             ... \
             }
     The expected pod_progress (pp) for the 01 after 0x7 can be 1 or 2,
     so had to set up as a range
     """
     podInitDict = { \
-            0           : ( 'assignID', '0x7',  [0]), \
+            0           : ( 'assignID', '0x7',  [-1]), \
             1           : ( 'successID', '0115',  [1, 2]), \
             2           : ( 'setupPod', '0x3',  [1, 2]), \
             3           : ( 'successSetup', '011b',  [3]), \
@@ -113,7 +113,7 @@ def returnPodID(podDict, podInfo):
         'piVersion': 'unknown', \
         'address': 'unknown'}
     hasPodInit = False
-    # if captured initialization steps, update podInfo and  get podInitFrame
+    # if captured initialization steps, update podInfo
     if podInfo.get('rssi_value'):
         hasPodInit = True
         podID['lot'] = podInfo['lot']

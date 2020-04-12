@@ -58,8 +58,8 @@ def parse_1a17(msg):
     #              0  1  2        6  7    9  10   12   14
     #First half:   1a LL NNNNNNNN 02 CCCC HH SSSS PPPP 0ppp [napp...]  17...
     msgDict = { }
-    msgDict['message_type'] = '1a17'
-    msgDict['raw_value']    = msg
+    msgDict['msg_type'] = '1a17'
+    msgDict['msg_body']    = msg
 
     byteMsg = bytearray.fromhex(msg)
     byteList = list(byteMsg)
@@ -88,8 +88,8 @@ def parse_1a17(msg):
         print('Warning - bolus not properly configured, extended pulses not 0')
 
     msgDict = { }
-    msgDict['message_type'] = '1a17'
-    msgDict['raw_value']    = msg
+    msgDict['msg_type'] = '1a17'
+    msgDict['msg_body']    = msg
     msgDict['mtype'] = mtype
     msgDict['mlen'] = mlen
     msgDict['nonce'] = nonce

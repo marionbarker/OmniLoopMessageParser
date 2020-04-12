@@ -50,7 +50,7 @@ def parse_01(msg):
     mtype = byteList[0]
     mlen = byteList[1]
     msgDict = { }
-    msgDict['message_type'] = '0x1'
+    msgDict['msg_type'] = '0x1'
     msgDict['mlen'] = mlen
 
     if mlen == 0x15:
@@ -65,7 +65,7 @@ def parse_01(msg):
         # mask gS
         gg = gS & 0xC0 >> 6
         ss = gS & 0x3F
-        msgDict['message_type'] = '0115'
+        msgDict['msg_type'] = '0115'
         msgDict['recv_gain'] = gg
         msgDict['rssi_value'] = ss
     elif mlen == 0x1b:
@@ -77,7 +77,7 @@ def parse_01(msg):
         podLot = combineByte(byteList[17:21])
         podTid = combineByte(byteList[21:25])
         podAddr = combineByte(byteList[25:29])
-        msgDict['message_type'] = '011b'
+        msgDict['msg_type'] = '011b'
         msgDict['fixedWord'] = fixedWord
 
     if mlen == 0x15 or mlen == 0x1b:
@@ -88,6 +88,6 @@ def parse_01(msg):
         msgDict['lot']  = podLot
         msgDict['tid']  = podTid
         msgDict['address']  = hex(podAddr)
-        msgDict['raw_value'] = msg
+        msgDict['msg_body'] = msg
 
     return msgDict

@@ -26,11 +26,11 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
     df = generate_table(podFrame, radio_on_time)
 
     # set up a few reportable values here from df, time is in UTC
-    first_command = df.iloc[0]['time']
-    last_command = df.iloc[-1]['time']
+    first_msg = df.iloc[0]['time']
+    last_msg = df.iloc[-1]['time']
     send_receive_messages = df.groupby(['type']).size()
     number_of_messages = len(df)
-    lastDate = last_command.date()
+    lastDate = last_msg.date()
 
     # Process df to generate the podState associated with every message
     #   Updates to states occur with pod message (mostly 1d) status
@@ -69,9 +69,9 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
 
     # continue if vFlag is not 3 (aka REPORT_INIT_ONLY)
     if hasPodInit:
-        writePodInfo(podInfo, nomNumInitSteps)
+        printPodInfo(podInfo, nomNumInitSteps)
     else:
-        writePodDict(podDict)
+        printPodDict(podDict)
 
     if vFlag == 2:
         if hasPodInit:
@@ -80,9 +80,9 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
     # From the podState, extract some values to use in reports
     msgLogHrs = podState.iloc[-1]['timeCumSec']/3600
     radioOnHrs = podState.iloc[-1]['radioOnCumSec']/3600
-    numberOfAssignID = len(podState[podState.message_type=='0x7'])
-    numberOfSetUpPod = len(podState[podState.message_type=='0x3'])
-    numberOfNonceResync = len(podState[podState.message_type=='06'])
+    numberOfAssignID = len(podState[podState.msg_type=='0x7'])
+    numberOfSetUpPod = len(podState[podState.msg_type=='0x3'])
+    numberOfNonceResync = len(podState[podState.msg_type=='06'])
     insulinDelivered = podState.iloc[-1]['insulinDelivered']
     sourceString = 'from last 0x1d'
 
@@ -96,7 +96,7 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
             checkInsulin = faultProcessedMsg['insulinDelivered']
         else:
             thisFault = faultProcessedMsg['fault_type']
-        rawFault = faultProcessedMsg['raw_value']
+        rawFault = faultProcessedMsg['msg_body']
         if checkInsulin >= insulinDelivered:
             insulinDelivered = checkInsulin
             sourceString = 'from 0x02 msg'
@@ -121,16 +121,16 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
 
     if outFile == 2:
         # print a few things then returns
-        print(f'{thisPerson},{thisAntenna},{thisFault},{first_command},{last_command},{msgLogHrs},{lot},{tid},{piv}')
+        print(f'{thisPerson},{thisAntenna},{thisFault},{first_msg},{last_msg},{msgLogHrs},{lot},{tid},{piv}')
         actionSummary = []
         return df, podState, actionFrame, actionSummary
 
     if True:
         #
-        # print out summary information to command window
+        # print out summary information to stdout window
         # need this True to get the actionSummary used to fill csv file
-        print('\n            First message for pod :', first_command)
-        print('            Last  message for pod :', last_command)
+        print('\n            First message for pod :', first_msg)
+        print('            Last  message for pod :', last_msg)
         print('  Total elapsed time in log (hrs) : {:6.1f}'.format(msgLogHrs))
         print('                Radio on estimate : {:6.1f}, {:5.1f}%'.format(radioOnHrs, 100*radioOnHrs/msgLogHrs))
         print('   Number of messages (sent/recv) : {:6d} ({:4d} / {:4d})'.format(number_of_messages,
@@ -151,7 +151,8 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
             elif thisFault == '0x34':
                 print('    An 0x0202 message of {:s} reported - this wipes out registers'.format(thisFault))
             else:
-                print('    An 0x0202 message of {:s} reported - details later'.format(thisFault))
+                #print('    An 0x0202 message of {:s} reported - details later'.format(thisFault))
+                hasFault = 0
 
         if emptyMessageList:
             print('    ***  Detected {:d} empty message(s) during life of the pod'.format(len(emptyMessageList)))
@@ -162,7 +163,7 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
 
         # add this printout to look for message types other than 14 for 06 responses
         #  added message logging to record this around Dec 2, 2019
-        # print('\n Search for non-type 14 in 06 messages\n',podState[podState.message_type=='06'])
+        # print('\n Search for non-type 14 in 06 messages\n',podState[podState.msg_type=='06'])
 
     if hasFault:
         print('\nFault Details')

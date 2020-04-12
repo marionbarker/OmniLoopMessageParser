@@ -49,8 +49,9 @@ def printInitFrame(podInitFrame):
             row['expectMT'], row['actualMT'], row['expectPP'],
             row['actualPP'], row['ppMeaning']))
 
-def writePodInfo(podInfo, nomNumSteps):
+def printPodInfo(podInfo, nomNumSteps):
     if 'rssi_value' in podInfo:
+        print('\n')
         if podInfo['numInitSteps'] > nomNumSteps:
             print('    *** pod exceeded nominal init steps of {:d}' \
                   ' ***'.format(nomNumSteps))
@@ -78,7 +79,14 @@ def writePodInfoToOutputFile(outFile, lastDate, thisFile, podInfo):
     stream_out.write('\n')
     stream_out.close()
 
-def writePodDict(podDict):
+def printPodDict(podDict):
     # print a few things then returns
-    print('    Pod: Address {:s}, Lot {:s}, PI: {:s} (From Pod Manager, newest pod)'.format(podDict['address'],
+    print('    Pod: Address {:s} (pod), (newest pod)(Lot {:s}, PI: {:s}'.format(podDict['address'],
             podDict['lot'], podDict['piVersion']))
+
+def printFrameDebug(frame):
+    print('\n Debug printout of head and tail')
+    print(frame.head())
+    print('\n')
+    print(frame.tail())
+    print('\n')

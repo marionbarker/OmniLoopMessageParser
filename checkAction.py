@@ -46,7 +46,7 @@ def checkAction(frame):
     else:
         # need to add the next row too - but keep going until it is a '1d'
         checkIdx = initIdx[-1]
-        while (frame.loc[checkIdx,'message_type']) != '1d':
+        while (frame.loc[checkIdx,'msg_type']) != '1d':
             checkIdx += 1
             initIdx = np.append(initIdx, checkIdx)
 
@@ -74,7 +74,7 @@ def checkAction(frame):
         thisID = values[0]           # used to index into matchList, identifier for Action
         matchList = values[1]
         msgPerAction = len(matchList)  # always 2 or 4
-        thisFrame = frameBalance[frameBalance.message_type == matchList[thisID]]
+        thisFrame = frameBalance[frameBalance.msg_type == matchList[thisID]]
         if len(thisFrame) == 0:
             continue
         thisIdx = np.array(thisFrame.index.to_list())
@@ -87,7 +87,7 @@ def checkAction(frame):
             # to avoid missing indices already removed from frameBalance, use frame here
             checkFrame=frame.loc[thisList,:]
             # identify any mismatches with respect to action message
-            badFrame = checkFrame[checkFrame.message_type != matchList[ii+thisID]]
+            badFrame = checkFrame[checkFrame.msg_type != matchList[ii+thisID]]
             if len(badFrame) > 0:
                 thisBad = np.array(badFrame.index.to_list())
                 thisBad = thisBad-ii

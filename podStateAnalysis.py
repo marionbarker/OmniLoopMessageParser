@@ -16,14 +16,14 @@ def getPodState(frame):
 
     Output:
        podStateFrame       dataframe with pod state extracted from messages
-       emptyMessageList    indices of any messages with blank commands
+       emptyMessageList    indices of any blank messages (ACK)
        faultProcessedMsg   dictionary for the fault message
        podInfo             dictionary for pod
 
     """
     # initialize values for pod states that we will update
     timeCumSec = 0
-    pod_progress = 0
+    pod_progress = -1 # indicate we do not yet have response from pod as to state
     faultProcessedMsg = {}
     insulinDelivered = getUnitsFromPulses(0)
     reqTB = getUnitsFromPulses(0)
@@ -40,9 +40,9 @@ def getPodState(frame):
     list_of_states = []
 
     colNames = ('df_idx', 'timeStamp', 'time_delta', 'timeCumSec', \
-                'message_type', 'pod_progress', 'radioOnCumSec',\
+                'msg_type', 'pod_progress', 'radioOnCumSec',\
                 'insulinDelivered', 'reqTB', \
-                'reqBolus', 'Bolus','TB','SchBasal', 'raw_value' )
+                'reqBolus', 'Bolus','TB','SchBasal', 'msg_body' )
 
     # iterate through the DataFrame, should already be sorted into send-recv pairs
     for index, row in frame.iterrows():
@@ -50,18 +50,18 @@ def getPodState(frame):
         timeStamp = row['time']
         time_delta = row['time_delta']
         timeCumSec += time_delta
-        msg = row['raw_value']
+        msg = row['msg_body']
         if msg == '':
-            #print('Empty command for {} at dataframe index of {:d}'.format(row['type'], index))
+            #print('Empty message for {} at dataframe index of {:d}'.format(row['type'], index))
             pmsg = {}
-            pmsg['message_type'] = 'unknown'
+            pmsg['msg_type'] = 'empty'
             emptyMessageList.append(index)
             #continue
         else:
             pmsg = processMsg(msg)
 
-        message_type = pmsg['message_type']
-        if message_type == '02':
+        msg_type = pmsg['msg_type']
+        if msg_type == '02':
             faultProcessedMsg = pmsg
 
         timeAsleep = row['time_asleep']
@@ -70,21 +70,21 @@ def getPodState(frame):
         else:
             radioOnCumSec += time_delta - timeAsleep
 
-        # fill in pod state based on message_type
-        if message_type == '1a16':
+        # fill in pod state based on msg_type
+        if msg_type == '1a16':
             reqTB = pmsg['temp_basal_rate_u_per_hr']
 
-        elif message_type == '1a17':
+        elif msg_type == '1a17':
             reqBolus = pmsg['prompt_bolus_u']
 
-        elif message_type == '1d':
+        elif msg_type == '1d':
             pod_progress = pmsg['pod_progress']
             insulinDelivered = pmsg['insulinDelivered_delivered']
             Bolus = pmsg['immediate_bolus_active']
             TB    = pmsg['temp_basal_active']
             schBa = pmsg['basal_active']
 
-        elif message_type == '0115':
+        elif msg_type == '0115':
             pod_progress = pmsg['pod_progress']
             podInfo['piVersion'] = pmsg['piVersion']
             podInfo['lot']  = str(pmsg['lot'])
@@ -93,22 +93,22 @@ def getPodState(frame):
             podInfo['recv_gain']  = pmsg['recv_gain']
             podInfo['rssi_value']  = pmsg['rssi_value']
 
-        elif message_type == '011b':
+        elif msg_type == '011b':
             pod_progress = pmsg['pod_progress']
             podInfo['piVersion'] = pmsg['piVersion']
             podInfo['lot']  = str(pmsg['lot'])
             podInfo['tid']  = str(pmsg['tid'])
             podInfo['address']  = pmsg['address']
 
-        elif message_type == '1f':
+        elif msg_type == '1f':
             #Bolus = Bolus and not pmsg['cancelBolus']
             #TB    = TB and not pmsg['cancelTB']
             #schBa = schBa and not pmsg['suspend']
-            # rename the message_type per Joe's request
-            message_type = '1f0{:d}'.format(pmsg['cancelByte'])
+            # rename the msg_type per Joe's request
+            msg_type = '1f0{:d}'.format(pmsg['cancelByte'])
 
         list_of_states.append((index, timeStamp, time_delta, timeCumSec, \
-                              message_type, pod_progress, radioOnCumSec, \
+                              msg_type, pod_progress, radioOnCumSec, \
                               insulinDelivered, reqTB, \
                               reqBolus, Bolus, TB, schBa, msg))
 

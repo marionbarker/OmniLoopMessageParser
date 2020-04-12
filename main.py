@@ -21,14 +21,16 @@ def main(thisPath, thisFile, outFile, vFlag):
         print('Did not recognize file type')
     else:
         if fileType == "messageLog":
-            #print('__________________________________________\n')
-            #print('This file uses MessageLog')
-            #print('__________________________________________\n')
+            print('__________________________________________\n')
+            print('  This file uses MessageLog, {:s}'.format(thisFile))
+            print('__________________________________________\n')
             df, podState, actionFrame, actionSummary = analyzePodMessages(thisFile,
                 podFrame, podDict, fault_report, outFile, vFlag)
 
         elif fileType == "deviceLog":
-            #print('This file uses Device Communication Log; Code to handle this is WIP')
+            print('__________________________________________\n')
+            print('  This file uses Device Communication Log, {:s}'.format(thisFile))
+            print('__________________________________________\n')
             df, podState, actionFrame, actionSummary = analyzeAllPodsInDeviceLog(thisFile,
                 podFrame, podDict, fault_report, outFile, vFlag)
 

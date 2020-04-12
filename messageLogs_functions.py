@@ -3,8 +3,7 @@ messageLogs_functions.py
 
 Parse either old messageLog format or new deviceCommunication format
 
-Updates: changed name to messages instead of commands, in some places
-         but leave the name alone in the dictionary (for now)
+Updates: changed name to message instead of command, in some places
 
 Examples:
         MessageLog format:
@@ -47,7 +46,13 @@ def _parse_filehandle(filehandle):
     Returns:
        A dict of markdown heading -> list of text from that heading
     """
+    # read content from file
     content = filehandle.read()
+
+    # remove << which breaks one line into two (in the soup section later)
+    content = content.replace('<<', '')
+
+    # make sure each Header is properly format for soup use
     for fixme in re.findall(FIXME_RE, content):
         content = content.replace(fixme, '\n' + fixme, 1)
     html = markdown.markdown(content)
@@ -68,6 +73,21 @@ def _parse_filehandle(filehandle):
                 data[header.text].extend([text for text in nextNode.stripped_strings])
     return data
 
+def splitFullMsg(full_msg):
+    address = full_msg[:8]
+    B9 = full_msg[8:10] # B9 is string
+    byteMsg = bytearray.fromhex(B9) # convert to list of bytes
+    byteList = list(byteMsg)
+    B9_b = combineByte(byteList)
+    seq_num = (B9_b & 0x3C)>>2
+    BLEN = full_msg[10:12]
+    msg_plus_crc = full_msg[12:]
+    # The CRC-16 is at the end of the raw_value
+    thisLength = len(msg_plus_crc)
+    CRC16 = msg_plus_crc[-4:]
+    msg_body = msg_plus_crc[:thisLength-4]
+    return address, seq_num, BLEN, msg_body, CRC16
+
 ## orginal version for MessageLog format
 """
     MessageLog format:
@@ -75,9 +95,12 @@ def _parse_filehandle(filehandle):
         * 2020-02-06 06:01:26 +0000 receive 1f036f63200a1d18002e2800000073ff8388
 """
 def _message_dict(data):
-    timestamp, direction, value = data.rsplit(' ', 2)
+    timestamp, action, full_msg = data.rsplit(' ', 2)
+    address, seq_num, BLEN, msg_body, CRC16 = splitFullMsg(full_msg)
     podMessagesDict = dict(
-        time=timestamp, type=direction, raw_value=value[12:])
+        time=timestamp,
+        address=address, type=action, seq_num=seq_num,
+        msg_body=msg_body, CRC16=CRC16 )
     return podMessagesDict
 
 ## new version for Device Communication Log format
@@ -91,51 +114,75 @@ def _message_dict(data):
 
 """
 def _device_message_dict(data):
-    # for use with short test.md file
-    if 0:
+    # set default values in case they cannot be found or have wrong format
+    device = 'unknown'
+    address = 'unknown'
+    action = 'unknown'
+    seq_num = -1
+    msg_body = 'empty'
+    CRC16    = 'unknown'
+
+    noisy = 0    # ONLY set noisy to 1 when using short test.md file
+    if noisy:
         print("\n")
         print(data)
-    # split from left to determine if omnipod line
-    timestamp = data[2:19]
-    if 0:
-        print(timestamp)
-    device, address, action, value = data[26:].split(' ', 3)
-    if 0:
-        print(device)
-        print(address)
-        print(action)
-        print(value)
+
+    # data format examples:
+    #   0123456789012345678901234567890123456789012345678901234567890123456789
+    #   2020-04-11 09:45:51 +0000 Omnipod 1F02029E send 1f02029e3c030e0100813c
+    #   2020-04-01 22:39:59 +0000 DexG6Transmitter 81H33P connection Connected
+
+    timestamp = data[0:19]
+    # skip the UTC time delta characters ( +0000 ), logs are always in UTC
+    stringToUnpack = data[26:]
+
+    # extract common information, parse Omnipod, leave other devices alone for now
+    device, address, action, restOfLine = stringToUnpack.split(' ',3)
     if device=="Omnipod":
-        address2 = value[:7]
-        cmdcnt = value[7:9]
-        nibble = value[9:12]
-        raw_value = value[12:]
+        #device, address1, action, full_msg = stringToUnpack.split(' ', 3)
+        address2, seq_num, BLEN, msg_body, CRC16 = splitFullMsg(restOfLine)
+        #if (address.lower() != address2) and (address != 'noPod') and (seq_num>3):
+        if (address.lower() != address2) and (address != 'noPod'):
+            print('The two message numbers do not agree ', address.lower, address2)
+            print(seq_num, BLEN, CRC16)
+            print(msg_body)
+            print(data)
+        else:
+            address = address2  # this will replace 'noPod' with 'ffffffff'
     else:
-        dummy1, dummy2, dummy3, device, theRestOfLine = data.split(' ', 4)
-        raw_value = theRestOfLine[6:]
+        #device, address, action, full_msg = stringToUnpack.split(' ', 3)
+        #dummy1, dummy2, dummy3, device, theRestOfLine = stringToUnpack.split(' ', 1)
+        msg_body = restOfLine
+
     deviceMessagesDict = dict(
           time=timestamp, device=device,
-          address=address, type=action, raw_value=raw_value)
+          address=address, type=action, seq_num=seq_num,
+          msg_body=msg_body, CRC16=CRC16 )
+    if noisy:
+        print('\n')
+        printDict(deviceMessagesDict)
     return deviceMessagesDict
 
 def _extract_pod_state(data):
-    podStateDict = dict([[x.strip() for x in v.split(':', 1)]
-            for v in data['PodState']])
+    podStateDict = {}
+    if 'PodState' in data:
+        podStateDict = dict([[x.strip() for x in v.split(':', 1)]
+                for v in data['PodState']])
     return podStateDict
 
-def select_extra_command(raw_value):
-    if raw_value[:2]=='1a':
-        if raw_value[32:34] not in ['16','17']:
+def select_extra_message(msg_body):
+    if msg_body[:2]=='1a':
+        if msg_body[32:34] not in ['16','17']:
             return 13
         else:
-            return raw_value[32:34]
+            return msg_body[32:34]
 
 def generate_table(df, radio_on_time):
     # convert to a pandas dataframe
     # now done in persist_message - already a DataFrame
     #       df = pd.DataFrame(pod_messages)
     df['time'] = pd.to_datetime(df['time'])
-    df['command'] = df['raw_value'].str[:2].astype(str)+df['raw_value'].apply(select_extra_command).fillna('').astype(str)
+    df['message'] = df['msg_body'].str[:2].astype(str)+df['msg_body'].apply(select_extra_message).fillna('').astype(str)
     df['time_delta'] = (df['time']-df['time'].shift()).dt.seconds.fillna(0).astype(float)
     df['time_asleep'] = df['time_delta'].loc[df['time_delta'] > radio_on_time] - radio_on_time  # radio_on_time seconds the radio stays awake
     return df
@@ -216,15 +263,23 @@ def otherP(message):
 
 def persist_message(fileType, parsed_content):
     # set up default
+    noisy = 0
     pod_messages = ['nil']
     if fileType == "messageLog":
         pod_messages = [_message_dict(m) for m in parsed_content['MessageLog']]
     elif fileType == "deviceLog":
         messages = [_device_message_dict(m) for m in parsed_content['Device Communication Log']]
         pod_messages = list(filter(omnipodP, messages))
+        if noisy:
+            print('\n Pod Messages')
+            printList(pod_messages[1:5])
+            printList(pod_messages[-2:-1])
+
         # this works - use it later if desired
-        # cgm_messages = list(filter(otherP, messages))
-        # printList(cgm_messages[1:5])
-        # printList(cgm_messages[-1])
+        if noisy:
+            print('\n CGM Messages')
+            cgm_messages = list(filter(otherP, messages))
+            printList(cgm_messages[1:5])
+            printList(cgm_messages[-2:-1])
     podFrame = pd.DataFrame(pod_messages)
     return podFrame
