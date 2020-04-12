@@ -137,18 +137,18 @@ def _device_message_dict(data):
     stringToUnpack = data[26:]
 
     # extract common information, parse Omnipod, leave other devices alone for now
+    # note that address is what Loop thinks the address is
     device, address, action, restOfLine = stringToUnpack.split(' ',3)
     if device=="Omnipod":
-        #device, address1, action, full_msg = stringToUnpack.split(' ', 3)
-        address2, seq_num, BLEN, msg_body, CRC16 = splitFullMsg(restOfLine)
-        #if (address.lower() != address2) and (address != 'noPod') and (seq_num>3):
-        if (address.lower() != address2) and (address != 'noPod'):
-            print('The two message numbers do not agree ', address.lower, address2)
+        # addressPod is what pod thinks address is
+        addressPod, seq_num, BLEN, msg_body, CRC16 = splitFullMsg(restOfLine)
+        if (address.lower() != addressPod) and (addressPod != 'ffffffff'):
+            print('\nThe two message numbers do not agree \n', address, addressPod)
             print(seq_num, BLEN, CRC16)
             print(msg_body)
             print(data)
         else:
-            address = address2  # this will replace 'noPod' with 'ffffffff'
+            address = addressPod  # this returns what pod thinks is the address
     else:
         #device, address, action, full_msg = stringToUnpack.split(' ', 3)
         #dummy1, dummy2, dummy3, device, theRestOfLine = stringToUnpack.split(' ', 1)
