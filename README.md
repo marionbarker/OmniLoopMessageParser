@@ -73,6 +73,7 @@ Input arguments:
 **     : if 1: output pod session analysis to outFile
 **     : if 2: report init steps to terminal if available
 **     : if 3: output init summary to outFile, init steps if too many, skip rest of pod analysis
+**     : if 4: report init steps to outFile_init.csv, report podState to outFile_podState.csv
 
 Main routine for reading file and deciding what to do based off report contents
 

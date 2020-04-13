@@ -40,7 +40,7 @@ def getPodState(frame):
     list_of_states = []
 
     colNames = ('df_idx', 'timeStamp', 'time_delta', 'timeCumSec', \
-                'msg_type', 'pod_progress', 'radioOnCumSec',\
+                'seq_num', 'msg_type', 'pod_progress', 'radioOnCumSec',\
                 'insulinDelivered', 'reqTB', \
                 'reqBolus', 'Bolus','TB','SchBasal', 'msg_body' )
 
@@ -51,6 +51,7 @@ def getPodState(frame):
         time_delta = row['time_delta']
         timeCumSec += time_delta
         msg = row['msg_body']
+        seq_num = row['seq_num']
         if msg == '':
             #print('Empty message for {} at dataframe index of {:d}'.format(row['type'], index))
             pmsg = {}
@@ -108,7 +109,7 @@ def getPodState(frame):
             msg_type = '1f0{:d}'.format(pmsg['cancelByte'])
 
         list_of_states.append((index, timeStamp, time_delta, timeCumSec, \
-                              msg_type, pod_progress, radioOnCumSec, \
+                              seq_num, msg_type, pod_progress, radioOnCumSec, \
                               insulinDelivered, reqTB, \
                               reqBolus, Bolus, TB, schBa, msg))
 

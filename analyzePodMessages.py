@@ -12,11 +12,12 @@ analyzePodMessages
     This code analyzes a single Pod with available message dataframe
 """
 
-def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag):
+def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag, chunkNum):
     # preprocess podFrame to be from a single pod
     # new use of vFlag.  If one, print out pod init lines then continue
     # if 3, return after reporting pod init
     REPORT_INIT_ONLY = 3
+    VERBOSE_OUT_FILE = 4
     nomNumInitSteps = 18  # nominal number steps to initialize pod
 
     # This is time (sec) radio on Pod stays awake once comm is initiated
@@ -31,6 +32,8 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
     send_receive_messages = df.groupby(['type']).size()
     number_of_messages = len(df)
     lastDate = last_msg.date()
+
+    thisPerson, thisDate = getPersonFromFilename(thisFile, last_msg)
 
     # Process df to generate the podState associated with every message
     #   Updates to states occur with pod message (mostly 1d) status
@@ -76,6 +79,11 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
     if vFlag == 2:
         if hasPodInit:
             printInitFrame(podInitFrame)
+
+    if vFlag == VERBOSE_OUT_FILE and hasPodInit:
+        thisOutFile = outFile +'_initSteps_' + thisPerson + '_' + thisDate + '_' + str(chunkNum) + '.csv'
+        print('  Sending full podInit details to \n    ',thisOutFile)
+        podInitFrame.to_csv(thisOutFile)
 
     # From the podState, extract some values to use in reports
     msgLogHrs = podState.iloc[-1]['timeCumSec']/3600
@@ -169,8 +177,14 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
         print('\nFault Details')
         printDict(faultProcessedMsg)
 
+    if vFlag == VERBOSE_OUT_FILE:
+        thisOutFile = outFile +'_podState_' + thisPerson + '_' + thisDate + '_' + str(chunkNum) + '.csv'
+        print('  Sending full podState details to \n    ',thisOutFile)
+        # Joe wants FALSE to be replaced with '' and TRUE with 'y' - do this later
+        podState.to_csv(thisOutFile)
+
     # if an output filename is provided - write statistics to it (csv format)
-    if outFile:
+    if outFile and vFlag != VERBOSE_OUT_FILE:
         # check if file exists
         isItThere = os.path.isfile(outFile)
 

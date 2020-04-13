@@ -40,6 +40,6 @@ def analyzeAllPodsInDeviceLog(thisFile, podFrame, podDict, fault_report, outFile
         print('     Block {:d} of {:d}'.format(idx, numChunks))
 
         df, podState, actionFrame, actionSummary = analyzePodMessages(thisFile,
-            thisFrame, podDict, fault_report, outFile, vFlag)
+            thisFrame, podDict, fault_report, outFile, vFlag, idx)
 
     return df, podState, actionFrame, actionSummary

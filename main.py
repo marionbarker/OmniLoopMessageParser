@@ -17,6 +17,7 @@ def main(thisPath, thisFile, outFile, vFlag):
     filename = thisPath + '/' + thisFile
     fileType, podFrame, podDict, fault_report = persist_read_file(filename)
 
+
     if fileType == "unknown":
         print('Did not recognize file type')
     else:
@@ -24,8 +25,9 @@ def main(thisPath, thisFile, outFile, vFlag):
             print('__________________________________________\n')
             print('  This file uses MessageLog, {:s}'.format(thisFile))
             print('__________________________________________\n')
+            numChunks = 1 # number of pods in log file is always 1
             df, podState, actionFrame, actionSummary = analyzePodMessages(thisFile,
-                podFrame, podDict, fault_report, outFile, vFlag)
+                podFrame, podDict, fault_report, outFile, vFlag, numChunks)
 
         elif fileType == "deviceLog":
             print('__________________________________________\n')

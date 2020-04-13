@@ -187,6 +187,41 @@ def generate_table(df, radio_on_time):
     df['time_asleep'] = df['time_delta'].loc[df['time_delta'] > radio_on_time] - radio_on_time  # radio_on_time seconds the radio stays awake
     return df
 
+# parse the person in the filename
+def getPersonFromFilename(filename, last_timestamp):
+    val = '^.*/'
+    thisPerson = re.findall(val, filename)
+    if not thisPerson:
+        thisPerson = 'Unknown'
+    else:
+        thisPerson = thisPerson[0] [0:-1]
+
+    
+    val = '/.*$'
+    thisFullName = re.findall(val, filename)
+    #print(thisFullName)
+    thisFullName = thisFullName[0]
+    #print(thisFullName)
+    thisFullName = thisFullName[1:]
+    #print(thisFullName)
+    thisFullName = thisFullName.replace(' ','') # remove spaces
+    thisFullName = thisFullName.replace('-','') # remove hypens
+    thisFullName = thisFullName.replace('_','') # remove underscores
+    #print(thisFullName)
+    # trim off some characters
+    thisDate = thisFullName[10:18] + '_' + thisFullName[18:20]
+    #print(thisDate)
+
+    #thisDate = last_timestamp.dt.strftime('%Y%m%d_%r')
+    #print(thisDate)
+    #thisDate = last_timestamp
+
+    #thisDate = last_timestamp.replace('-','') # remove hyphens
+    #thisDate = thisDate.replace(' ','_') # replace space before hour with underscore
+    #thisDate = thisDate[0:12] # capture yyyymmdd_hh
+
+    return thisPerson, thisDate
+
 # parse the information in the filename
 def parse_info_from_filename(filename):
     val = '^.*/'
