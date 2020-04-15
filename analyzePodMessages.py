@@ -81,7 +81,7 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
             printInitFrame(podInitFrame)
 
     if vFlag == VERBOSE_OUT_FILE and hasPodInit:
-        thisOutFile = outFile +'_initSteps_' + thisPerson + '_' + thisDate + '_' + str(chunkNum) + '.csv'
+        thisOutFile = outFile +'initSteps_' + thisPerson + '_' + thisDate + '_' + str(chunkNum) + '.csv'
         print('  Sending full podInit details to \n    ',thisOutFile)
         podInitFrame.to_csv(thisOutFile)
 
@@ -178,7 +178,7 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
         printDict(faultProcessedMsg)
 
     if vFlag == VERBOSE_OUT_FILE:
-        thisOutFile = outFile +'_podState_' + thisPerson + '_' + thisDate + '_' + str(chunkNum) + '.csv'
+        thisOutFile = outFile +'podState_' + thisPerson + '_' + thisDate + '_' + str(chunkNum) + '.csv'
         print('  Sending full podState details to \n    ',thisOutFile)
         # Joe wants FALSE to be replaced with '' and TRUE with 'y' - do this later
         podState.to_csv(thisOutFile)
