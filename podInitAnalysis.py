@@ -30,7 +30,7 @@ def getInitState(frame):
     ppMeaning = getPodProgressMeaning(0)
 
     colNames = ('df_idx', 'timeStamp', 'time_delta', 'timeCumSec', \
-                'status', 'expectAction', 'expectMT', 'actualMT', \
+                'seq_num', 'status', 'expectAction', 'expectMT', 'actualMT', \
                 'expectPP', 'actualPP', 'ppRange', \
                 'ppMeaning', 'msg_body' )
 
@@ -46,6 +46,7 @@ def getInitState(frame):
         ppRange = podInitDict[initIdx][2]
         expectPP = ppRange[0]
         msg = row['msg_body']
+        seq_num = row['seq_num']
         if msg == '':
             print('  *** During pod init: row {:4d}, Empty Message (ACK) {:s}'.format(index, row['type']))
             pmsg = {}
@@ -70,7 +71,7 @@ def getInitState(frame):
             initIdx = max(0,initIdx-1)
 
         list_of_states.append((index, timeStamp, time_delta, timeCumSec, \
-                status, expectAction, expectMT, actualMT, \
+                seq_num, status, expectAction, expectMT, actualMT, \
                 expectPP, actualPP, ppRange, ppMeaning, msg))
 
     podInitFrame = pd.DataFrame(list_of_states, columns=colNames)

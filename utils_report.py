@@ -40,12 +40,13 @@ def printActionSummary(actionSummary, vFlag):
         print('    #TB rep value >=30s & <19min : {:5.0f}'.format(numrepeated19MinTB))
 
 def printInitFrame(podInitFrame):
-    print('\n  idx, CumSec, status,  expectAction, expectMT, actualMT, ' \
-           'expectPP, actualPP, ppMeaning')
+    print('\n  idx, CumSec, seqNum, status,  expectAction, expMT, actMT, ' \
+           'expPP, actPP, ppMeaning')
     for index, row in podInitFrame.iterrows():
-        print('  {:2d}, {:5.0f}, {:5d},   {:14s}, {:8s}, {:8s}, {:8d}, ' \
-            '{:8d}, {:14s}'.format(index,
-            row['timeCumSec'], row['status'], row['expectAction'],
+        print('  {:2d}, {:5.0f}, {:6d}, {:5d},   {:14s}, {:5s}, {:5s}, {:5d}, ' \
+            '{:5d}, {:14s}'.format(index,
+            row['timeCumSec'], row['seq_num'],
+            row['status'], row['expectAction'],
             row['expectMT'], row['actualMT'], row['expectPP'],
             row['actualPP'], row['ppMeaning']))
 
