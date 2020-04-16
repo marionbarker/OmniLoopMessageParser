@@ -1,20 +1,24 @@
 # OmniLoopMessageParser
 python code to parse the messages found in Loop Reports
 
+ToDo:
+* finish the modularization of code
+
+## April 15, 2020
+* Modify the pod_progress meanings to match newly edited Wiki page
+* Modify podInitAnalysis to better handle when initialization steps are repeated
+* Add test case: python test.py > exampleFiles/exampleOutput_test.txt
+* Add an exampleFiles folder with examples for MessageLog (single pod) and Device Communication Log (persistent) and associated exampleOutput_test.txt
+
 ## April 11, 2020
 Add seqNum and CRC16 to DataFrame read from Loop Report.
 Refactor some names:
 * from command to msg
 * from message_type to msg_type
-* from raw_value to msg_body (the CRC16 is removed from omnipod messages)
+* from raw_value to msg_body (the address, B9, seq_num, BLEN, CRC16 are removed from what used to be raw_value)
 
 ## April 10, 2020
 Added parsing of the 0x01 pod responses during initialization and add flag to direct type of results posted (just init vs full analysis).  Have modularized part of the output stream (to terminal and or output file)
-
-ToDo:
-* fix the time parsing with the Device Communication log
-* add message sequence number to the pod message analysis
-* finish the modularization of output
 
 ## March 3, 2020
 Start modifying code - attempt to keep this always working with documentation not too out of date.  But this is a moving target for a bit.

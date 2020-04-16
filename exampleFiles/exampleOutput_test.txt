@@ -1,0 +1,122 @@
+__________________________________________
+
+  This file uses Device Communication Log, exampleFiles/DeviceCommunicationsLogExample_multiplePods.md
+__________________________________________
+
+__________________________________________
+
+  Report on Omnipod from exampleFiles/DeviceCommunicationsLogExample_multiplePods.md
+     Block 1 of 3
+    Pod: Address 1f0f5d42 (pod), (newest pod)(Lot 45286, PI: 2.9.0
+
+            First message for pod : 2020-04-11 13:59:47
+            Last  message for pod : 2020-04-12 01:12:07
+  Total elapsed time in log (hrs) :   11.2
+                Radio on estimate :    1.1,   9.9%
+   Number of messages (sent/recv) :    426 ( 214 /  212)
+    Messages in completed actions :    420 : 98.6%
+          Number of nonce resyncs :      2
+            Insulin delivered (u) : 144.30 (from last 0x1d)
+
+  Action Summary with sequential 4 or 2 message sequences with action response times in sec
+      Action        : #Success,  mean, [  min,  max  ] : #Incomplete
+    CnxSetTmpBasal  :     22,      5,  [    2,    10 ] :     0
+    Status&Bolus    :     49,      5,  [    2,    10 ] :     0
+    StatusCheck     :     60,      1,  [    0,     3 ] :     0
+    CnxTmpBasal     :      6,      1,  [    1,     1 ] :     4
+    CnxAll          :      1,      1,  [    1,     1 ] :     0
+    DeactivatePod   :      1,      1,  [    1,     1 ] :     0
+__________________________________________
+
+  Report on Omnipod from exampleFiles/DeviceCommunicationsLogExample_multiplePods.md
+     Block 2 of 3
+
+
+    Pod: Address 0x1f0bf397, Lot 45286, PI: 2.9.0, gain 1, rssi 53, numInitSteps 18
+
+            First message for pod : 2020-04-12 01:20:35
+            Last  message for pod : 2020-04-15 03:35:31
+  Total elapsed time in log (hrs) :   74.2
+                Radio on estimate :    6.0,   8.0%
+   Number of messages (sent/recv) :   2372 (1202 / 1170)
+    Messages in completed actions :   2332 : 98.3%
+          Number of nonce resyncs :      3
+            Insulin delivered (u) : 156.45 (from last 0x1d)
+
+  Action Summary with sequential 4 or 2 message sequences with action response times in sec
+      Action        : #Success,  mean, [  min,  max  ] : #Incomplete
+    AssignID        :      1,      1,  [    1,     1 ] :     0
+    SetupPod        :      1,      1,  [    1,     1 ] :     0
+    CnfgDelivFlg    :      1,      1,  [    1,     1 ] :     0
+    CnxSetTmpBasal  :    158,      5,  [    2,    15 ] :     2
+    Status&Bolus    :    221,      5,  [    2,    12 ] :     3
+    StatusCheck     :    359,      1,  [    0,     9 ] :    25
+    AcknwlAlerts    :      1,      1,  [    1,     1 ] :     0
+    CnfgAlerts      :      2,      2,  [    1,     2 ] :     0
+    CnxTmpBasal     :     38,      1,  [    0,     4 ] :     8
+    CnxAll          :      1,      1,  [    1,     1 ] :     0
+    BolusAlone      :      2,      2,  [    2,     3 ] :     1
+    DeactivatePod   :      1,      2,  [    2,     2 ] :     0
+    PrgBasalSch     :      1,      4,  [    4,     4 ] :     0
+__________________________________________
+
+  Report on Omnipod from exampleFiles/DeviceCommunicationsLogExample_multiplePods.md
+     Block 3 of 3
+
+
+    *** pod exceeded nominal init steps of 18 ***
+    Pod: Address 0x1f0b3388, Lot 45286, PI: 2.9.0, gain 2, rssi 50, numInitSteps 23
+
+            First message for pod : 2020-04-15 04:04:24
+            Last  message for pod : 2020-04-15 13:55:58
+  Total elapsed time in log (hrs) :    9.9
+                Radio on estimate :    1.0,   9.7%
+   Number of messages (sent/recv) :    407 ( 204 /  203)
+    Messages in completed actions :    404 : 99.3%
+          Number of nonce resyncs :      1
+            Insulin delivered (u) :  20.35 (from last 0x1d)
+
+  Action Summary with sequential 4 or 2 message sequences with action response times in sec
+      Action        : #Success,  mean, [  min,  max  ] : #Incomplete
+    AssignID        :      1,      0,  [    0,     0 ] :     0
+    SetupPod        :      1,      2,  [    2,     2 ] :     0
+    CnfgDelivFlg    :      1,      1,  [    1,     1 ] :     0
+    CnxSetTmpBasal  :     33,      4,  [    2,     9 ] :     0
+    Status&Bolus    :     43,      4,  [    2,     7 ] :     4
+    StatusCheck     :     33,      1,  [    0,     3 ] :     0
+    CnfgAlerts      :      2,      2,  [    1,     2 ] :     0
+    CnxTmpBasal     :      9,      1,  [    0,     2 ] :     0
+    BolusAlone      :      2,      3,  [    2,     4 ] :     2
+    PrgBasalSch     :      1,      3,  [    3,     3 ] :     0
+__________________________________________
+
+  This file uses MessageLog, exampleFiles/MessageLogExample_singlePod.md
+__________________________________________
+
+
+
+    Pod: Address 0x1f0e4b6e, Lot 45286, PI: 2.9.0, gain 2, rssi 58, numInitSteps 18
+
+            First message for pod : 2020-03-25 14:18:57+00:00
+            Last  message for pod : 2020-03-28 02:42:02+00:00
+  Total elapsed time in log (hrs) :   60.4
+                Radio on estimate :    4.5,   7.5%
+   Number of messages (sent/recv) :   1749 ( 878 /  871)
+    Messages in completed actions :   1742 : 99.6%
+          Number of nonce resyncs :      0
+            Insulin delivered (u) : 129.85 (from last 0x1d)
+
+  Action Summary with sequential 4 or 2 message sequences with action response times in sec
+      Action        : #Success,  mean, [  min,  max  ] : #Incomplete
+    AssignID        :      1,      1,  [    1,     1 ] :     0
+    SetupPod        :      1,      2,  [    2,     2 ] :     0
+    CnfgDelivFlg    :      1,      1,  [    1,     1 ] :     0
+    CnxSetTmpBasal  :    111,      5,  [    2,    15 ] :     1
+    Status&Bolus    :    161,      5,  [    2,    12 ] :     2
+    CnxAllSetBasal  :      1,      6,  [    6,     6 ] :     1
+    StatusCheck     :    284,      1,  [    0,     9 ] :     4
+    CnfgAlerts      :      2,      1,  [    1,     1 ] :     0
+    CnxTmpBasal     :     32,      2,  [    0,    10 ] :     2
+    CnxAll          :      1,      1,  [    1,     1 ] :     0
+    BolusAlone      :      2,      3,  [    2,     4 ] :     0
+    PrgBasalSch     :      1,      3,  [    3,     3 ] :     0
