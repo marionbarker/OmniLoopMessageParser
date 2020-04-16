@@ -28,11 +28,11 @@ def getInitState(frame):
     podInitDict = getPodInitDict()
     statusOK = 1
     statusNotOK = 0
-    ppMeaning = getPodProgressMeaning(0)
+    ppMeaning = getPodProgressMeaning(actualPP)
 
     colNames = ('df_idx', 'timeStamp', 'time_delta', 'timeCumSec', \
-                'seq_num', 'status', 'expectAction', 'expectMT', 'actualMT', \
-                'expectPP', 'actualPP', 'ppRange', \
+                'seq_num', 'expectAction', 'expectMT', 'expectPP', \
+                'status', 'actualMT', 'actualPP', \
                 'ppMeaning', 'msg_body' )
 
     # iterate through the DataFrame
@@ -83,8 +83,8 @@ def getInitState(frame):
                 print(initIdx, ', next ppRange', ppRange)
 
         list_of_states.append((index, timeStamp, time_delta, timeCumSec, \
-                seq_num, status, expectAction, expectMT, actualMT, \
-                expectPP, actualPP, ppRange, ppMeaning, msg))
+                seq_num, expectAction, expectMT, ppRange, \
+                status, actualMT, actualPP, ppMeaning, msg))
 
     podInitFrame = pd.DataFrame(list_of_states, columns=colNames)
     return podInitFrame

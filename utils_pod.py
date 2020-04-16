@@ -1,24 +1,28 @@
 # utils_pod - lower level functions related to omnipod
 
+# and the nomenclature for pod_progress here:
+#	https://github.com/openaps/openomni/wiki/Pod-Progress-State
+
 def getPodProgressMeaning(thisInt):
     """ convert the value for pod progess into it's meaning """
     podProgress = { \
-        0: 'Initial value', \
-        1: 'Memory initialized', \
-        2: 'Pairing reminder initialized', \
-        3: 'Pairing completed', \
+        -1: 'Unknown', \
+        0: 'InitialValue', \
+        1: 'MemoryInitialized', \
+        2: 'ReminderInitialized', \
+        3: 'PairingCompleted', \
         4: 'Priming', \
-        5: 'Priming completed', \
-        6: 'Basal initialized', \
-        7: 'Inserting cannula', \
-        8: 'Running with > 50U in reservoir', \
-        9: 'Running with <= 50U in reservoir', \
-        10: '10 Not used (except for possible debug use)', \
-        11: '11 Not used (except for possible debug use)', \
-        12: '12 Not used (except for possible debug use)', \
-        13: 'Fault event occurred, shutting down', \
-        14: 'Failed to initialize in time, shutting down', \
-        15: 'Pod inactive'}
+        5: 'PrimingCompleted', \
+        6: 'BasalInitialized', \
+        7: 'InsertingCannula', \
+        8: 'Running > 50U', \
+        9: 'Running <= 50U', \
+        10: '10 NotUsed', \
+        11: '11 NotUsed', \
+        12: '12 NotUsed', \
+        13: 'FaultEvent', \
+        14: 'ActivationTimeExceeded', \
+        15: 'PodInactive'}
 
     return podProgress[thisInt]
 
