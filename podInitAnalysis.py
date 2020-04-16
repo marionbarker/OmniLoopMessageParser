@@ -22,6 +22,7 @@ def getInitState(frame):
     list_of_states = []
     timeCumSec = 0
     # increment initIdx upon success matching msg_type and pod_progress
+    # initIdx is the index into the expectMT and expectPP for initializaton
     initIdx = 0
     actualPP = -1
     podInitDict = getPodInitDict()
@@ -69,6 +70,17 @@ def getInitState(frame):
             initIdx = initIdx + 1
         elif expectMT == '1d':
             initIdx = max(0,initIdx-1)
+        elif actualMT == '0x7':
+            # restarting the pairing from the beginning
+            #print('On row {:d}, got a 0x7 after first pass through, reset initIdx'.format(index))
+            initIdx = 0
+        elif actualPP>ppRange[-1]:
+            # pod moved on and message was not captured
+            initIdx = 0
+            while actualPP > ppRange[-1]:
+                ppRange = podInitDict[initIdx+1][2]
+                initIdx = initIdx+2  # send and recv pair
+                print(initIdx, ', next ppRange', ppRange)
 
         list_of_states.append((index, timeStamp, time_delta, timeCumSec, \
                 seq_num, status, expectAction, expectMT, actualMT, \
