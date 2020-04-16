@@ -4,13 +4,13 @@ def getPodProgressMeaning(thisInt):
     """ convert the value for pod progess into it's meaning """
     podProgress = { \
         0: 'Initial value', \
-        1: 'Tank power activated', \
-        2: 'Tank fill completed', \
-        3: 'Pairing success', \
-        4: 'Purging', \
-        5: 'Ready for injection', \
-        6: 'Injection done', \
-        7: 'Priming cannula', \
+        1: 'Memory initialized', \
+        2: 'Pairing reminder initialized', \
+        3: 'Pairing completed', \
+        4: 'Priming', \
+        5: 'Priming completed', \
+        6: 'Basal initialized', \
+        7: 'Inserting cannula', \
         8: 'Running with > 50U in reservoir', \
         9: 'Running with <= 50U in reservoir', \
         10: '10 Not used (except for possible debug use)', \
@@ -78,7 +78,7 @@ def getPodInitDict():
     so had to set up as a range
     """
     podInitDict = { \
-            0           : ( 'assignID', '0x7',  [-1]), \
+            0           : ( 'assignID', '0x7',  [-1, 2]), \
             1           : ( 'successID', '0115',  [1, 2]), \
             2           : ( 'setupPod', '0x3',  [1, 2]), \
             3           : ( 'successSetup', '011b',  [3]), \
