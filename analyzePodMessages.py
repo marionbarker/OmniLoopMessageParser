@@ -40,7 +40,7 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
     #     (the state for extended_bolus_active is NOT included (always False))
     #   Includes values for requested bolus and TB
     # Note that .iloc for df and podState are identical
-    podState, emptyMessageList, faultProcessedMsg, podInfo = getPodState(df)
+    podState, ackMessageList, faultProcessedMsg, podInfo = getPodState(df)
 
     # checkAction returns actionFrame with indices and times for every action
     #     completed actions and incomplete requests are separate columns
@@ -162,9 +162,9 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
                 #print('    An 0x0202 message of {:s} reported - details later'.format(thisFault))
                 hasFault = 0
 
-        if emptyMessageList:
-            print('    ***  Detected {:d} empty message(s) during life of the pod'.format(len(emptyMessageList)))
-            print('    ***  indices :', emptyMessageList)
+        if ackMessageList:
+            print('    ***  Detected {:d} ACK(s) during life of the pod'.format(len(ackMessageList)))
+            print('    ***  indices :', ackMessageList)
 
 
         printActionSummary(actionSummary, vFlag)

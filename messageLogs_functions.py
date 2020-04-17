@@ -119,7 +119,7 @@ def _device_message_dict(data):
     address = 'unknown'
     action = 'unknown'
     seq_num = -1
-    msg_body = 'empty'
+    msg_body = ''
     CRC16    = 'unknown'
 
     noisy = 0    # ONLY set noisy to 1 when using short test.md file
@@ -196,7 +196,6 @@ def getPersonFromFilename(filename, last_timestamp):
     else:
         thisPerson = thisPerson[0] [0:-1]
 
-    
     val = '/.*$'
     thisFullName = re.findall(val, filename)
     #print(thisFullName)

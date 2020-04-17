@@ -16,7 +16,7 @@ def getPodState(frame):
 
     Output:
        podStateFrame       dataframe with pod state extracted from messages
-       emptyMessageList    indices of any blank messages (ACK)
+       ackMessageList    indices of any blank messages (ACK)
        faultProcessedMsg   dictionary for the fault message
        podInfo             dictionary for pod
 
@@ -32,7 +32,7 @@ def getPodState(frame):
     Bolus = False
     TB    = False
     schBa = False
-    emptyMessageList = []
+    ackMessageList = []
     radio_on_time = 30 # radio is on for 30 seconds every time pod wakes up
     radioOnCumSec = radio_on_time
     podInfo = {}
@@ -52,14 +52,9 @@ def getPodState(frame):
         timeCumSec += time_delta
         msg = row['msg_body']
         seq_num = row['seq_num']
-        if msg == '':
-            #print('Empty message for {} at dataframe index of {:d}'.format(row['type'], index))
-            pmsg = {}
-            pmsg['msg_type'] = 'empty'
-            emptyMessageList.append(index)
-            #continue
-        else:
-            pmsg = processMsg(msg)
+        pmsg = processMsg(msg)
+        if pmsg['msg_type'] == 'ACK':
+            ackMessageList.append(index)
 
         msg_type = pmsg['msg_type']
         if msg_type == '02':
@@ -114,4 +109,4 @@ def getPodState(frame):
                               reqBolus, Bolus, TB, schBa, msg))
 
     podStateFrame = pd.DataFrame(list_of_states, columns=colNames)
-    return podStateFrame, emptyMessageList, faultProcessedMsg, podInfo
+    return podStateFrame, ackMessageList, faultProcessedMsg, podInfo

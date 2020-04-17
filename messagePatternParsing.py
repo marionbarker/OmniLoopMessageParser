@@ -19,7 +19,7 @@ def ignoreMsg(msg):
     byteMsg = bytearray.fromhex(msg)
     msgDict['mtype'] = byteMsg[0]
     msgDict['msg_type'] = hex(byteMsg[0])
-    msgDict['msg_body']    = msg
+    msgDict['msg_body'] = msg
     return msgDict
 
 def parse_1a(msg):
@@ -46,7 +46,15 @@ chooseMsgType = {
     0x1f: parse_1f
 }
 
+# decide how to handle message based on msg string
+# special case for empty msg aka ACK
 def processMsg(msg):
-    byteMsg = bytearray.fromhex(msg)
-    thisMessage = chooseMsgType.get(byteMsg[0],ignoreMsg)(msg)
+    if msg == '':
+        thisMessage = {}
+        thisMessage['mtype'] = '0x0'
+        thisMessage['msg_type'] = 'ACK'
+        thisMessage['msg_body'] = msg
+    else:
+        byteMsg = bytearray.fromhex(msg)
+        thisMessage = chooseMsgType.get(byteMsg[0],ignoreMsg)(msg)
     return thisMessage
