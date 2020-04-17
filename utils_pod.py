@@ -75,7 +75,7 @@ def getPodInitDict():
     This is the list of messages that should be sequential for a
     successful pod initialization
         getPodInitDict {
-            seq# : ['initStepName', msg_type, ppRange], \
+            initIdx : ['initStepName', msg_type, ppRange], \
             ... \
             }
     The expected pod_progress can sometimes vary so is a list
