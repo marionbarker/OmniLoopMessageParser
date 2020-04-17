@@ -6,8 +6,7 @@
 def getPodProgressMeaning(thisInt):
     """ convert the value for pod progess into it's meaning """
     podProgress = { \
-        -1: 'Unknown', \
-        0: 'InitialValue', \
+        0: '', \
         1: 'MemoryInitialized', \
         2: 'ReminderInitialized', \
         3: 'PairingCompleted', \
@@ -73,36 +72,48 @@ def getActionDict():
 
 def getPodInitDict():
     """
-    This is the list of messages that should be sequential for a successful "action"
+    This is the list of messages that should be sequential for a
+    successful pod initialization
         getPodInitDict {
-            seq# : ('initStepName', msg_type, ppRange), \
+            seq# : ['initStepName', msg_type, ppRange], \
             ... \
             }
-    The expected pod_progress (pp) for the 01 after 0x7 can be 1 or 2,
-    so had to set up as a range
+    The expected pod_progress can sometimes vary so is a list
     """
     podInitDict = { \
-            0           : ( 'assignID', '0x7',  [-1, 2]), \
-            1           : ( 'successID', '0115',  [1, 2]), \
-            2           : ( 'setupPod', '0x3',  [1, 2]), \
-            3           : ( 'successSetup', '011b',  [3]), \
-            4           : ( 'cnfgDelivFlags', '0x8',  [3]), \
-            5           : ( 'successDF', '1d',  [3]), \
-            6           : ( 'cnfgAlerts1', '0x19',  [3]), \
-            7           : ( 'successCA1', '1d',  [3]), \
-            8           : ( 'prime', '1a17',  [3]), \
-            9           : ( 'successPrime', '1d',  [4]), \
-            10          : ( 'programBasal', '1a13', [4]), \
-            11          : ( 'successBasal', '1d',  [6]), \
-            12          : ( 'cnfgAlerts2', '0x19',  [6]), \
-            13          : ( 'successCA2', '1d',  [6]), \
-            14          : ( 'insertCanu', '1a17',  [6]), \
-            15          : ( 'successIns', '1d',  [7]), \
-            16          : ( 'statusCheck', '0e',  [7]), \
-            17          : ( 'initSuccess', '1d',  [8])
+            0           : [ 'assignID', '0x7',  [0, 2]], \
+            1           : [ 'successID', '0115',  [1, 2]], \
+            2           : [ 'setupPod', '0x3',  [1, 2]], \
+            3           : [ 'successSetup', '011b',  [3]], \
+            4           : [ 'cnfgDelivFlags', '0x8',  [3]], \
+            5           : [ 'successDF', '1d',  [3]], \
+            6           : [ 'cnfgAlerts1', '0x19',  [3]], \
+            7           : [ 'successCA1', '1d',  [3]], \
+            8           : [ 'prime', '1a17',  [3]], \
+            9           : [ 'successPrime', '1d',  [4]], \
+            10          : [ 'programBasal', '1a13', [4]], \
+            11          : [ 'successBasal', '1d',  [6]], \
+            12          : [ 'cnfgAlerts2', '0x19',  [6]], \
+            13          : [ 'successCA2', '1d',  [6]], \
+            14          : [ 'insertCanu', '1a17',  [6]], \
+            15          : [ 'successIns', '1d',  [7]], \
+            16          : [ 'statusCheck', '0e',  [7]], \
+            17          : [ 'initSuccess', '1d',  [8]]
             }
 
     return podInitDict
+
+def getPodInitRestartDict(restartType):
+    """
+    Update the list of messages following a restart of pod init sequence
+        sett getPodInitDict {
+    """
+    podInitRestartDict = getPodInitDict()
+    if restartType == 0:
+        podInitRestartDict[1] = [ 'ack', 'ACK',  [1, 2]]
+        podInitRestartDict[3] = [ 'ack', 'ACK',  [3]]
+
+    return podInitRestartDict
 
 def returnPodID(podDict, podInfo):
     """

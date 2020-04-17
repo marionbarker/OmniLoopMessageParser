@@ -24,11 +24,14 @@ def getInitState(frame):
     # increment initIdx upon success matching msg_type and pod_progress
     # initIdx is the index into the expectMT and expectPP for initializaton
     initIdx = 0
-    actualPP = -1
+    actualPP = 0
+    ppMeaning = getPodProgressMeaning(actualPP)
     podInitDict = getPodInitDict()
     statusOK = 1
     statusNotOK = 0
-    ppMeaning = getPodProgressMeaning(actualPP)
+    # if need to restart sequence, then need updated podInitDict
+    # currently, there is only one restartType
+    restartType = 0
 
     colNames = ('df_idx', 'timeStamp', 'time_delta', 'timeCumSec', \
                 'seq_num', 'expectAction', 'expectMT', 'expectPP', \
@@ -61,10 +64,12 @@ def getInitState(frame):
             status = statusOK
             initIdx = initIdx + 1
         elif expectMT == '1d':
+            # did not get '1d' response from pod, back up one
             initIdx = max(0,initIdx-1)
-        elif actualMT == '0x7':
+        elif actualMT == '0x7' and initIdx >= 2:
             # restarting the pairing from the beginning
             initIdx = 1
+            podInitDict = getPodInitRestartDict(restartType)
         elif actualPP > ppRange[-1]:
             # pod moved on and message was not captured
             initIdx = 0
