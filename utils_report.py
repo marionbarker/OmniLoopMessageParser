@@ -81,8 +81,12 @@ def writePodInfoToOutputFile(outFile, lastDate, thisFile, podInfo):
 
 def printPodDict(podDict):
     # print a few things then returns
-    print('    Pod: Address {:s} (pod), (newest pod)(Lot {:s}, PI: {:s}'.format(podDict['address'],
-            podDict['lot'], podDict['piVersion']))
+    # add protection here
+    if 'address' in podDict:
+        print('    Pod: Address {:s} (pod), (newest pod)(Lot {:s}, PI: {:s}'.format(podDict['address'],
+                podDict['lot'], podDict['piVersion']))
+    else:
+        print('      Missing podDict, check report for ## OmnipodPumpManager section')
 
 def printFrameDebug(frame):
     print('\n Debug printout of head and tail')
