@@ -208,7 +208,7 @@ def getPersonFromFilename(filename, last_timestamp):
     thisFullName = thisFullName.replace('_','') # remove underscores
     #print(thisFullName)
     # trim off some characters
-    thisDate = thisFullName[10:18] + '_' + thisFullName[18:20]
+    thisDate = thisFullName[10:18] + '_' + thisFullName[18:22]
     #print(thisDate)
 
     #thisDate = last_timestamp.dt.strftime('%Y%m%d_%r')
