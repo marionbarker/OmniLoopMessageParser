@@ -4,6 +4,11 @@ python code to parse the messages found in Loop Reports
 ToDo:
 * finish the modularization of code
 
+## April 16, 2020
+* Modify the pod_progress meanings to match yet again edited Wiki page
+* Change msg_type for empty msg body to be ACK
+* Fix the logic in realigning podInitFrame if messages get out of phase
+
 ## April 15, 2020
 * Modify the pod_progress meanings to match newly edited Wiki page
 * Modify podInitAnalysis to better handle when initialization steps are repeated
@@ -75,7 +80,7 @@ Input arguments:
 * vFlag
 **     : if 0: output analysis to terminal window
 **     : if 1: output pod session analysis to outFile
-**     : if 2: report init steps to terminal if available
+**     : if 2: report init steps to terminal if exceeds nominal expected
 **     : if 3: output init summary to outFile, init steps if too many, skip rest of pod analysis
 **     : if 4: report init steps to outFile_init.csv, report podState to outFile_podState.csv
 

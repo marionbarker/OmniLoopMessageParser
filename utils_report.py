@@ -24,20 +24,20 @@ def printActionSummary(actionSummary, vFlag):
           subDict['minResponseTime'], subDict['maxResponseTime'], \
           subDict['countIncomplete']))
         # deprecated (Pete fixed code)
-        if keys=='CnxSetTmpBasal':
-            numShortTB          = subDict['numShortTB']
-            numSchBasalbeforeTB = subDict['numSchBasalbeforeTB']
-            numRepeatedTB       = subDict['numRepeatedTB']
-            numRepeatedShortTB  = subDict['numRepeatedShortTB']
-            numrepeated19MinTB  = subDict['numrepeated19MinTB']
+        #if keys=='CnxSetTmpBasal':
+        #    numShortTB          = subDict['numShortTB']
+        #    numSchBasalbeforeTB = subDict['numSchBasalbeforeTB']
+        #    numRepeatedTB       = subDict['numRepeatedTB']
+        #    numRepeatedShortTB  = subDict['numRepeatedShortTB']
+        #    numrepeated19MinTB  = subDict['numrepeated19MinTB']
 
     # deprecated (Pete fixed code)
-    if vFlag==1:
-        print('\n    #TB with SchBasal before     : {:5d}'.format(numSchBasalbeforeTB))
-        print('    #TB sent at <30s interval    : {:5d}'.format(numShortTB))
-        print('    #TB repeated value           : {:5.0f}'.format(numRepeatedTB))
-        print('    #TB repeated value <30s      : {:5.0f}'.format(numRepeatedShortTB))
-        print('    #TB rep value >=30s & <19min : {:5.0f}'.format(numrepeated19MinTB))
+    #if vFlag==1:
+    #    print('\n    #TB with SchBasal before     : {:5d}'.format(numSchBasalbeforeTB))
+    #    print('    #TB sent at <30s interval    : {:5d}'.format(numShortTB))
+    #    print('    #TB repeated value           : {:5.0f}'.format(numRepeatedTB))
+    #    print('    #TB repeated value <30s      : {:5.0f}'.format(numRepeatedShortTB))
+    #    print('    #TB rep value >=30s & <19min : {:5.0f}'.format(numrepeated19MinTB))
 
 def printInitFrame(podInitFrame):
     print('\n  CumSec, seqNum, expectAction  , expMT, status, actMT, ' \

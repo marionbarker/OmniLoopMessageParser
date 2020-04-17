@@ -14,8 +14,12 @@ analyzePodMessages
 
 def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag, chunkNum):
     # preprocess podFrame to be from a single pod
-    # new use of vFlag.  If one, print out pod init lines then continue
-    # if 3, return after reporting pod init
+    # new use of vFlag.
+    #  : if 0: output analysis to terminal window
+    #  : if 1: output pod session analysis to outFile (older and not working)
+    #  : if 2: like 0, but report init steps to terminal if exceeds nominal expected
+    #  : if 3: output init summary to outFile, init steps if too many, skip rest of pod analysis
+    #  : if 4: report init steps to outFile_init.csv, report podState to outFile_podState.csv
     REPORT_INIT_ONLY = 3
     VERBOSE_OUT_FILE = 4
     nomNumInitSteps = 18  # nominal number steps to initialize pod
@@ -77,7 +81,7 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
         printPodDict(podDict)
 
     if vFlag == 2:
-        if hasPodInit:
+        if hasPodInit and podInfo['numInitSteps']!=nomNumInitSteps:
             printInitFrame(podInitFrame)
 
     if vFlag == VERBOSE_OUT_FILE and hasPodInit:
@@ -184,7 +188,9 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
         podState.to_csv(thisOutFile)
 
     # if an output filename is provided - write statistics to it (csv format)
-    if outFile and vFlag != VERBOSE_OUT_FILE:
+    # This prints things we no longer calculate - clean up later
+    doNotUse = 0
+    if doNotUse:
         # check if file exists
         isItThere = os.path.isfile(outFile)
 
