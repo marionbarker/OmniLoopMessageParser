@@ -55,6 +55,7 @@ def parse_1d(msg):
     msgDict = { }
     msgDict['msg_type'] = '1d'
     msgDict['mtype'] = byte_0
+    msgDict['msgMeaning'] = 'PodStatus'
     msgDict['msg_body']    = msg
 
     msgDict['extended_bolus_active']   = (byte_1 >> 4 & 0x8) != 0

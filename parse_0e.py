@@ -34,12 +34,12 @@ def parse_0e(msg):
     msgDict['mtype'] = mtype
     msgDict['requestCode'] = requestCode
     if requestCode == 0:
-        msgDict['requestMeaning'] = 'StandardStatus'
+        msgDict['msgMeaning'] = 'RequestStatus'
     elif requestCode == 1:
-        msgDict['requestMeaning'] = 'ExpiredAlert'
-    elif requestCode == 1:
-        msgDict['requestMeaning'] = 'Fault'
+        msgDict['msgMeaning'] = 'RequestAlert'
+    elif requestCode == 2:
+        msgDict['msgMeaning'] = 'RequestFault'
     else:
-        msgDict['requestMeaning'] = 'ReferToWiki'
+        msgDict['msgMeaning'] = 'CheckWiki'
 
     return msgDict

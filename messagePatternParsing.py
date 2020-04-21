@@ -20,13 +20,31 @@ def ignoreMsg(msg):
     msgDict['mtype'] = byteMsg[0]
     msgDict['msg_type'] = hex(byteMsg[0])
     msgDict['msg_body'] = msg
+    msgDict['msgMeaning'] = 'checkWiki'
+    return msgDict
+
+def badMsg(msg):
+    msgDict = {}
+    msgDict['mtype'] = '0xFF'
+    msgDict['msg_type'] = '0xFF'
+    msgDict['msg_body'] = msg
+    msgDict['msgMeaning'] = 'Unknown'
+    return msgDict
+
+def emptyMsg(msg):
+    msgDict = {}
+    msgDict['mtype'] = '0x00'
+    msgDict['msg_type'] = 'ACK'
+    msgDict['msg_body'] = msg
+    msgDict['msgMeaning'] = 'ack'
     return msgDict
 
 def parse_1a(msg):
     # extract information the indicator for type of 1a command
     byteMsg = bytearray.fromhex(msg)
     byteList = list(byteMsg)
-    xtype = byteList[16]
+    mlen = byteList[1]
+    xtype = byteList[2+mlen]
     if xtype == 0x16:
         msgDict = parse_1a16(msg)
     elif xtype == 0x17:
@@ -50,11 +68,12 @@ chooseMsgType = {
 # special case for empty msg aka ACK
 def processMsg(msg):
     if msg == '':
-        thisMessage = {}
-        thisMessage['mtype'] = '0x0'
-        thisMessage['msg_type'] = 'ACK'
-        thisMessage['msg_body'] = msg
+        thisMessage = emptyMsg(msg)
     else:
         byteMsg = bytearray.fromhex(msg)
-        thisMessage = chooseMsgType.get(byteMsg[0],ignoreMsg)(msg)
+        if len(byteMsg)<3:
+            print('msg_body not understood: ', msg)
+            thisMessage = badMsg(msg)
+        else:
+            thisMessage = chooseMsgType.get(byteMsg[0],ignoreMsg)(msg)
     return thisMessage

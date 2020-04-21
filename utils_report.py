@@ -44,8 +44,8 @@ def printInitFrame(podInitFrame):
            'actPP, ppMeaning')
     for index, row in podInitFrame.iterrows():
         print('  {:5.0f}, {:7d}, {:14s}, {:5s}, {:6d}, {:5s}, ' \
-            '{:5d}, {:14s}'.format(row['timeCumSec'], row['seq_num'],
-            row['expectAction'], row['expectMT'],
+            '{:5d}, {:14s}'.format(row['timeCumSec'],
+            row['seq_num'], row['expectAction'], row['expectMT'],
             row['status'], row['actualMT'],
             row['actualPP'], row['ppMeaning']))
 

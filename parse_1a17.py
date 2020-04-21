@@ -68,9 +68,9 @@ def parse_1a17(msg):
     nonce = combineByte(byteList[2:6])
     TableNum = byteList[6]
     chsum   = combineByte(byteList[7:9])
-    hhsegments = byteList[9]
+    hhEntries = byteList[9]
     secsX8Left = combineByte(byteList[10:12])
-    hhpulses = combineByte(byteList[12:14])
+    pulsesPerHhr = combineByte(byteList[12:14])
     pulse0   = combineByte(byteList[14:16])
     # only immediate bolus used by Loop - so done with first half
 
@@ -90,14 +90,15 @@ def parse_1a17(msg):
     msgDict = { }
     msgDict['msg_type'] = '1a17'
     msgDict['msg_body']    = msg
+    msgDict['msgMeaning'] = 'SetBolus'
     msgDict['mtype'] = mtype
     msgDict['mlen'] = mlen
     msgDict['nonce'] = nonce
     msgDict['TableNum'] = TableNum
     msgDict['chsum'] = chsum
-    msgDict['hhsegments'] = hhsegments
+    msgDict['hhEntries'] = hhEntries
     msgDict['secsX8Left'] = secsX8Left
-    msgDict['hhpulses'] = hhpulses
+    msgDict['pulsesPerHhr'] = pulsesPerHhr
     msgDict['pulse0'] = pulse0
 
     msgDict['xtype'] = xtype
@@ -108,6 +109,6 @@ def parse_1a17(msg):
     msgDict['extendedTenthPulses'] = extendedTenthPulses
     msgDict['extendedDelay'] = extendedDelay
 
-    msgDict['prompt_bolus_u']  =  getUnitsFromPulses(hhpulses)
+    msgDict['prompt_bolus_u']  =  getUnitsFromPulses(pulsesPerHhr)
 
     return msgDict

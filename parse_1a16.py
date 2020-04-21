@@ -58,23 +58,37 @@ def parse_1a16(msg):
     byteList = list(byteMsg)
     mtype = byteList[0]
     mlen = byteList[1]
+    # use mlen to determine when the 16 follow on command starts
+    # two values are 14 (0x0e) or 16 (0x10)
     nonce = combineByte(byteList[2:6])
     TableNum = byteList[6]
     chsum   = combineByte(byteList[7:9])
-    hhsegments = byteList[10]
-    secsX8Left = combineByte(byteList[11:13])
-    hhpulses = combineByte(byteList[13:15])
+    hhEntries = byteList[9]  # number of half hour entries, max is 24 = 12 hours
+    secsX8Left = combineByte(byteList[10:12]) # always 0x3840
+    pulsesPerHhr = combineByte(byteList[12:14])   # pulses per half hour segment
+    if mlen == 0x0e:
+        numHalfHrSegs = 1 # all we expect with Loop
+        # ignore first napp - always indicate 1 half hour segment
+    elif mlen == 0x10:
+        napp1 = combineByte(byteList[14:16])
+        napp2 = combineByte(byteList[16:18])
+        numHalfHrSegs = 10 # place holder, get from masking napp1 + napp2
+    else:
+        print('mlen is not valid in msg')
+        print(msg)
+        return ignoreMsg(msg)
 
+    # count below is true iff mlen is 0x0e
     #              16 17 18 19 20   22       26   28
     #Second half:  16 LL RR MM NNNN XXXXXXXX YYYY ZZZZZZZZ [YYYY ZZZZZZZZ...]
-    xtype = byteList[16]
-    xlen = byteList[17]
-    reminders = byteList[18]
-    MM = byteList[19]   # Always 0
-    firstEntryX10pulses = combineByte(byteList[20:22])
-    firstDelayMicroSec = combineByte(byteList[22:26])
-    totalEntryX10pulses = combineByte(byteList[26:28])
-    delayMicroSec = combineByte(byteList[28:32])
+    xtype = byteList[2+mlen]
+    xlen = byteList[3+mlen]
+    reminders = byteList[4+mlen]
+    MM = byteList[5+mlen]   # Always 0
+    firstEntryX10pulses = combineByte(byteList[(6+mlen):(8+mlen)])
+    firstDelayMicroSec = combineByte(byteList[(8+mlen):(12+mlen)])
+    totalEntryX10pulses = combineByte(byteList[(12+mlen):(14+mlen)])
+    delayMicroSec = combineByte(byteList[(14+mlen):(18+mlen)])
 
     if firstEntryX10pulses != totalEntryX10pulses:
         print('Warning - temp basal not properly configured, # pulses')
@@ -85,14 +99,16 @@ def parse_1a16(msg):
     msgDict = { }
     msgDict['msg_type'] = '1a16'
     msgDict['msg_body']    = msg
+    msgDict['msgMeaning'] = 'SetTempBasal'
     msgDict['mtype'] = mtype
     msgDict['mlen'] = mlen
     msgDict['nonce'] = nonce
     msgDict['TableNum'] = TableNum
     msgDict['chsum'] = chsum
-    msgDict['hhsegments'] = hhsegments
+    msgDict['hhEntries'] = hhEntries
     msgDict['secsX8Left'] = secsX8Left
-    msgDict['hhpulses'] = hhpulses
+    msgDict['pulsesPerHhr'] = pulsesPerHhr
+    msgDict['pulsesPerHhr'] = pulsesPerHhr
 
     msgDict['xtype'] = xtype
     msgDict['xlen'] = xlen

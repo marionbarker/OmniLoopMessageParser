@@ -36,6 +36,9 @@ def checkAction(frame):
 
     actionDict = getActionDict()
 
+    actionColumnNames = ('actionName', 'msgPerAction', 'cumStartSec', \
+      'responseTime' , 'SchBasalState', 'incompleteList','completedList' )
+
     # determine initIdx from pod_progress value
     podInit = frame[frame.pod_progress < 8]
     # get list of indices for initializing the pod
@@ -46,9 +49,18 @@ def checkAction(frame):
     else:
         # need to add the next row too - but keep going until it is a '1d'
         checkIdx = initIdx[-1]
-        while (frame.loc[checkIdx,'msg_type']) != '1d':
+        while checkIdx<len(frame) and (frame.loc[checkIdx,'msg_type']) != '1d':
             checkIdx += 1
             initIdx = np.append(initIdx, checkIdx)
+
+    if len(initIdx) > len(frame):
+        print('Pod never reached pod_progress of 8')
+        #print('len(initIdx):', len(initIdx))
+        #print('len(frame):', len(frame))
+        initIdx = initIdx[0:len(frame)]
+        #print('len(initIdx):', len(initIdx))
+        actionFrame = pd.DataFrame([], columns=actionColumnNames)
+        return actionFrame, initIdx
 
     # prepare to search by actions
     frameBalance = frame.copy()
@@ -62,8 +74,6 @@ def checkAction(frame):
     # if all the expected messages are found in the correct order, then the
     #     indices for all the messages are removed from frameBalance before
     #     searching for the next actionDict item
-    actionColumnNames = ('actionName', 'msgPerAction', 'cumStartSec', \
-      'responseTime' , 'SchBasalState', 'incompleteList','completedList' )
 
     actionList = []
 

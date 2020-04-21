@@ -72,6 +72,7 @@ def parse_1a13(msg):
     msgDict = { }
     msgDict['msg_type'] = '1a13'
     msgDict['msg_body']    = msg
+    msgDict['msgMeaning'] = 'SetBasalSch'
     msgDict['mtype'] = mtype
     msgDict['mlen'] = mlen
     msgDict['nonce'] = nonce

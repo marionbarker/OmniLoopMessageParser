@@ -23,7 +23,7 @@ def getPodState(frame):
     """
     # initialize values for pod states that we will update
     timeCumSec = 0
-    pod_progress = -1 # indicate we do not yet have response from pod as to state
+    pod_progress = 0 
     faultProcessedMsg = {}
     insulinDelivered = getUnitsFromPulses(0)
     reqTB = getUnitsFromPulses(0)
@@ -40,7 +40,7 @@ def getPodState(frame):
     list_of_states = []
 
     colNames = ('df_idx', 'timeStamp', 'time_delta', 'timeCumSec', \
-                'seq_num', 'msg_type', 'pod_progress', 'radioOnCumSec',\
+                'radioOnCumSec', 'seq_num', 'pod_progress', 'msg_type', \
                 'insulinDelivered', 'reqTB', \
                 'reqBolus', 'Bolus','TB','SchBasal', 'msg_body' )
 
@@ -53,6 +53,7 @@ def getPodState(frame):
         msg = row['msg_body']
         seq_num = row['seq_num']
         pmsg = processMsg(msg)
+        #msgMeaning  = pmsg['msgMeaning']
         if pmsg['msg_type'] == 'ACK':
             ackMessageList.append(index)
 
@@ -96,15 +97,8 @@ def getPodState(frame):
             podInfo['tid']  = str(pmsg['tid'])
             podInfo['address']  = pmsg['address']
 
-        elif msg_type == '1f':
-            #Bolus = Bolus and not pmsg['cancelBolus']
-            #TB    = TB and not pmsg['cancelTB']
-            #schBa = schBa and not pmsg['suspend']
-            # rename the msg_type per Joe's request
-            msg_type = '1f0{:d}'.format(pmsg['cancelByte'])
-
         list_of_states.append((index, timeStamp, time_delta, timeCumSec, \
-                              seq_num, msg_type, pod_progress, radioOnCumSec, \
+                              radioOnCumSec, seq_num, pod_progress, msg_type, \
                               insulinDelivered, reqTB, \
                               reqBolus, Bolus, TB, schBa, msg))
 

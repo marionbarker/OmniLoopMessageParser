@@ -46,8 +46,10 @@ def parse_06(msg):
     if msgDict['is_nonce_resync']:
         msgDict['nonce_reseed_word'] = wordCode
         msgDict['fault_code'] = 'nonceResync'
+        msgDict['msgMeaning'] = 'ResyncNonceOK'
     else:
         msgDict['nonce_reseed_word'] = 0
         msgDict['fault_code'] = hex(errorCode)
+        msgDict['msgMeaning'] = 'ResyncNonceNotOK'
 
     return msgDict

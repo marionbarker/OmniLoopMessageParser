@@ -54,6 +54,7 @@ def parse_01(msg):
     msgDict['mlen'] = mlen
 
     if mlen == 0x15:
+        msgDict['msgMeaning'] = 'IdAssigned'
         pmVer = byteList[2:5]
         piVer = byteList[5:8]
         always2 = byteList[8]
@@ -69,6 +70,7 @@ def parse_01(msg):
         msgDict['recv_gain'] = gg
         msgDict['rssi_value'] = ss
     elif mlen == 0x1b:
+        msgDict['msgMeaning'] = 'PodSetupOK'
         fixedWord = byteList[2:9]
         pmVer = byteList[9:12]
         piVer = byteList[12:15]

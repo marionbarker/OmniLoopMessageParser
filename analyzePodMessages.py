@@ -89,6 +89,12 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
         print('  Sending full podInit details to \n    ',thisOutFile)
         podInitFrame.to_csv(thisOutFile)
 
+    if vFlag == VERBOSE_OUT_FILE:
+        thisOutFile = outFile +'podState_' + thisPerson + '_' + thisDate + '_' + str(chunkNum) + '.csv'
+        print('  Sending full podState details to \n    ',thisOutFile)
+        # Joe wants FALSE to be replaced with '' and TRUE with 'y' - do this later
+        podState.to_csv(thisOutFile)
+
     # From the podState, extract some values to use in reports
     msgLogHrs = podState.iloc[-1]['timeCumSec']/3600
     radioOnHrs = podState.iloc[-1]['radioOnCumSec']/3600
@@ -122,6 +128,10 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
         thisFault = 'PodInfoFaultEvent'
 
     # process the action frame (returns a dictionary plus total completed message count)
+    if len(actionFrame) == 0:
+        print('Pod did not initialize')
+        actionSummary = 0
+        return df, podState, actionFrame, actionSummary
     actionSummary, totalCompletedMessages = processActionFrame(actionFrame, podState)
     percentCompleted = 100*totalCompletedMessages/number_of_messages
 
@@ -163,8 +173,8 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
             elif thisFault == '0x34':
                 print('    An 0x0202 message of {:s} reported - this wipes out registers'.format(thisFault))
             else:
-                #print('    An 0x0202 message of {:s} reported - details later'.format(thisFault))
-                hasFault = 0
+                print('    An 0x0202 message of {:s} reported - details later'.format(thisFault))
+                #hasFault = 0
 
         if ackMessageList:
             print('    ***  Detected {:d} ACK(s) during life of the pod'.format(len(ackMessageList)))
@@ -180,12 +190,6 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
     if hasFault:
         print('\nFault Details')
         printDict(faultProcessedMsg)
-
-    if vFlag == VERBOSE_OUT_FILE:
-        thisOutFile = outFile +'podState_' + thisPerson + '_' + thisDate + '_' + str(chunkNum) + '.csv'
-        print('  Sending full podState details to \n    ',thisOutFile)
-        # Joe wants FALSE to be replaced with '' and TRUE with 'y' - do this later
-        podState.to_csv(thisOutFile)
 
     # if an output filename is provided - write statistics to it (csv format)
     # This prints things we no longer calculate - clean up later

@@ -48,8 +48,6 @@ def parse_02(msg):
 
     byteMsg = bytearray.fromhex(msg)
     byteList = list(byteMsg)
-    #print(byteMsg)
-    #print(byteList)
     byte_0 = byteList[0]
     byte_1 = byteList[1]
     if byte_1 < 4:
@@ -80,6 +78,7 @@ def parse_02(msg):
     msgDict = { }
     msgDict['msg_type'] = '02'
     msgDict['msg_body']    = msg
+    msgDict['msgMeaning'] = 'WIPorFault'
     msgDict['mtype'] = byte_0
     msgDict['fault_type'] = byte_2
     if msgDict['fault_type'] != 2:

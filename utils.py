@@ -23,10 +23,12 @@ def flatten(lol):
 def printDict(thisDict):
     for keys,values in thisDict.items():
         print('  {} =   {}'.format(keys, values))
+    print('\n')
 
 def printList(thisList):
     for item in thisList:
         print(item)
+    print('\n')
 
 def listFromDict(thisDict):
     list_of_keys = []
