@@ -17,26 +17,28 @@ from parse_1f import *
 def ignoreMsg(msg):
     msgDict = {}
     byteMsg = bytearray.fromhex(msg)
-    msgDict['mtype'] = byteMsg[0]
+    mtype = byteMsg[0]
+    msgDict['mtype'] = mtype
     msgDict['msg_type'] = hex(byteMsg[0])
     msgDict['msg_body'] = msg
-    msgDict['msgMeaning'] = 'checkWiki'
+    if mtype == 0x07:
+        msgDict['msgMeaning'] = 'assignID'
+    elif mtype == 0x03:
+        msgDict['msgMeaning'] = 'setupPod'
+    elif mtype == 0x08:
+        msgDict['msgMeaning'] = 'cnfgDelivFlags'
+    elif mtype == 0x19:
+        msgDict['msgMeaning'] = 'cnfgAlerts'
+    else:
+        msgDict['msgMeaning'] = 'checkWiki'
     return msgDict
 
-def badMsg(msg):
+def ackMsg(msg):
     msgDict = {}
-    msgDict['mtype'] = '0xFF'
-    msgDict['msg_type'] = '0xFF'
-    msgDict['msg_body'] = msg
-    msgDict['msgMeaning'] = 'Unknown'
-    return msgDict
-
-def emptyMsg(msg):
-    msgDict = {}
-    msgDict['mtype'] = '0x00'
+    msgDict['mtype'] = 'ACK'
     msgDict['msg_type'] = 'ACK'
     msgDict['msg_body'] = msg
-    msgDict['msgMeaning'] = 'ack'
+    msgDict['msgMeaning'] = 'ACK'
     return msgDict
 
 def parse_1a(msg):
@@ -68,12 +70,13 @@ chooseMsgType = {
 # special case for empty msg aka ACK
 def processMsg(msg):
     if msg == '':
-        thisMessage = emptyMsg(msg)
+        # format before Loop 2.2
+        thisMessage = ackMsg(msg)
     else:
+        # format with Loop 2.2
         byteMsg = bytearray.fromhex(msg)
         if len(byteMsg)<3:
-            print('msg_body not understood: ', msg)
-            thisMessage = badMsg(msg)
+            thisMessage = ackMsg(msg)
         else:
             thisMessage = chooseMsgType.get(byteMsg[0],ignoreMsg)(msg)
     return thisMessage

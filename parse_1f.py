@@ -52,6 +52,8 @@ def parse_1f(msg):
         msgDict['msgMeaning'] = 'CancelTB'
     elif cancelByte == 1:
         msgDict['msgMeaning'] = 'SuspendPod'
+    else:
+        msgDict['msgMeaning'] = 'Canx'
     msgDict['mtype'] = mtype
     msgDict['mlen'] = mlen
     msgDict['nonce'] = nonce

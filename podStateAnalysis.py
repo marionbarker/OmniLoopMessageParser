@@ -23,7 +23,7 @@ def getPodState(frame):
     """
     # initialize values for pod states that we will update
     timeCumSec = 0
-    pod_progress = 0 
+    pod_progress = 0
     faultProcessedMsg = {}
     insulinDelivered = getUnitsFromPulses(0)
     reqTB = getUnitsFromPulses(0)
@@ -41,8 +41,8 @@ def getPodState(frame):
 
     colNames = ('df_idx', 'timeStamp', 'time_delta', 'timeCumSec', \
                 'radioOnCumSec', 'seq_num', 'pod_progress', 'msg_type', \
-                'insulinDelivered', 'reqTB', \
-                'reqBolus', 'Bolus','TB','SchBasal', 'msg_body' )
+                'msgMeaning', 'insulinDelivered', 'reqTB', \
+                'reqBolus', 'Bolus','TB','SchBasal', 'address', 'msg_body' )
 
     # iterate through the DataFrame, should already be sorted into send-recv pairs
     for index, row in frame.iterrows():
@@ -53,7 +53,7 @@ def getPodState(frame):
         msg = row['msg_body']
         seq_num = row['seq_num']
         pmsg = processMsg(msg)
-        #msgMeaning  = pmsg['msgMeaning']
+        msgMeaning  = pmsg['msgMeaning']
         if pmsg['msg_type'] == 'ACK':
             ackMessageList.append(index)
 
@@ -99,8 +99,8 @@ def getPodState(frame):
 
         list_of_states.append((index, timeStamp, time_delta, timeCumSec, \
                               radioOnCumSec, seq_num, pod_progress, msg_type, \
-                              insulinDelivered, reqTB, \
-                              reqBolus, Bolus, TB, schBa, msg))
+                              msgMeaning, insulinDelivered, reqTB, \
+                              reqBolus, Bolus, TB, schBa, row['address'], msg))
 
     podStateFrame = pd.DataFrame(list_of_states, columns=colNames)
     return podStateFrame, ackMessageList, faultProcessedMsg, podInfo

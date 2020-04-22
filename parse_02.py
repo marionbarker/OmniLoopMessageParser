@@ -55,6 +55,7 @@ def parse_02(msg):
         msgDict['msg_type'] = '0x2'
         msgDict['msg_body']    = msg
         msgDict['mtype'] = byte_0
+        msgDict['msgMeaning'] = 'Other 0x02'
         return msgDict
 
     byte_2 = byteList[2]
@@ -78,7 +79,7 @@ def parse_02(msg):
     msgDict = { }
     msgDict['msg_type'] = '02'
     msgDict['msg_body']    = msg
-    msgDict['msgMeaning'] = 'WIPorFault'
+    msgDict['msgMeaning'] = 'WIP_or_Fault'
     msgDict['mtype'] = byte_0
     msgDict['fault_type'] = byte_2
     if msgDict['fault_type'] != 2:
