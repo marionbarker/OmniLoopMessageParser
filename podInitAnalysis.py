@@ -49,6 +49,8 @@ def getInitState(frame):
         expectMT = podInitDict[initIdx][1]
         ppRange = podInitDict[initIdx][2]
         msg = row['msg_body']
+        # prevent excel from treating 1e as exponent
+        msgWithPrefix = 'hex {:s}'.format(msg)
         seq_num = row['seq_num']
         pmsg = processMsg(msg)
 
@@ -81,7 +83,7 @@ def getInitState(frame):
 
         list_of_states.append((index, timeStamp, time_delta, timeCumSec, \
                 seq_num, expectAction, expectMT, ppRange, \
-                status, actualMT, actualPP, ppMeaning, msg))
+                status, actualMT, actualPP, ppMeaning, msgWithPrefix))
 
     podInitFrame = pd.DataFrame(list_of_states, columns=colNames)
     return podInitFrame

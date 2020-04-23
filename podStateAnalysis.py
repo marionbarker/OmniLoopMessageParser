@@ -51,8 +51,8 @@ def getPodState(frame):
         time_delta = row['time_delta']
         timeCumSec += time_delta
         msg = row['msg_body']
-        # prevent excel from treating 1e as exponent
-        msgForPodState = 'hex {:s}'.format(msg)
+        # prevent excel from treating 1e as exponentgit
+        msgWithPrefix = 'hex {:s}'.format(msg)
         seq_num = row['seq_num']
         pmsg = processMsg(msg)
         msgMeaning  = pmsg['msgMeaning']
@@ -102,7 +102,7 @@ def getPodState(frame):
         list_of_states.append((index, timeStamp, time_delta, timeCumSec, \
                               radioOnCumSec, seq_num, pod_progress, msg_type, \
                               msgMeaning, insulinDelivered, reqTB, \
-                              reqBolus, Bolus, TB, schBa, row['address'], msgForPodState))
+                              reqBolus, Bolus, TB, schBa, row['address'], msgWithPrefix))
 
     podStateFrame = pd.DataFrame(list_of_states, columns=colNames)
     return podStateFrame, ackMessageList, faultProcessedMsg, podInfo
