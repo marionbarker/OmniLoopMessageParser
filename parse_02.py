@@ -29,10 +29,13 @@ def parse_02(msg):
     MM (1 byte) [$7]: message sequence number (saved B9>>2)
     NNNN (1 bytes) [$8:$9]: total # of pulses delivered
     PP (1 byte) [$A]: original logged fault event, if any
-    QQQQ (2 bytes) [$B:$C]: fault event time in minutes since Pod activation or $ffff if unknown due to an unexpected MCU reset
+    QQQQ (2 bytes) [$B:$C]: fault event time in minutes since Pod activation
+        or $ffff if unknown due to an unexpected MCU reset
     RRRR (2 bytes) [$D:$E]: # of 0.05U pulses remaining if <= 50U or $3ff if > 50U
     SSSS (2 bytes) [$F:$10]: minutes since Pod activation
-    TT (1 byte) [$11]: bit mask of the active, unacknowledged alerts (1 << alert #) from the $19 Command, this bit mask is the same as the aaaaaaaaa bits in the $1D Response
+    TT (1 byte) [$11]: bit mask of the active, unacknowledged alerts
+        (1 << alert #) from the $19 Command, this bit mask is the same as the
+        aaaaaaaaa bits in the $1D Response
     UU (1 byte) [$12]: 2 if there is a fault accessing tables
     VV (1 byte) [$13]: bits abbcdddd with information about logged fault event
     a: insulin state table corruption found during error logging
@@ -52,8 +55,7 @@ def parse_02(msg):
     byte_1 = byteList[1]
     if byte_1 < 4:
         msgDict = { }
-        msgDict['msg_type'] = '0x2'
-        msgDict['msg_body']    = msg
+        msgDict['msg_type'] = '0x02'
         msgDict['mtype'] = byte_0
         msgDict['msgMeaning'] = 'Other 0x02'
         return msgDict
@@ -77,8 +79,7 @@ def parse_02(msg):
     cksm   = combineByte(byteList[24:26])
 
     msgDict = { }
-    msgDict['msg_type'] = '02'
-    msgDict['msg_body']    = msg
+    msgDict['msg_type'] = '0x02'
     msgDict['msgMeaning'] = 'WIP_or_Fault'
     msgDict['mtype'] = byte_0
     msgDict['fault_type'] = byte_2

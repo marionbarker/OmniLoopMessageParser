@@ -38,8 +38,7 @@ def parse_06(msg):
     wordCode = combineByte(byteList[3:5])
 
     msgDict = { }
-    msgDict['msg_type'] = '06'
-    msgDict['msg_body']    = msg
+    msgDict['msg_type'] = '{0:#0{1}x}'.format(mtype,4)
     msgDict['mtype'] = mtype
     msgDict['mlen'] = mlen
     msgDict['is_nonce_resync'] = errorCode==0x14

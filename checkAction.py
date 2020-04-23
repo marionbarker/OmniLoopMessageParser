@@ -19,7 +19,7 @@ def checkAction(frame):
         Uses the actionDict for which send-recv patterns go with actions
         Steps:
             # - identify the indices associated with initilizing the pod
-                (use pod_progress < 8) plus next 1d messages
+                (use pod_progress < 8) plus next 0x1d messages
             # - build up actionFrame
                 (note that incompleteList remain in frameBalance)
                 frameBalance = frame
@@ -47,9 +47,9 @@ def checkAction(frame):
     if initIdx[-1] == 0:
         initIdx = [];
     else:
-        # need to add the next row too - but keep going until it is a '1d'
+        # need to add the next row too - but keep going until it is a '0x1d'
         checkIdx = initIdx[-1]
-        while checkIdx<len(frame) and (frame.loc[checkIdx,'msg_type']) != '1d':
+        while checkIdx<len(frame) and (frame.loc[checkIdx,'msg_type']) != '0x1d':
             checkIdx += 1
             initIdx = np.append(initIdx, checkIdx)
 

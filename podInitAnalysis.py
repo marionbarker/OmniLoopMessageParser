@@ -63,12 +63,12 @@ def getInitState(frame):
             (actualPP <= ppRange[-1]) ):
             status = statusOK
             initIdx = initIdx + 1
-        elif actualMT == '0x7' and initIdx >= 2:
+        elif actualMT == '0x07' and initIdx >= 2:
             # restarting the pairing from the beginning
             initIdx = 1
             podInitDict = getPodInitRestartDict(restartType)
-        elif expectMT == '1d':
-            # did not get '1d' response from pod, back up one
+        elif expectMT == '0x1d':
+            # did not get '0x1d' response from pod, back up one
             initIdx = max(0,initIdx-1)
         elif actualPP > ppRange[-1]:
             # pod moved on and message was not captured

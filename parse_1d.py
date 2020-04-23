@@ -39,24 +39,16 @@ def parse_1d(msg):
 
     byteMsg = bytearray.fromhex(msg)
     byteList = list(byteMsg)
-    byte_0 = byteList[0]
+    mtype = byteList[0]
     byte_1 = byteList[1]
     dword_3 = combineByte(byteList[2:6])
     dword_4 = combineByte(byteList[6:10])
     cksm   = combineByte(byteList[10:12])
 
-    #print(msg)
-    #print('0x{:x}'.format(combineByte(byte0)))
-    #print('0x{:x}'.format(combineByte(byte1)))
-    #print('0x{:x}'.format(combineByte(dword0)))
-    #print('0x{:x}'.format(combineByte(dword1)))
-    #print(combineByte(dword0) >> 15 & 0x1FFF)
-
     msgDict = { }
-    msgDict['msg_type'] = '1d'
-    msgDict['mtype'] = byte_0
+    msgDict['msg_type'] = '{0:#0{1}x}'.format(mtype,4)
+    msgDict['mtype'] = mtype
     msgDict['msgMeaning'] = 'PodStatus'
-    msgDict['msg_body']    = msg
 
     msgDict['extended_bolus_active']   = (byte_1 >> 4 & 0x8) != 0
     msgDict['immediate_bolus_active']  = (byte_1 >> 4 & 0x4) != 0

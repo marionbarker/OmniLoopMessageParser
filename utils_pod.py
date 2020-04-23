@@ -48,24 +48,24 @@ def getActionDict():
             first.  Then the sequences of 2 messages are identified next
     """
     actionDict = { \
-      'AssignID'        : (0, ('0x7' , '0115')), \
-      'SetupPod'        : (0, ('0x3' , '011b')), \
-      'CnfgDelivFlg'    : (0, ('0x8' , '1d')), \
-      'CnxSetTmpBasal'  : (2, ('1f02', '1d', '1a16', '1d')), \
-      'Status&Bolus'    : (2, ('0e',   '1d', '1a17', '1d')), \
-      'CnxAllSetBasal'  : (2, ('1f07', '1d', '1a13', '1d')), \
-      'StatusCheck'     : (0, ('0e'  , '1d')), \
-      'AcknwlAlerts'    : (0, ('0x11', '1d')), \
-      'CnfgAlerts'      : (0, ('0x19', '1d')), \
-      'SetBeeps'        : (0, ('0x1e', '1d')), \
-      'CnxDelivery'     : (0, ('1f'  , '1d')), \
-      'CnxBasal'        : (0, ('1f01', '1d')), \
-      'CnxTmpBasal'      : (0, ('1f02', '1d')), \
-      'CnxBolus'        : (0, ('1f04', '1d')), \
-      'CnxAll'          : (0, ('1f07', '1d')), \
-      'BolusAlone'      : (0, ('1a17', '1d')), \
-      'DeactivatePod'   : (0, ('0x1c', '1d')), \
-      'PrgBasalSch'     : (0, ('1a13', '1d'))
+      'AssignID'        : (0, ('0x07' , '0x0115')), \
+      'SetupPod'        : (0, ('0x03' , '0x011b')), \
+      'CnfgDelivFlg'    : (0, ('0x08' , '0x1d')), \
+      'CnxSetTmpBasal'  : (2, ('0x1f02', '0x1d', '0x1a16', '0x1d')), \
+      'Status&Bolus'    : (2, ('0x0e',   '0x1d', '0x1a17', '0x1d')), \
+      'CnxAllSetBasal'  : (2, ('0x1f07', '0x1d', '0x1a13', '0x1d')), \
+      'StatusCheck'     : (0, ('0x0e'  , '0x1d')), \
+      'AcknwlAlerts'    : (0, ('0x11', '0x1d')), \
+      'CnfgAlerts'      : (0, ('0x19', '0x1d')), \
+      'SetBeeps'        : (0, ('0x1e', '0x1d')), \
+      'CnxDelivery'     : (0, ('0x1f'  , '0x1d')), \
+      'CnxBasal'        : (0, ('0x1f01', '0x1d')), \
+      'CnxTmpBasal'     : (0, ('0x1f02', '0x1d')), \
+      'CnxBolus'        : (0, ('0x1f04', '0x1d')), \
+      'CnxAll'          : (0, ('0x1f07', '0x1d')), \
+      'BolusAlone'      : (0, ('0x1a17', '0x1d')), \
+      'DeactivatePod'   : (0, ('0x1c', '0x1d')), \
+      'PrgBasalSch'     : (0, ('0x1a13', '0x1d'))
        }
     return actionDict
 
@@ -81,24 +81,24 @@ def getPodInitDict():
     The expected pod_progress can sometimes vary so is a list
     """
     podInitDict = { \
-            0           : [ 'assignID', '0x7',  [0, 2]], \
-            1           : [ 'successID', '0115',  [1, 2]], \
-            2           : [ 'setupPod', '0x3',  [1, 2]], \
-            3           : [ 'successSetup', '011b',  [3]], \
-            4           : [ 'cnfgDelivFlags', '0x8',  [3]], \
-            5           : [ 'successDF', '1d',  [3]], \
+            0           : [ 'assignID', '0x07',  [0, 2]], \
+            1           : [ 'successID', '0x0115',  [1, 2]], \
+            2           : [ 'setupPod', '0x03',  [1, 2]], \
+            3           : [ 'successSetup', '0x011b',  [3]], \
+            4           : [ 'cnfgDelivFlags', '0x08',  [3]], \
+            5           : [ 'successDF', '0x1d',  [3]], \
             6           : [ 'cnfgAlerts1', '0x19',  [3]], \
-            7           : [ 'successCA1', '1d',  [3]], \
-            8           : [ 'prime', '1a17',  [3]], \
-            9           : [ 'successPrime', '1d',  [4]], \
-            10          : [ 'programBasal', '1a13', [4]], \
-            11          : [ 'successBasal', '1d',  [6]], \
+            7           : [ 'successCA1', '0x1d',  [3]], \
+            8           : [ 'prime', '0x1a17',  [3]], \
+            9           : [ 'successPrime', '0x1d',  [4]], \
+            10          : [ 'programBasal', '0x1a13', [4]], \
+            11          : [ 'successBasal', '0x1d',  [6]], \
             12          : [ 'cnfgAlerts2', '0x19',  [6]], \
-            13          : [ 'successCA2', '1d',  [6]], \
-            14          : [ 'insertCanu', '1a17',  [6]], \
-            15          : [ 'successIns', '1d',  [7]], \
-            16          : [ 'statusCheck', '0e',  [7]], \
-            17          : [ 'initSuccess', '1d',  [8]]
+            13          : [ 'successCA2', '0x1d',  [6]], \
+            14          : [ 'insertCanu', '0x1a17',  [6]], \
+            15          : [ 'successIns', '0x1d',  [7]], \
+            16          : [ 'statusCheck', '0x0e',  [7]], \
+            17          : [ 'initSuccess', '0x1d',  [8]]
             }
 
     return podInitDict

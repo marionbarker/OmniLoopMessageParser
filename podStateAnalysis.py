@@ -51,6 +51,8 @@ def getPodState(frame):
         time_delta = row['time_delta']
         timeCumSec += time_delta
         msg = row['msg_body']
+        # prevent excel from treating 1e as exponent
+        msgForPodState = 'hex {:s}'.format(msg)
         seq_num = row['seq_num']
         pmsg = processMsg(msg)
         msgMeaning  = pmsg['msgMeaning']
@@ -58,7 +60,7 @@ def getPodState(frame):
             ackMessageList.append(index)
 
         msg_type = pmsg['msg_type']
-        if msg_type == '02':
+        if msg_type == '0x02':
             faultProcessedMsg = pmsg
 
         timeAsleep = row['time_asleep']
@@ -68,20 +70,20 @@ def getPodState(frame):
             radioOnCumSec += time_delta - timeAsleep
 
         # fill in pod state based on msg_type
-        if msg_type == '1a16':
+        if msg_type == '0x1a16':
             reqTB = pmsg['temp_basal_rate_u_per_hr']
 
-        elif msg_type == '1a17':
+        elif msg_type == '0x1a17':
             reqBolus = pmsg['prompt_bolus_u']
 
-        elif msg_type == '1d':
+        elif msg_type == '0x1d':
             pod_progress = pmsg['pod_progress']
             insulinDelivered = pmsg['insulinDelivered_delivered']
             Bolus = pmsg['immediate_bolus_active']
             TB    = pmsg['temp_basal_active']
             schBa = pmsg['basal_active']
 
-        elif msg_type == '0115':
+        elif msg_type == '0x0115':
             pod_progress = pmsg['pod_progress']
             podInfo['piVersion'] = pmsg['piVersion']
             podInfo['lot']  = str(pmsg['lot'])
@@ -90,7 +92,7 @@ def getPodState(frame):
             podInfo['recv_gain']  = pmsg['recv_gain']
             podInfo['rssi_value']  = pmsg['rssi_value']
 
-        elif msg_type == '011b':
+        elif msg_type == '0x011b':
             pod_progress = pmsg['pod_progress']
             podInfo['piVersion'] = pmsg['piVersion']
             podInfo['lot']  = str(pmsg['lot'])
@@ -100,7 +102,7 @@ def getPodState(frame):
         list_of_states.append((index, timeStamp, time_delta, timeCumSec, \
                               radioOnCumSec, seq_num, pod_progress, msg_type, \
                               msgMeaning, insulinDelivered, reqTB, \
-                              reqBolus, Bolus, TB, schBa, row['address'], msg))
+                              reqBolus, Bolus, TB, schBa, row['address'], msgForPodState))
 
     podStateFrame = pd.DataFrame(list_of_states, columns=colNames)
     return podStateFrame, ackMessageList, faultProcessedMsg, podInfo

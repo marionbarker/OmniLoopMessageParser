@@ -70,8 +70,7 @@ def parse_1a13(msg):
     scheduleEntryIndex = byteList[mlen+5]
 
     msgDict = { }
-    msgDict['msg_type'] = '1a13'
-    msgDict['msg_body']    = msg
+    msgDict['msg_type'] = '0x1a13'
     msgDict['msgMeaning'] = 'SetBasalSch'
     msgDict['mtype'] = mtype
     msgDict['mlen'] = mlen

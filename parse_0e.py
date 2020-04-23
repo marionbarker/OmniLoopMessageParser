@@ -29,8 +29,7 @@ def parse_0e(msg):
     requestCode = byteList[2]
 
     msgDict = { }
-    msgDict['msg_type'] = '0e'
-    msgDict['msg_body']    = msg
+    msgDict['msg_type'] = '{0:#0{1}x}'.format(mtype,4)
     msgDict['mtype'] = mtype
     msgDict['requestCode'] = requestCode
     if requestCode == 0:

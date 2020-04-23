@@ -26,10 +26,6 @@ def parse_1f(msg):
     The Pod responds to the $1F command with a $1D status message.
     """
 
-    msgDict = { }
-    msgDict['msg_type'] = '1f'
-    msgDict['msg_body']    = msg
-
     byteMsg = bytearray.fromhex(msg)
     byteList = list(byteMsg)
     mtype = byteList[0]
@@ -42,8 +38,7 @@ def parse_1f(msg):
     suspend     = (cancelByte & 0x01) != 0
 
     msgDict = { }
-    msgDict['msg_type'] = '1f0{:d}'.format(cancelByte)
-    msgDict['msg_body']    = msg
+    msgDict['msg_type'] = '0x1f0{:d}'.format(cancelByte)
     if cancelByte == 7:
         msgDict['msgMeaning'] = 'CancelAll'
     elif cancelByte == 4:
