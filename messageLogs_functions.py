@@ -26,6 +26,7 @@ import os
 import markdown
 from bs4 import BeautifulSoup, NavigableString, Tag
 from utils import *
+from messagePatternParsing import *
 
 # Some markdown headings don't start on their own line. This regular expression
 # finds them so we can insert a newline. (Needed for some MessageLog files)
@@ -38,7 +39,7 @@ FIXME_RE = re.compile(r'(?!#).(##+.*)')
 #  note it's either MessageLog or Device Communication Log
 MARKDOWN_HEADINGS_TO_EXTRACT = ['OmnipodPumpManager', 'MessageLog', 'PodState', 'PodInfoFaultEvent', 'Device Communication Log']
 
-def _parse_filehandle(filehandle):
+def parse_filehandle(filehandle):
     """Given a filehandle, extract the content from below markdown headings.
 
     Args:
@@ -73,20 +74,53 @@ def _parse_filehandle(filehandle):
                 data[header.text].extend([text for text in nextNode.stripped_strings])
     return data
 
+"""
+    splitFullMsg takes the Loop packet and splits it into components
+      note - except for ACK this is not the full packet between PDM and Pod
+
+    An ACK packet has a different format than a send/recv packet
+    so check for ACK status first
+
+    An ACK packet consists of the
+        4-byte pod_address_1,
+        1-byte packet seq (NOT pod seq_num)
+            TTTSSSSS byte (with TTT = 010 and SSSSS = a 5-bit packet seq #)
+        4 byte ACK address
+        CRC-8 (packet checksum) byte
+
+    and this is what is now apparently being displayed for these ACK packets
+    which is now completely differently than the message based format for all
+    the other pod communication logging that formerly had empty messages for
+    ACK’s (which was OK for me).
+
+    However, for all other messages, the old code works fine.
+"""
+
 def splitFullMsg(full_msg):
+    print(len(full_msg), full_msg)
     address = full_msg[:8]
     B9 = full_msg[8:10] # B9 is string
-    byteMsg = bytearray.fromhex(B9) # convert to list of bytes
-    byteList = list(byteMsg)
-    B9_b = combineByte(byteList)
+    # convert string to list of bytes
+    B9list = list(bytearray.fromhex(B9))
+    # make a short from the byte list
+    B9_b = combineByte(B9list)
     seq_num = (B9_b & 0x3C)>>2
-    BLEN = full_msg[10:12]
-    msg_plus_crc = full_msg[12:]
-    # The CRC-16 is at the end of the raw_value
-    thisLength = len(msg_plus_crc)
-    CRC16 = msg_plus_crc[-4:]
-    msg_body = msg_plus_crc[:thisLength-4]
-    return address, seq_num, BLEN, msg_body, CRC16
+    # An ACK is always 10 long (and all other messages are longer)
+    if len(full_msg) == 28:
+        BLEN = 0;
+        CRC = full_msg[6:10]
+        # an empty msg_body is treated as an ACK
+        msg_body = ''
+    # this is a full message to or from the pod
+    else:
+        BLEN = full_msg[10:12]
+        msg_plus_crc = full_msg[12:]
+        # The CRC is at the end of the raw_value
+        thisLength = len(msg_plus_crc)
+        CRC = msg_plus_crc[-4:]
+        msg_body = msg_plus_crc[:thisLength-4]
+    CRC = 'hex ' + CRC
+    return address, seq_num, BLEN, msg_body, CRC
 
 ## orginal version for MessageLog format
 """
@@ -94,13 +128,17 @@ def splitFullMsg(full_msg):
         * 2020-02-06 06:01:23 +0000 send 1f036f631c030e01008043
         * 2020-02-06 06:01:26 +0000 receive 1f036f63200a1d18002e2800000073ff8388
 """
-def _message_dict(data):
-    timestamp, action, full_msg = data.rsplit(' ', 2)
-    address, seq_num, BLEN, msg_body, CRC16 = splitFullMsg(full_msg)
+def message_dict(data):
+    timestamp = data[0:19]
+    # skip the UTC time delta characters ( +0000 ), logs are always in UTC
+    stringToUnpack = data[26:]
+
+    action, full_msg = stringToUnpack.rsplit(' ', 1)
+    address, seq_num, BLEN, msg_body, CRC = splitFullMsg(full_msg)
     podMessagesDict = dict(
         time=timestamp,
         address=address, type=action, seq_num=seq_num,
-        msg_body=msg_body, CRC16=CRC16 )
+        msg_body=msg_body, CRC=CRC )
     return podMessagesDict
 
 ## new version for Device Communication Log format
@@ -113,14 +151,15 @@ def _message_dict(data):
         * 2020-04-01 02:15:06 +0000 Omnipod 1F0910C8 receive 1f0910c8140a1d18022700000016b3ff01e0
 
 """
-def _device_message_dict(data):
+def device_message_dict(data):
     # set default values in case they cannot be found or have wrong format
     device = 'unknown'
     address = 'unknown'
+    logAddr = 'unknown'
     action = 'unknown'
     seq_num = -1
     msg_body = ''
-    CRC16    = 'unknown'
+    CRC    = 'unknown'
 
     noisy = 0    # ONLY set noisy to 1 when using short test.md file
     if noisy:
@@ -137,39 +176,37 @@ def _device_message_dict(data):
     stringToUnpack = data[26:]
 
     # extract common information, parse Omnipod, leave other devices alone for now
-    # note that address is what Loop thinks the address is
-    device, address, action, restOfLine = stringToUnpack.split(' ',3)
+    # note that address is ffffffff until Loop and Pod finish some init steps
+    device, logAddr, action, restOfLine = stringToUnpack.split(' ',3)
     if device=="Omnipod":
-        # addressPod is what pod thinks address is
-        addressPod, seq_num, BLEN, msg_body, CRC16 = splitFullMsg(restOfLine)
-        if (address.lower() != addressPod) and (addressPod != 'ffffffff'):
-            print('\nThe two message numbers do not agree \n', address, addressPod)
-            print(seq_num, BLEN, CRC16)
+        # address is what pod thinks address is
+        address, seq_num, BLEN, msg_body, CRC = splitFullMsg(restOfLine)
+        if (logAddr.lower() != address) and (address != 'ffffffff'):
+            print('\nThe two message numbers do not agree \n', logAddr, address)
             print(msg_body)
             print(data)
-        else:
-            address = addressPod  # this returns what pod thinks is the address
     else:
-        #device, address, action, full_msg = stringToUnpack.split(' ', 3)
-        #dummy1, dummy2, dummy3, device, theRestOfLine = stringToUnpack.split(' ', 1)
         msg_body = restOfLine
 
     deviceMessagesDict = dict(
           time=timestamp, device=device,
-          address=address, type=action, seq_num=seq_num,
-          msg_body=msg_body, CRC16=CRC16 )
+          logAddr=logAddr, address=address, type=action, seq_num=seq_num,
+          msg_body=msg_body, CRC=CRC )
     if noisy:
         print('\n')
         printDict(deviceMessagesDict)
     return deviceMessagesDict
 
-def _extract_pod_state(data):
+def extract_pod_state(data):
     podStateDict = {}
     if 'PodState' in data:
         podStateDict = dict([[x.strip() for x in v.split(':', 1)]
                 for v in data['PodState']])
     return podStateDict
 
+# This is a bit of a hack.  It works for Loop because the extra message always
+# has a fixed length for a 1a16 message (refer to parse_1a16.py)
+# Add the 1f here too
 def select_extra_message(msg_body):
     if msg_body[:2]=='1a':
         if msg_body[32:34] not in ['16','17']:
@@ -177,14 +214,22 @@ def select_extra_message(msg_body):
         else:
             return msg_body[32:34]
 
+def getMsgType(msg_body):
+    pmsg = processMsg(msg_body)
+    return pmsg['msg_type']
+
+def getMsgMeaning(msg_body):
+    pmsg = processMsg(msg_body)
+    return pmsg['msgMeaning']
+
 def generate_table(df, radio_on_time):
-    # convert to a pandas dataframe
-    # now done in persist_message - already a DataFrame
-    #       df = pd.DataFrame(pod_messages)
+    # add columns to the DataFrame
     df['time'] = pd.to_datetime(df['time'])
-    df['message'] = df['msg_body'].str[:2].astype(str)+df['msg_body'].apply(select_extra_message).fillna('').astype(str)
+    #df['message'] = df['msg_body'].str[:2].astype(str)+df['msg_body'].apply(select_extra_message).fillna('').astype(str)
     df['time_delta'] = (df['time']-df['time'].shift()).dt.seconds.fillna(0).astype(float)
     df['time_asleep'] = df['time_delta'].loc[df['time_delta'] > radio_on_time] - radio_on_time  # radio_on_time seconds the radio stays awake
+    df['msg_type'] = df['msg_body'].apply(getMsgType)
+    df['msgMeaning'] = df['msg_body'].apply(getMsgMeaning)
     return df
 
 # parse the person in the filename
@@ -206,50 +251,10 @@ def getPersonFromFilename(filename, last_timestamp):
     thisFullName = thisFullName.replace(' ','') # remove spaces
     thisFullName = thisFullName.replace('-','') # remove hypens
     thisFullName = thisFullName.replace('_','') # remove underscores
-    #print(thisFullName)
     # trim off some characters
     thisDate = thisFullName[10:18] + '_' + thisFullName[18:22]
-    #print(thisDate)
-
-    #thisDate = last_timestamp.dt.strftime('%Y%m%d_%r')
-    #print(thisDate)
-    #thisDate = last_timestamp
-
-    #thisDate = last_timestamp.replace('-','') # remove hyphens
-    #thisDate = thisDate.replace(' ','_') # replace space before hour with underscore
-    #thisDate = thisDate[0:12] # capture yyyymmdd_hh
 
     return thisPerson, thisDate
-
-# parse the information in the filename
-def parse_info_from_filename(filename):
-    val = '^.*/'
-    thisPerson = re.findall(val, filename)
-    if not thisPerson:
-        thisPerson = 'Unknown'
-    else:
-        thisPerson = thisPerson[0] [0:-1]
-
-    finishValues = {'0x12', '0x14', '0x31', '0x34', '0x3d', '0x40', '0x42', '0x80', 'Nominal', '0x18', '0x1c', 'Unknown','WIP'}
-    antennaValues = {'origAnt', 'adHocAnt'}
-
-    for val in finishValues:
-        thisFinish = re.findall(val,filename)
-        if thisFinish:
-            break
-
-    for val in antennaValues:
-        thisAntenna = re.findall(val,filename)
-        if thisAntenna:
-            break
-
-    if not thisFinish:
-        thisFinish = ['Nominal']
-
-    if not thisAntenna:
-        thisAntenna = ['433MHz']
-
-    return (thisPerson, thisFinish[0], thisAntenna[0])
 
 """
   Add new versions of code, use prefix persist_ to indicate this was added to
@@ -259,7 +264,7 @@ def parse_info_from_filename(filename):
 def persist_read_file(filename):
     fileType = "unknown"
     file = open(filename, "r", encoding='UTF8')
-    parsed_content = _parse_filehandle(file)
+    parsed_content = parse_filehandle(file)
     if parsed_content.get('MessageLog'):
         fileType = "messageLog"
         # Handle case where last line of messageLog is 'status: ##'
@@ -278,14 +283,14 @@ def persist_pod_dict(parsed_content):
     # set up default
     pod_dict = ['nil']
     if parsed_content.get('OmnipodPumpManager'):
-      pod_dict = _extract_pod_state(parsed_content)
+      pod_dict = extract_pod_state(parsed_content)
     return pod_dict
 
 def persist_fault_report(parsed_content):
     # set up default
     fault_report = []
     if parsed_content.get('OmnipodPumpManager'):
-      pod_dict = _extract_pod_state(parsed_content)
+      pod_dict = extract_pod_state(parsed_content)
     return fault_report
 
 def omnipodP(message):
@@ -300,9 +305,9 @@ def persist_message(fileType, parsed_content):
     noisy = 0
     pod_messages = ['nil']
     if fileType == "messageLog":
-        pod_messages = [_message_dict(m) for m in parsed_content['MessageLog']]
+        pod_messages = [message_dict(m) for m in parsed_content['MessageLog']]
     elif fileType == "deviceLog":
-        messages = [_device_message_dict(m) for m in parsed_content['Device Communication Log']]
+        messages = [device_message_dict(m) for m in parsed_content['Device Communication Log']]
         pod_messages = list(filter(omnipodP, messages))
         if noisy:
             print('\n Pod Messages')

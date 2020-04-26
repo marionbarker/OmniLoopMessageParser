@@ -89,6 +89,6 @@ def parse_01(msg):
         msgDict['pod_progress']  = pprog
         msgDict['lot']  = podLot
         msgDict['tid']  = podTid
-        msgDict['address']  = hex(podAddr)
+        msgDict['podAddr']  = hex(podAddr)
 
     return msgDict

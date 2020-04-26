@@ -7,18 +7,17 @@ from analyzePodMessages import *
 """
 analyzeAllPodsInDeviceLog
     This pre-parser selects pod messages from Device Communications
-    Logic: Split podFrame by address=noPod
+    Logic: Split podFrame by logAddress=noPod, address=ffffffff
     Scenarios:
         address1 : group 1
-        noPodAddress + address2: group 2
-        noPodAddress + address3: group 3, etc
+        noPod/ffffffff + address2: group 2
+        noPod/ffffffff + address3: group 3, etc
 """
 
 def analyzeAllPodsInDeviceLog(thisFile, podFrame, podDict, fault_report, outFile, vFlag):
     # break podFrame into chunks and process each chunk
     #  unique address list, breakPoints in podFrame
     podAddresses, breakPoints = findBreakPoints(podFrame)
-
 
     numChunks = len(breakPoints)-1
 
@@ -41,5 +40,11 @@ def analyzeAllPodsInDeviceLog(thisFile, podFrame, podDict, fault_report, outFile
 
         df, podState, actionFrame, actionSummary = analyzePodMessages(thisFile,
             thisFrame, podDict, fault_report, outFile, vFlag, idx)
+
+        if vFlag == 4:
+            thisOutFile = 'm:/SharedFiles/LoopReportPythonAnalysis' + '/' \
+                + 'verboseOutput' + '/' + 'full_df_out_' + str(idx) + '.csv'
+            print('  Sending this chunk of df details to \n    ',thisOutFile)
+            df.to_csv(thisOutFile)
 
     return df, podState, actionFrame, actionSummary

@@ -29,20 +29,27 @@ def getPodState(frame):
     reqTB = getUnitsFromPulses(0)
     reqBolus = getUnitsFromPulses(0)
     #extBo = False # since extended bolus is always false, don't put into dataframe
-    Bolus = False
+    # to make this print out nicely, use '' for FALSE, 'y' for TRUE
+    Bolus = _getStringFromLogic(False)
     TB    = False
     schBa = False
     ackMessageList = []
     radio_on_time = 30 # radio is on for 30 seconds every time pod wakes up
     radioOnCumSec = radio_on_time
+
     podInfo = {}
 
     list_of_states = []
 
-    colNames = ('df_idx', 'timeStamp', 'time_delta', 'timeCumSec', \
+    colNamesMsg = ('df_idx', 'timeStamp', 'time_delta', 'timeCumSec', \
                 'radioOnCumSec', 'seq_num', 'pod_progress', 'msg_type', \
                 'msgMeaning', 'insulinDelivered', 'reqTB', \
                 'reqBolus', 'Bolus','TB','SchBasal', 'address', 'msg_body' )
+
+    colNamesDev = ('df_idx', 'timeStamp', 'time_delta', 'timeCumSec', \
+                'radioOnCumSec', 'seq_num', 'pod_progress', 'msg_type', \
+                'msgMeaning', 'insulinDelivered', 'reqTB', \
+                'reqBolus', 'Bolus','TB','SchBasal', 'logAddr', 'address', 'msg_body' )
 
     # iterate through the DataFrame, should already be sorted into send-recv pairs
     for index, row in frame.iterrows():
@@ -51,7 +58,7 @@ def getPodState(frame):
         time_delta = row['time_delta']
         timeCumSec += time_delta
         msg = row['msg_body']
-        # prevent excel from treating 1e as exponentgit
+        # prevent excel from treating 1e as exponent
         msgWithPrefix = 'hex {:s}'.format(msg)
         seq_num = row['seq_num']
         pmsg = processMsg(msg)
@@ -79,7 +86,7 @@ def getPodState(frame):
         elif msg_type == '0x1d':
             pod_progress = pmsg['pod_progress']
             insulinDelivered = pmsg['insulinDelivered_delivered']
-            Bolus = pmsg['immediate_bolus_active']
+            Bolus = _getStringFromLogic(pmsg['immediate_bolus_active'])
             TB    = pmsg['temp_basal_active']
             schBa = pmsg['basal_active']
 
@@ -88,7 +95,7 @@ def getPodState(frame):
             podInfo['piVersion'] = pmsg['piVersion']
             podInfo['lot']  = str(pmsg['lot'])
             podInfo['tid']  = str(pmsg['tid'])
-            podInfo['address']  = pmsg['address']
+            podInfo['address']  = pmsg['podAddr']
             podInfo['recv_gain']  = pmsg['recv_gain']
             podInfo['rssi_value']  = pmsg['rssi_value']
 
@@ -97,12 +104,29 @@ def getPodState(frame):
             podInfo['piVersion'] = pmsg['piVersion']
             podInfo['lot']  = str(pmsg['lot'])
             podInfo['tid']  = str(pmsg['tid'])
-            podInfo['address']  = pmsg['address']
+            podInfo['address']  = pmsg['podAddr']
 
-        list_of_states.append((index, timeStamp, time_delta, timeCumSec, \
-                              radioOnCumSec, seq_num, pod_progress, msg_type, \
-                              msgMeaning, insulinDelivered, reqTB, \
-                              reqBolus, Bolus, TB, schBa, row['address'], msgWithPrefix))
+        if row.get('logAddr'):
+            colNames = colNamesDev
+            list_of_states.append((index, timeStamp, time_delta, timeCumSec, \
+                                  radioOnCumSec, seq_num, pod_progress, msg_type, \
+                                  msgMeaning, insulinDelivered, reqTB, \
+                                  reqBolus, Bolus, TB, schBa, row['logAddr'], \
+                                  row['address'], msgWithPrefix))
+        else:
+            colNames = colNamesMsg
+            list_of_states.append((index, timeStamp, time_delta, timeCumSec, \
+                                  radioOnCumSec, seq_num, pod_progress, msg_type, \
+                                  msgMeaning, insulinDelivered, reqTB, \
+                                  reqBolus, Bolus, TB, schBa, \
+                                  row['address'], msgWithPrefix))
+
 
     podStateFrame = pd.DataFrame(list_of_states, columns=colNames)
     return podStateFrame, ackMessageList, faultProcessedMsg, podInfo
+
+def _getStringFromLogic(bool):
+    if bool:
+        return 'y'
+    else:
+        return ''
