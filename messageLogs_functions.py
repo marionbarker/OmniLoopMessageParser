@@ -75,53 +75,35 @@ def parse_filehandle(filehandle):
     return data
 
 """
-    splitFullMsg takes the Loop packet and splits it into components
+    splitFullMsg splits the hexToParse from Loop report into components
 
     Use: https://github.com/openaps/openomni/wiki/Message-Structure information
 
     An ACK packet has a different format
-        Check for ACK status first (different for MessageLog, which had empty
-        msg_body and Device Communication Log, which has CRC at msg_body loc)
+        different for MessageLog, which had empty msg_body
+        and Device Communication Log, which has CRC at msg_body loc
 
 """
 
-def splitFullMsg(full_msg):
-    # print(len(full_msg), full_msg)
-    ackFlag = 0
-    address = full_msg[:8]
-    B9 = full_msg[8:10] # B9 is string
-    #print(B9)
-    # convert string to list of bytes
-    B9list = list(bytearray.fromhex(B9))
-    # make a short from the byte list
-    B9_b = combineByte(B9list)
-    if len(full_msg) <= 18:
+def splitFullMsg(hexToParse):
+    # print(len(hexToParse), hexToParse)
+    address = hexToParse[:8]
+    thisLen = len(hexToParse)
+    if thisLen <= 10:
         # "old-style" ACK
-        ackFlag = 1
-    elif len(full_msg) == 28:
-        # "new-style" ACK
-        BLEN = full_msg[10:12]
-        print( '\n ***>> ', len(full_msg), BLEN, full_msg, '\n')
-        if BLEN != '06':
-            ackFlag = 1
-    # ACK from pod
-    # TODO - get a test case from MessageLog that had ACK
-    if ackFlag:
-        print( '\n *** ', len(full_msg), full_msg, '\n')
-        BLEN = 0;
-        CRC = full_msg[6:10]
+        print( '\n *** ', len(hexToParse), hexToParse, '\n')
+        BLEN = 0
+        CRC = '0000' # indicates no CRC provided
         # an empty msg_body is treated as an ACK
         msg_body = ''
         seq_num = -1
-    # this is a full message to or from the pod
     else:
+        # new-style ACK is handled properly here (msg_body is empty)
+        B9_b = combineByte(list(bytearray.fromhex(hexToParse[8:10])))
         seq_num = (B9_b & 0x3C)>>2
-        BLEN = full_msg[10:12]
-        msg_plus_crc = full_msg[12:]
-        # The CRC is at the end of the raw_value
-        thisLength = len(msg_plus_crc)
-        CRC = msg_plus_crc[-4:]
-        msg_body = msg_plus_crc[:thisLength-4]
+        BLEN = hexToParse[10:12]
+        msg_body = hexToParse[12:-4]
+        CRC = hexToParse[-4:]
     msgDict = processMsg(msg_body)
     CRC = '0x'+CRC
     return address, seq_num, BLEN, msgDict, CRC
@@ -137,8 +119,8 @@ def message_dict(data):
     # skip the UTC time delta characters ( +0000 ), logs are always in UTC
     stringToUnpack = data[26:]
 
-    action, full_msg = stringToUnpack.rsplit(' ', 1)
-    address, seq_num, BLEN, msgDict, CRC = splitFullMsg(full_msg)
+    action, hexToParse = stringToUnpack.rsplit(' ', 1)
+    address, seq_num, BLEN, msgDict, CRC = splitFullMsg(hexToParse)
     podMessagesDict = dict(
         time=timestamp,
         address=address, type=action, seq_num=seq_num,

@@ -91,9 +91,7 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
 
     if vFlag == VERBOSE_OUT_FILE:
         thisOutFile = outFile +'podState_' + thisPerson + '_' + thisDate + '_' + str(chunkNum) + '.csv'
-        print('  Sending full podState details to \n    ',thisOutFile)
-        # Joe wants FALSE to be replaced with '' and TRUE with 'y' - do this later
-        podState.to_csv(thisOutFile)
+        writePodStateToOutputFile(thisOutFile, thisFile, podState)
 
     # From the podState, extract some values to use in reports
     msgLogHrs = podState.iloc[-1]['timeCumSec']/3600

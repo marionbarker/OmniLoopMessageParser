@@ -31,7 +31,7 @@ def getPodState(frame):
     #extBo = False # since extended bolus is always false, don't put into dataframe
     # to make this print out nicely, use '' for FALSE, 'y' for TRUE
     # NOPE - have to have logic for checkAction to be valid
-    Bolus = _getStringFromLogic(False)
+    Bolus = False
     TB    = False
     schBa = False
     ackMessageList = []
@@ -84,7 +84,7 @@ def getPodState(frame):
         elif msgType == '0x1d':
             pod_progress = msgDict['pod_progress']
             insulinDelivered = msgDict['insulinDelivered_delivered']
-            Bolus = _getStringFromLogic(msgDict['immediate_bolus_active'])
+            Bolus = msgDict['immediate_bolus_active']
             TB    = msgDict['temp_basal_active']
             schBa = msgDict['basal_active']
 
@@ -122,9 +122,3 @@ def getPodState(frame):
 
     podStateFrame = pd.DataFrame(list_of_states, columns=colNames)
     return podStateFrame, ackMessageList, faultProcessedMsg, podInfo
-
-def _getStringFromLogic(bool):
-    if bool:
-        return 'y'
-    else:
-        return ''

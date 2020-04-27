@@ -94,3 +94,25 @@ def printFrameDebug(frame):
     print('\n')
     print(frame.tail())
     print('\n')
+
+
+def writePodStateToOutputFile(outFile, thisFile, podState):
+    print(' *** Sending podState from {:s} to\n     {:s}'.format(thisFile, outFile))
+    # change the True False columns to 'y' and '' (make Joe happy)
+    podState['TB_on'] = podState['TB'].apply(getStringFromLogic)
+    podState['SchB'] = podState['SchBasal'].apply(getStringFromLogic)
+    podState['Bol'] = podState['Bolus'].apply(getStringFromLogic)
+    #podState.delete('TB')
+    columnList = ['logIdx','timeStamp','time_delta','timeCumSec',
+        'radioOnCumSec','seq_num','pod_progress','msgType',
+        'insulinDelivered','reqTB','reqBolus','TB_on','SchB','Bol',
+        'address','msgDict']
+
+    podState = podState[columnList]
+    podState.to_csv(outFile)
+
+def getStringFromLogic(bool):
+    if bool:
+        return 'y'
+    else:
+        return ''
