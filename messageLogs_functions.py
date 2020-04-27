@@ -76,51 +76,55 @@ def parse_filehandle(filehandle):
 
 """
     splitFullMsg takes the Loop packet and splits it into components
-      note - except for ACK this is not the full packet between PDM and Pod
 
-    An ACK packet has a different format than a send/recv packet
-    so check for ACK status first
+    Use: https://github.com/openaps/openomni/wiki/Message-Structure information
 
-    An ACK packet consists of the
-        4-byte pod_address_1,
-        1-byte packet seq (NOT pod seq_num)
-            TTTSSSSS byte (with TTT = 010 and SSSSS = a 5-bit packet seq #)
-        4 byte ACK address
-        CRC-8 (packet checksum) byte
+    An ACK packet has a different format
+        Check for ACK status first (different for MessageLog, which had empty
+        msg_body and Device Communication Log, which has CRC at msg_body loc)
 
-    and this is what is now apparently being displayed for these ACK packets
-    which is now completely differently than the message based format for all
-    the other pod communication logging that formerly had empty messages for
-    ACK’s (which was OK for me).
-
-    However, for all other messages, the old code works fine.
 """
 
 def splitFullMsg(full_msg):
-    print(len(full_msg), full_msg)
+    # print(len(full_msg), full_msg)
+    ackFlag = 0
     address = full_msg[:8]
     B9 = full_msg[8:10] # B9 is string
+    #print(B9)
     # convert string to list of bytes
     B9list = list(bytearray.fromhex(B9))
     # make a short from the byte list
     B9_b = combineByte(B9list)
-    seq_num = (B9_b & 0x3C)>>2
-    # An ACK is always 10 long (and all other messages are longer)
-    if len(full_msg) == 28:
+    if len(full_msg) <= 18:
+        # "old-style" ACK
+        ackFlag = 1
+    elif len(full_msg) == 28:
+        # "new-style" ACK
+        BLEN = full_msg[10:12]
+        print( '\n ***>> ', len(full_msg), BLEN, full_msg, '\n')
+        if BLEN != '06':
+            ackFlag = 1
+    # ACK from pod
+    # TODO - get a test case from MessageLog that had ACK
+    if ackFlag:
+        print( '\n *** ', len(full_msg), full_msg, '\n')
         BLEN = 0;
         CRC = full_msg[6:10]
         # an empty msg_body is treated as an ACK
         msg_body = ''
+        seq_num = -1
     # this is a full message to or from the pod
     else:
+        seq_num = (B9_b & 0x3C)>>2
         BLEN = full_msg[10:12]
         msg_plus_crc = full_msg[12:]
         # The CRC is at the end of the raw_value
         thisLength = len(msg_plus_crc)
         CRC = msg_plus_crc[-4:]
         msg_body = msg_plus_crc[:thisLength-4]
-    CRC = 'hex ' + CRC
-    return address, seq_num, BLEN, msg_body, CRC
+    msgDict = processMsg(msg_body)
+    CRC = '0x'+CRC
+    return address, seq_num, BLEN, msgDict, CRC
 
 ## orginal version for MessageLog format
 """
@@ -134,11 +138,11 @@ def message_dict(data):
     stringToUnpack = data[26:]
 
     action, full_msg = stringToUnpack.rsplit(' ', 1)
-    address, seq_num, BLEN, msg_body, CRC = splitFullMsg(full_msg)
+    address, seq_num, BLEN, msgDict, CRC = splitFullMsg(full_msg)
     podMessagesDict = dict(
         time=timestamp,
         address=address, type=action, seq_num=seq_num,
-        msg_body=msg_body, CRC=CRC )
+        msgDict=msgDict, CRC=CRC )
     return podMessagesDict
 
 ## new version for Device Communication Log format
@@ -158,7 +162,7 @@ def device_message_dict(data):
     logAddr = 'unknown'
     action = 'unknown'
     seq_num = -1
-    msg_body = ''
+    msgDict = {}
     CRC    = 'unknown'
 
     noisy = 0    # ONLY set noisy to 1 when using short test.md file
@@ -180,7 +184,7 @@ def device_message_dict(data):
     device, logAddr, action, restOfLine = stringToUnpack.split(' ',3)
     if device=="Omnipod":
         # address is what pod thinks address is
-        address, seq_num, BLEN, msg_body, CRC = splitFullMsg(restOfLine)
+        address, seq_num, BLEN, msgDict, CRC = splitFullMsg(restOfLine)
         if (logAddr.lower() != address) and (address != 'ffffffff'):
             print('\nThe two message numbers do not agree \n', logAddr, address)
             print(msg_body)
@@ -191,7 +195,7 @@ def device_message_dict(data):
     deviceMessagesDict = dict(
           time=timestamp, device=device,
           logAddr=logAddr, address=address, type=action, seq_num=seq_num,
-          msg_body=msg_body, CRC=CRC )
+          msgDict=msgDict, CRC=CRC )
     if noisy:
         print('\n')
         printDict(deviceMessagesDict)
@@ -204,33 +208,12 @@ def extract_pod_state(data):
                 for v in data['PodState']])
     return podStateDict
 
-# This is a bit of a hack.  It works for Loop because the extra message always
-# has a fixed length for a 1a16 message (refer to parse_1a16.py)
-# Add the 1f here too
-def select_extra_message(msg_body):
-    if msg_body[:2]=='1a':
-        if msg_body[32:34] not in ['16','17']:
-            return 13
-        else:
-            return msg_body[32:34]
-
-def getMsgType(msg_body):
-    pmsg = processMsg(msg_body)
-    return pmsg['msg_type']
-
-def getMsgMeaning(msg_body):
-    pmsg = processMsg(msg_body)
-    return pmsg['msgMeaning']
-
-def generate_table(df, radio_on_time):
-    # add columns to the DataFrame
-    df['time'] = pd.to_datetime(df['time'])
-    #df['message'] = df['msg_body'].str[:2].astype(str)+df['msg_body'].apply(select_extra_message).fillna('').astype(str)
-    df['time_delta'] = (df['time']-df['time'].shift()).dt.seconds.fillna(0).astype(float)
-    df['time_asleep'] = df['time_delta'].loc[df['time_delta'] > radio_on_time] - radio_on_time  # radio_on_time seconds the radio stays awake
-    df['msg_type'] = df['msg_body'].apply(getMsgType)
-    df['msgMeaning'] = df['msg_body'].apply(getMsgMeaning)
-    return df
+def generate_table(podFrame, radio_on_time):
+    # add columns to the DataFrame - valid only when a single pod is included
+    podFrame['time'] = pd.to_datetime(podFrame['time'])
+    podFrame['time_delta'] = (podFrame['time']-podFrame['time'].shift()).dt.seconds.fillna(0).astype(float)
+    podFrame['time_asleep'] = podFrame['time_delta'].loc[podFrame['time_delta'] > radio_on_time] - radio_on_time  # radio_on_time seconds the radio stays awake
+    return podFrame
 
 # parse the person in the filename
 def getPersonFromFilename(filename, last_timestamp):
@@ -259,6 +242,8 @@ def getPersonFromFilename(filename, last_timestamp):
 """
   Add new versions of code, use prefix persist_ to indicate this was added to
   handle either MessageLog or Device Communication Log
+  Note - there were several version of having status being tacked
+         on to the end of the MessageLog, handle these cases
   Break into more modular chunks
 """
 def persist_read_file(filename):
@@ -267,17 +252,26 @@ def persist_read_file(filename):
     parsed_content = parse_filehandle(file)
     if parsed_content.get('MessageLog'):
         fileType = "messageLog"
-        # Handle case where last line of messageLog is 'status: ##'
+        # handle various versions of status: being tacked onto end
         tmp = parsed_content['MessageLog'][-1]
-        if tmp=='status:':
-            parsed_content['MessageLog'] = parsed_content['MessageLog'][:-1]
+        tmpEnd = tmp[len(tmp)-7:]
+        # Handle case where last line of messageLog is 'status: ##'
+        if tmpEnd=='status:':
+            # print(' *** Last Message:\n', parsed_content['MessageLog'][-1])
+            if len(tmp) == 7:
+                # print('  length of last message was {:d}'.format(len(tmp)))
+                parsed_content['MessageLog'] = parsed_content['MessageLog'][:-1]
+            else:
+                # print('  length of last message was {:d} (not 7)'.format(len(tmp)))
+                parsed_content['MessageLog'][-1] = tmp[:len(tmp)-8]
+            # print('  ',parsed_content['MessageLog'][-1], '\n ***\n')
     if parsed_content.get('Device Communication Log'):
         fileType = "deviceLog"
-    # now extract pod_messages, podDict, fault_report separately
-    pod_messages = persist_message(fileType, parsed_content)
+    # now return dataframe from entire log, podDict, fault_report separately
+    logDF = persist_message(fileType, parsed_content)
     pod_dict = persist_pod_dict(parsed_content)
     fault_report = persist_fault_report(parsed_content)
-    return fileType, pod_messages, pod_dict, fault_report
+    return fileType, logDF, pod_dict, fault_report
 
 def persist_pod_dict(parsed_content):
     # set up default
@@ -305,8 +299,10 @@ def persist_message(fileType, parsed_content):
     noisy = 0
     pod_messages = ['nil']
     if fileType == "messageLog":
+        # only pod messages are found in this section of the Loop Report
         pod_messages = [message_dict(m) for m in parsed_content['MessageLog']]
     elif fileType == "deviceLog":
+        # pod messages interleaved with CGM messages in this Loop Report
         messages = [device_message_dict(m) for m in parsed_content['Device Communication Log']]
         pod_messages = list(filter(omnipodP, messages))
         if noisy:
@@ -320,5 +316,6 @@ def persist_message(fileType, parsed_content):
             cgm_messages = list(filter(otherP, messages))
             printList(cgm_messages[1:5])
             printList(cgm_messages[-2:-1])
-    podFrame = pd.DataFrame(pod_messages)
-    return podFrame
+    # logDF all pod messages in Report (can be across multiple pods)
+    logDF = pd.DataFrame(pod_messages)
+    return logDF

@@ -2,7 +2,7 @@
 
 from utils import *
 
-def parse_1c(msg):
+def parse_1c(byteList, msgDict):
     """
     Example:
      msg = '1c041793f587'
@@ -17,15 +17,9 @@ def parse_1c(msg):
     NN (4 byte): nonce
     """
 
-    byteMsg = bytearray.fromhex(msg)
-    byteList = list(byteMsg)
-    mtype = byteList[0]
     mlen = byteList[1]
     nonce = combineByte(byteList[2:])
 
-    msgDict = { }
-    msgDict['msg_type'] = '{0:#0{1}x}'.format(mtype,4)
-    msgDict['mtype'] = mtype
     msgDict['mlen'] = mlen
     msgDict['nonce'] = nonce
     msgDict['msgMeaning'] = 'DeactivatePod'

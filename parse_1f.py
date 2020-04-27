@@ -2,7 +2,7 @@
 from utils import *
 from decimal import Decimal
 
-def parse_1f(msg):
+def parse_1f(byteList, msgDict):
     # extract information from the 1f cancel command
     """
     Command $1F is the Cancel command. It has the following format:
@@ -26,9 +26,6 @@ def parse_1f(msg):
     The Pod responds to the $1F command with a $1D status message.
     """
 
-    byteMsg = bytearray.fromhex(msg)
-    byteList = list(byteMsg)
-    mtype = byteList[0]
     mlen = byteList[1]
     nonce = combineByte(byteList[2:6])
     cancelByte = byteList[6]
@@ -36,9 +33,9 @@ def parse_1f(msg):
     cancelBolus = (cancelByte & 0x04) != 0
     cancelTB    = (cancelByte & 0x02) != 0
     suspend     = (cancelByte & 0x01) != 0
+    cnxByteStr = '{0:x}'.format(cancelByte,2)
+    msgDict['msgType'] = msgDict['msgType']+cnxByteStr
 
-    msgDict = { }
-    msgDict['msg_type'] = '0x1f0{:d}'.format(cancelByte)
     if cancelByte == 7:
         msgDict['msgMeaning'] = 'CancelAll'
     elif cancelByte == 4:
@@ -49,7 +46,6 @@ def parse_1f(msg):
         msgDict['msgMeaning'] = 'SuspendPod'
     else:
         msgDict['msgMeaning'] = 'Canx'
-    msgDict['mtype'] = mtype
     msgDict['mlen'] = mlen
     msgDict['nonce'] = nonce
     msgDict['cancelByte'] = cancelByte

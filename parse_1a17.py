@@ -3,7 +3,7 @@ from utils import *
 from utils_pod import *
 from decimal import Decimal
 
-def parse_1a17(msg):
+def parse_1a17(byteList, msgDict):
     # extract information from the 1a13 basal command << to be updated - this is a copy of 1a16
     """
     This is the combination of two messages
@@ -57,12 +57,6 @@ def parse_1a17(msg):
     """
     #              0  1  2        6  7    9  10   12   14
     #First half:   1a LL NNNNNNNN 02 CCCC HH SSSS PPPP 0ppp [napp...]  17...
-    msgDict = { }
-    msgDict['msg_type'] = '1a17'
-
-    byteMsg = bytearray.fromhex(msg)
-    byteList = list(byteMsg)
-    mtype = byteList[0]
     mlen = byteList[1]
     nonce = combineByte(byteList[2:6])
     TableNum = byteList[6]
@@ -86,10 +80,7 @@ def parse_1a17(msg):
     if extendedTenthPulses != 0:
         print('Warning - bolus not properly configured, extended pulses not 0')
 
-    msgDict = { }
-    msgDict['msg_type'] = '0x1a17'
     msgDict['msgMeaning'] = 'SetBolus'
-    msgDict['mtype'] = mtype
     msgDict['mlen'] = mlen
     msgDict['nonce'] = nonce
     msgDict['TableNum'] = TableNum

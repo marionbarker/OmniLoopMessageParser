@@ -2,7 +2,7 @@
 
 from utils import *
 
-def parse_01(msg):
+def parse_01(byteList, msgDict):
     # pod response - indicates a nonce resync is required
     """
     My example:
@@ -45,12 +45,7 @@ def parse_01(msg):
     """
 
     # extract information the indicator for type of 0x01 command
-    byteMsg = bytearray.fromhex(msg)
-    byteList = list(byteMsg)
-    mtype = byteList[0]
     mlen = byteList[1]
-    msgDict = { }
-    msgDict['msg_type'] = '{0:#0{1}x}'.format(mtype,4)
     msgDict['mlen'] = mlen
 
     if mlen == 0x15:
@@ -66,7 +61,7 @@ def parse_01(msg):
         # mask gS
         gg = gS & 0xC0 >> 6
         ss = gS & 0x3F
-        msgDict['msg_type'] = '0x0115'
+        msgDict['msgType'] = '0x0115'
         msgDict['recv_gain'] = gg
         msgDict['rssi_value'] = ss
     elif mlen == 0x1b:
@@ -79,7 +74,7 @@ def parse_01(msg):
         podLot = combineByte(byteList[17:21])
         podTid = combineByte(byteList[21:25])
         podAddr = combineByte(byteList[25:29])
-        msgDict['msg_type'] = '0x011b'
+        msgDict['msgType'] = '0x011b'
         msgDict['fixedWord'] = fixedWord
 
     if mlen == 0x15 or mlen == 0x1b:

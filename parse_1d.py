@@ -2,7 +2,7 @@
 from utils import *
 from utils_pod import *
 
-def parse_1d(msg):
+def parse_1d(byteList, msgDict):
     # extract information from the 1d response and return as a dictionary
     """
     The $1D status response is sent from the Pod to provide information on its
@@ -10,6 +10,9 @@ def parse_1d(msg):
     Pod active time, reservoir level, etc. as the normal response to
     non-specialized commands. This page explains how the different values are
     packed into the $1D status response.
+
+    It is the only command without an mlen value
+     - always fixed length of 12 bytes
 
     The $1D status response has the following form:
         00 01 02030405 06070809
@@ -37,17 +40,12 @@ def parse_1d(msg):
         rrrrrrrrrr 10 bits, Reservoir 0.05U pulses remaining (if <= 50U) or $3ff (if > 50U left)
     """
 
-    byteMsg = bytearray.fromhex(msg)
-    byteList = list(byteMsg)
-    mtype = byteList[0]
     byte_1 = byteList[1]
     dword_3 = combineByte(byteList[2:6])
     dword_4 = combineByte(byteList[6:10])
     cksm   = combineByte(byteList[10:12])
 
-    msgDict = { }
-    msgDict['msg_type'] = '{0:#0{1}x}'.format(mtype,4)
-    msgDict['mtype'] = mtype
+    msgDict['mlen'] = 12
     msgDict['msgMeaning'] = 'PodStatus'
 
     msgDict['extended_bolus_active']   = (byte_1 >> 4 & 0x8) != 0

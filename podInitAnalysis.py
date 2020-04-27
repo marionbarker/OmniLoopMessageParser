@@ -21,7 +21,7 @@ def getInitState(frame):
     # initialize values for pod states that we will update
     list_of_states = []
     timeCumSec = 0
-    # increment initIdx upon success matching msg_type and pod_progress
+    # increment initIdx upon success matching msgType and pod_progress
     # initIdx is the index into the expectMT and expectPP for initializaton
     initIdx = 0
     actualPP = 0
@@ -33,10 +33,10 @@ def getInitState(frame):
     # currently, there is only one restartType
     restartType = 0
 
-    colNames = ('df_idx', 'timeStamp', 'time_delta', 'timeCumSec', \
+    colNames = ('logIdx', 'timeStamp', 'time_delta', 'timeCumSec', \
                 'seq_num', 'expectAction', 'expectMT', 'expectPP', \
                 'status', 'actualMT', 'actualPP', \
-                'ppMeaning', 'msg_body' )
+                'ppMeaning', 'msgDict' )
 
     # iterate through the DataFrame
     for index, row in frame.iterrows():
@@ -45,18 +45,17 @@ def getInitState(frame):
         time_delta = row['time_delta']
         timeCumSec += time_delta
         status = statusNotOK
+        initIdx = min(initIdx, len(podInitDict)-1)
         expectAction = podInitDict[initIdx][0]
         expectMT = podInitDict[initIdx][1]
         ppRange = podInitDict[initIdx][2]
-        msg = row['msg_body']
+        msgDict = row['msgDict']
         # prevent excel from treating 1e as exponent
-        msgWithPrefix = 'hex {:s}'.format(msg)
         seq_num = row['seq_num']
-        pmsg = processMsg(msg)
 
-        actualMT = pmsg['msg_type']
-        if 'pod_progress' in pmsg:
-            actualPP = pmsg['pod_progress']
+        actualMT = msgDict['msgType']
+        if 'pod_progress' in msgDict:
+            actualPP = msgDict['pod_progress']
             ppMeaning = getPodProgressMeaning(actualPP)
 
         # check if message matches expected sequence
@@ -83,7 +82,7 @@ def getInitState(frame):
 
         list_of_states.append((index, timeStamp, time_delta, timeCumSec, \
                 seq_num, expectAction, expectMT, ppRange, \
-                status, actualMT, actualPP, ppMeaning, msgWithPrefix))
+                status, actualMT, actualPP, ppMeaning, msgDict))
 
     podInitFrame = pd.DataFrame(list_of_states, columns=colNames)
     return podInitFrame

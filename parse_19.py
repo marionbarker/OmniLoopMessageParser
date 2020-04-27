@@ -3,7 +3,7 @@
 
 from utils import *
 
-def parse_19(msg):
+def parse_19(byteList, msgDict):
     """
     Command $19 can used to configure a number of different alerts.
     This command is used multiple times during initial setup and for
@@ -60,16 +60,9 @@ def parse_19(msg):
         for a triple alert $19 command is $16.
     """
 
-    byteMsg = bytearray.fromhex(msg)
-    byteList = list(byteMsg)
-    mtype = byteList[0]
     mlen = byteList[1]
     nonce = combineByte(byteList[2:6])
 
-    msgDict = { }
-    msgDict['msg_type'] = '{0:#0{1}x}'.format(mtype,4)
-    msgDict['msg_body']    = msg
-    msgDict['mtype'] = mtype
     msgDict['mlen'] = mlen
     msgDict['nonce'] = nonce
     msgDict['msgMeaning'] = 'cnfgAlerts'

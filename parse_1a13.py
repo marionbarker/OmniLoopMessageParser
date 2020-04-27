@@ -2,7 +2,7 @@
 from utils import *
 from decimal import Decimal
 
-def parse_1a13(msg):
+def parse_1a13(byteList, msgDict):
     # extract information from the 1a13 basal command
     """
     This is the combination of two messages
@@ -50,9 +50,6 @@ def parse_1a13(msg):
     """
     #              0  1  2        6  7    9  10   12   14   15 ... to mlen
     #First half:   1a LL NNNNNNNN 00 CCCC HH SSSS PPPP napp napp  13...
-    byteMsg = bytearray.fromhex(msg)
-    byteList = list(byteMsg)
-    mtype = byteList[0]
     mlen = byteList[1]
     nonce = combineByte(byteList[2:6])
     TableNum = byteList[6]
@@ -69,10 +66,7 @@ def parse_1a13(msg):
     reminders = byteList[mlen+4]
     scheduleEntryIndex = byteList[mlen+5]
 
-    msgDict = { }
-    msgDict['msg_type'] = '0x1a13'
     msgDict['msgMeaning'] = 'SetBasalSch'
-    msgDict['mtype'] = mtype
     msgDict['mlen'] = mlen
     msgDict['nonce'] = nonce
     msgDict['TableNum'] = TableNum

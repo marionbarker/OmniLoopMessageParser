@@ -5,7 +5,7 @@ from utils import *
 from utils_pod import *
 import numpy as np
 
-def parse_02(msg):
+def parse_02(byteList, msgDict):
     # extract information from the 02 response and return as a dictionary
     """
     My example:
@@ -49,14 +49,8 @@ def parse_02(msg):
     YYYY (2 bytes): [$16:$17] unknown
     """
 
-    byteMsg = bytearray.fromhex(msg)
-    byteList = list(byteMsg)
-    byte_0 = byteList[0]
     byte_1 = byteList[1]
     if byte_1 < 4:
-        msgDict = { }
-        msgDict['msg_type'] = '0x02'
-        msgDict['mtype'] = byte_0
         msgDict['msgMeaning'] = 'Other 0x02'
         return msgDict
 
@@ -78,10 +72,7 @@ def parse_02(msg):
     word_Y = combineByte(byteList[22:24])
     cksm   = combineByte(byteList[24:26])
 
-    msgDict = { }
-    msgDict['msg_type'] = '0x02'
     msgDict['msgMeaning'] = 'WIP_or_Fault'
-    msgDict['mtype'] = byte_0
     msgDict['fault_type'] = byte_2
     if msgDict['fault_type'] != 2:
         msgDict['fault_type'] = 'Not fault type 02 not parsed yet'

@@ -43,7 +43,7 @@ def printInitFrame(podInitFrame):
     print('\n  CumSec, seqNum, expectAction  , expMT, status, actMT, ' \
            'actPP, ppMeaning')
     for index, row in podInitFrame.iterrows():
-        print('  {:5.0f}, {:7d}, {:14s}, {:5s}, {:6d}, {:5s}, ' \
+        print('  {:5.0f}, {:7d}, {:14s}, {:7s}, {:5d}, {:7s}, ' \
             '{:5d}, {:14s}'.format(row['timeCumSec'],
             row['seq_num'], row['expectAction'], row['expectMT'],
             row['status'], row['actualMT'],

@@ -98,9 +98,9 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
     # From the podState, extract some values to use in reports
     msgLogHrs = podState.iloc[-1]['timeCumSec']/3600
     radioOnHrs = podState.iloc[-1]['radioOnCumSec']/3600
-    numberOfAssignID = len(podState[podState.msg_type=='0x7'])
-    numberOfSetUpPod = len(podState[podState.msg_type=='0x3'])
-    numberOfNonceResync = len(podState[podState.msg_type=='06'])
+    numberOfAssignID = len(podState[podState.msgType=='0x7'])
+    numberOfSetUpPod = len(podState[podState.msgType=='0x3'])
+    numberOfNonceResync = len(podState[podState.msgType=='06'])
     insulinDelivered = podState.iloc[-1]['insulinDelivered']
     sourceString = 'from last 0x1d'
 
@@ -185,7 +185,7 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
 
         # add this printout to look for message types other than 14 for 06 responses
         #  added message logging to record this around Dec 2, 2019
-        # print('\n Search for non-type 14 in 06 messages\n',podState[podState.msg_type=='06'])
+        # print('\n Search for non-type 14 in 06 messages\n',podState[podState.msgType=='06'])
 
     if hasFault:
         print('\nFault Details')

@@ -2,7 +2,7 @@
 
 from utils import *
 
-def parse_06(msg):
+def parse_06(byteList, msgDict):
     # pod response - indicates a nonce resync is required
     """
     My example:
@@ -30,16 +30,10 @@ def parse_06(msg):
       (Lot, TID, MessageSeq, FakeNonce)
     """
 
-    byteMsg = bytearray.fromhex(msg)
-    byteList = list(byteMsg)
-    mtype = byteList[0]
     mlen = byteList[1]
     errorCode = byteList[2]
     wordCode = combineByte(byteList[3:5])
 
-    msgDict = { }
-    msgDict['msg_type'] = '{0:#0{1}x}'.format(mtype,4)
-    msgDict['mtype'] = mtype
     msgDict['mlen'] = mlen
     msgDict['is_nonce_resync'] = errorCode==0x14
     if msgDict['is_nonce_resync']:

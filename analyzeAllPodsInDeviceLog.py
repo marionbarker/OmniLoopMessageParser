@@ -14,10 +14,10 @@ analyzeAllPodsInDeviceLog
         noPod/ffffffff + address3: group 3, etc
 """
 
-def analyzeAllPodsInDeviceLog(thisFile, podFrame, podDict, fault_report, outFile, vFlag):
-    # break podFrame into chunks and process each chunk
-    #  unique address list, breakPoints in podFrame
-    podAddresses, breakPoints = findBreakPoints(podFrame)
+def analyzeAllPodsInDeviceLog(thisFile, logDF, podDict, fault_report, outFile, vFlag):
+    # break logDF into chunks and process each chunk
+    #  unique address list, breakPoints in logDF
+    podAddresses, breakPoints = findBreakPoints(logDF)
 
     numChunks = len(breakPoints)-1
 
@@ -31,20 +31,20 @@ def analyzeAllPodsInDeviceLog(thisFile, podFrame, podDict, fault_report, outFile
             podDict['address'] = podAddresses[idx]
         idx = idx+1
         stopRow = breakPoints[idx]-1
-        thisFrame = podFrame.loc[startRow:stopRow][:]
+        thisFrame = logDF.loc[startRow:stopRow][:]
         startRow = stopRow+1
 
         print('__________________________________________\n')
         print('  Report on Omnipod from {:s}'.format(thisFile))
         print('     Block {:d} of {:d}'.format(idx, numChunks))
 
-        df, podState, actionFrame, actionSummary = analyzePodMessages(thisFile,
+        podFrame, podState, actionFrame, actionSummary = analyzePodMessages(thisFile,
             thisFrame, podDict, fault_report, outFile, vFlag, idx)
 
         if vFlag == 4:
             thisOutFile = 'm:/SharedFiles/LoopReportPythonAnalysis' + '/' \
-                + 'verboseOutput' + '/' + 'full_df_out_' + str(idx) + '.csv'
+                + 'verboseOutput' + '/' + 'singlePod_' + str(idx) + '.csv'
             print('  Sending this chunk of df details to \n    ',thisOutFile)
-            df.to_csv(thisOutFile)
+            podFrame.to_csv(thisOutFile)
 
-    return df, podState, actionFrame, actionSummary
+    return

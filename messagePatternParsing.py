@@ -14,42 +14,36 @@ from parse_1c import *
 from parse_1d import *
 from parse_1f import *
 
-def unparsedMsg(msg):
-    msgDict = {}
-    byteMsg = bytearray.fromhex(msg)
-    mtype = byteMsg[0]
-    msgDict['mtype'] = mtype
-    #msgDict['msg_type'] = hex(byteMsg[0])
-    msgDict['msg_type'] = '{0:#0{1}x}'.format(mtype,4)
-    if mtype == 0x07:
+def unparsedMsg(byteList, msgDict):
+    # byteList not used, but have it to match all other calls
+    if byteList[0] == 0x07:
         msgDict['msgMeaning'] = 'assignID'
-    elif mtype == 0x03:
+    elif byteList[0] == 0x03:
         msgDict['msgMeaning'] = 'setupPod'
-    elif mtype == 0x08:
+    elif byteList[0] == 0x08:
         msgDict['msgMeaning'] = 'cnfgDelivFlags'
     else:
         msgDict['msgMeaning'] = 'checkWiki'
     return msgDict
 
-def ackMsg(msg):
-    msgDict = {}
-    msgDict['mtype'] = 'ACK'
-    msgDict['msg_type'] = 'ACK'
+def ackMsg(byteList, msgDict):
+    # byteList not used, but have it to match all other calls
+    msgDict['msgType'] = 'ACK'
+    msgDict['mlen'] = 0
     msgDict['msgMeaning'] = 'ACK'
     return msgDict
 
-def parse_1a(msg):
+def parse_1a(byteList, msgDict):
     # extract information the indicator for type of 1a command
-    byteMsg = bytearray.fromhex(msg)
-    byteList = list(byteMsg)
-    mlen = byteList[1]
-    xtype = byteList[2+mlen]
+    xtype = byteList[2+msgDict['mlen']]
+    xtypeStr = '{0:x}'.format(xtype,2)
+    msgDict['msgType'] = msgDict['msgType']+xtypeStr
     if xtype == 0x16:
-        msgDict = parse_1a16(msg)
+        msgDict = parse_1a16(byteList, msgDict)
     elif xtype == 0x17:
-        msgDict = parse_1a17(msg)
+        msgDict = parse_1a17(byteList, msgDict)
     else:
-        msgDict = parse_1a13(msg)
+        msgDict = parse_1a13(byteList, msgDict)
 
     return msgDict
 
@@ -66,16 +60,20 @@ chooseMsgType = {
 }
 
 # decide how to handle message based on msg string
-# special case for empty msg aka ACK
+# this section contains msgDict elements for all messages
+#   special case for empty msg aka ACK
 def processMsg(msg):
-    if msg == '':
-        # format before Loop 2.2
-        thisMessage = ackMsg(msg)
+    # want msgType and msgMeaning to show up first
+    # will be overwritten later
+    msgDict = {'msgType':'', 'msgMeaning':''}
+    byteList = list(bytearray.fromhex(msg))
+    if len(byteList)<3:
+        thisMessage = ackMsg(byteList, msgDict)
+        # print(thisMessage)
     else:
-        # format with Loop 2.2
-        byteMsg = bytearray.fromhex(msg)
-        if len(byteMsg)<3:
-            thisMessage = ackMsg(msg)
-        else:
-            thisMessage = chooseMsgType.get(byteMsg[0],unparsedMsg)(msg)
+        msgDict['mlen'] = byteList[1]
+        msgDict['msgType'] = '{0:#0{1}x}'.format(byteList[0],4)
+        thisMessage = chooseMsgType.get(byteList[0],unparsedMsg)(byteList, msgDict)
+    # add msg_body last cause it's long
+    msgDict['msg_body'] = msg
     return thisMessage

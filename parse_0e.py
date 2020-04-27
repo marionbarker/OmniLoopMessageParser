@@ -2,7 +2,7 @@
 
 from utils import *
 
-def parse_0e(msg):
+def parse_0e(byteList, msgDict):
     # request status from the pod
     """
     My examples:
@@ -22,15 +22,9 @@ def parse_0e(msg):
         $51 02 Response, Type 51 - like Type $50, but dumps entries before the last 50
     """
 
-    byteMsg = bytearray.fromhex(msg)
-    byteList = list(byteMsg)
-    mtype = byteList[0]
     alwaysOne = byteList[1]
     requestCode = byteList[2]
 
-    msgDict = { }
-    msgDict['msg_type'] = '{0:#0{1}x}'.format(mtype,4)
-    msgDict['mtype'] = mtype
     msgDict['requestCode'] = requestCode
     if requestCode == 0:
         msgDict['msgMeaning'] = 'RequestStatus'

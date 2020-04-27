@@ -44,12 +44,12 @@ def checkAction(frame):
     # get list of indices for initializing the pod
     # note when first message is a send, no pod_progress state is set
     initIdx = np.array(podInit.index.to_list())
-    if initIdx[-1] == 0:
+    if len(initIdx) == 0 or initIdx[-1] == 0:
         initIdx = [];
     else:
         # need to add the next row too - but keep going until it is a '0x1d'
         checkIdx = initIdx[-1]
-        while checkIdx<len(frame) and (frame.loc[checkIdx,'msg_type']) != '0x1d':
+        while checkIdx<len(frame) and (frame.loc[checkIdx,'msgType']) != '0x1d':
             checkIdx += 1
             initIdx = np.append(initIdx, checkIdx)
 
@@ -84,7 +84,7 @@ def checkAction(frame):
         thisID = values[0]           # used to index into matchList, identifier for Action
         matchList = values[1]
         msgPerAction = len(matchList)  # always 2 or 4
-        thisFrame = frameBalance[frameBalance.msg_type == matchList[thisID]]
+        thisFrame = frameBalance[frameBalance.msgType == matchList[thisID]]
         if len(thisFrame) == 0:
             continue
         thisIdx = np.array(thisFrame.index.to_list())
@@ -97,7 +97,7 @@ def checkAction(frame):
             # to avoid missing indices already removed from frameBalance, use frame here
             checkFrame=frame.loc[thisList,:]
             # identify any mismatches with respect to action message
-            badFrame = checkFrame[checkFrame.msg_type != matchList[ii+thisID]]
+            badFrame = checkFrame[checkFrame.msgType != matchList[ii+thisID]]
             if len(badFrame) > 0:
                 thisBad = np.array(badFrame.index.to_list())
                 thisBad = thisBad-ii
@@ -107,7 +107,7 @@ def checkAction(frame):
         if len(badIdx):
             # need to remove the "bad" aka incomplete action indices from thisIdx
             badIdx = np.unique(badIdx)
-            incompleteList = thisFrame.loc[badIdx,'df_idx'].to_list()
+            incompleteList = thisFrame.loc[badIdx,'logIdx'].to_list()
             # use thisFrame to transfer completed indices in next step
             thisFrame = thisFrame.drop(badIdx)
 

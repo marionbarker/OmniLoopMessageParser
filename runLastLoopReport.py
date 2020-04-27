@@ -8,4 +8,4 @@ filePath, outFile = getAnalysisIO(1,vFlag)
 fileDateList = get_file_list(filePath)
 
 ## Rev3 analysis
-df, podState, actionFrame, actionSummary = main(filePath, fileDateList[-1][0], outFile, vFlag)
+main(filePath, fileDateList[-1][0], outFile, vFlag)
