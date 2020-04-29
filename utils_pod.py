@@ -109,9 +109,9 @@ def getPodInitRestartDict(restartType):
         sett getPodInitDict {
     """
     podInitRestartDict = getPodInitDict()
-    if restartType == 0:
-        podInitRestartDict[1] = [ 'ack', 'ACK',  [1, 2]]
-        podInitRestartDict[3] = [ 'ack', 'ACK',  [3]]
+    #if restartType == 0:
+        #podInitRestartDict[1] = [ 'ack', 'ACK',  [1, 2]]
+        #podInitRestartDict[3] = [ 'ack', 'ACK',  [3]]
 
     return podInitRestartDict
 

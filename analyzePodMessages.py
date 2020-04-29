@@ -19,7 +19,7 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
     #  : if 1: output pod session analysis to outFile (older and not working)
     #  : if 2: like 0, but report init steps to terminal if exceeds nominal expected
     #  : if 3: output init summary to outFile, init steps if too many, skip rest of pod analysis
-    #  : if 4: report init steps to outFile_init.csv, report podState to outFile_podState.csv
+    #  : if 4: report init steps to terminal and outFile_init.csv, report podState to outFile_podState.csv
     REPORT_INIT_ONLY = 3
     VERBOSE_OUT_FILE = 4
     nomNumInitSteps = 18  # nominal number steps to initialize pod
@@ -85,13 +85,17 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
             printInitFrame(podInitFrame)
 
     if vFlag == VERBOSE_OUT_FILE and hasPodInit:
+        # print to terminal
+        printInitFrame(podInitFrame)
+        # write to file
         thisOutFile = outFile +'initSteps_' + thisPerson + '_' + thisDate + '_' + str(chunkNum) + '.csv'
-        print('  Sending full podInit details to \n    ',thisOutFile)
-        podInitFrame.to_csv(thisOutFile)
+        commentString = str(chunkNum)
+        writePodInitStateToOutputFile(thisOutFile, commentString, podInitFrame)
 
     if vFlag == VERBOSE_OUT_FILE:
         thisOutFile = outFile +'podState_' + thisPerson + '_' + thisDate + '_' + str(chunkNum) + '.csv'
-        writePodStateToOutputFile(thisOutFile, thisFile, podState)
+        commentString = str(chunkNum)
+        writePodStateToOutputFile(thisOutFile, commentString, podState)
 
     # From the podState, extract some values to use in reports
     msgLogHrs = podState.iloc[-1]['timeCumSec']/3600
@@ -127,7 +131,7 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
 
     # process the action frame (returns a dictionary plus total completed message count)
     if len(actionFrame) == 0:
-        print('Pod did not initialize')
+        print('\nPod did not initialize')
         actionSummary = 0
         return df, podState, actionFrame, actionSummary
     actionSummary, totalCompletedMessages = processActionFrame(actionFrame, podState)

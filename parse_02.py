@@ -78,6 +78,9 @@ def parse_02(byteList, msgDict):
         msgDict['fault_type'] = 'Not fault type 02 not parsed yet'
         return msgDict
 
+    # Since byte_2 was 2, update msgType
+    msgDict['msgType'] = '0x0202'
+
     msgDict['pod_progress_value']   = byte_3
 
     msgDict['extended_bolus_active']   = (byte_4 & 0x8) != 0

@@ -34,17 +34,11 @@ def analyzeAllPodsInDeviceLog(thisFile, logDF, podDict, fault_report, outFile, v
         thisFrame = logDF.loc[startRow:stopRow][:]
         startRow = stopRow+1
 
-        print('__________________________________________\n')
+        print('\n----------------------------------------')
         print('  Report on Omnipod from {:s}'.format(thisFile))
         print('     Block {:d} of {:d}'.format(idx, numChunks))
 
         podFrame, podState, actionFrame, actionSummary = analyzePodMessages(thisFile,
             thisFrame, podDict, fault_report, outFile, vFlag, idx)
-
-        if vFlag == 4:
-            thisOutFile = 'm:/SharedFiles/LoopReportPythonAnalysis' + '/' \
-                + 'verboseOutput' + '/' + 'singlePod_' + str(idx) + '.csv'
-            print('  Sending this chunk of df details to \n    ',thisOutFile)
-            podFrame.to_csv(thisOutFile)
 
     return

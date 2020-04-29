@@ -42,13 +42,13 @@ def getPodState(frame):
 
     list_of_states = []
 
-    colNamesMsg = ('logIdx', 'timeStamp', 'time_delta', 'timeCumSec', \
-                'radioOnCumSec', 'seq_num', 'pod_progress', 'msgType', \
+    colNamesMsg = ('logIdx', 'timeStamp', 'deltaSec', 'timeCumSec', \
+                'radioOnCumSec', 'seqNum', 'pod_progress', 'msgType', \
                 'msgMeaning', 'insulinDelivered', 'reqTB', \
                 'reqBolus', 'Bolus','TB','SchBasal', 'address', 'msgDict' )
 
-    colNamesDev = ('logIdx', 'timeStamp', 'time_delta', 'timeCumSec', \
-                'radioOnCumSec', 'seq_num', 'pod_progress', 'msgType', \
+    colNamesDev = ('logIdx', 'timeStamp', 'deltaSec', 'timeCumSec', \
+                'radioOnCumSec', 'seqNum', 'pod_progress', 'msgType', \
                 'msgMeaning', 'insulinDelivered', 'reqTB', \
                 'reqBolus', 'Bolus','TB','SchBasal', 'logAddr', 'address', 'msgDict' )
 
@@ -56,23 +56,23 @@ def getPodState(frame):
     for index, row in frame.iterrows():
         # reset each time
         timeStamp = row['time']
-        time_delta = row['time_delta']
-        timeCumSec += time_delta
+        deltaSec = row['deltaSec']
+        timeCumSec += deltaSec
         msgDict = row['msgDict']
-        seq_num = row['seq_num']
+        seqNum = row['seqNum']
         msgMeaning  = msgDict['msgMeaning']
         if msgDict['msgType'] == 'ACK':
             ackMessageList.append(index)
 
         msgType = msgDict['msgType']
-        if msgType == '0x02':
+        if msgType == '0x0202':
             faultProcessedMsg = msgDict
 
-        timeAsleep = row['time_asleep']
+        timeAsleep = row['timeAsleep']
         if np.isnan(timeAsleep):
-            radioOnCumSec += time_delta
+            radioOnCumSec += deltaSec
         else:
-            radioOnCumSec += time_delta - timeAsleep
+            radioOnCumSec += deltaSec - timeAsleep
 
         # fill in pod state based on msgType
         if msgType == '0x1a16':
@@ -106,15 +106,15 @@ def getPodState(frame):
 
         if row.get('logAddr'):
             colNames = colNamesDev
-            list_of_states.append((index, timeStamp, time_delta, timeCumSec, \
-                                  radioOnCumSec, seq_num, pod_progress, msgType, \
+            list_of_states.append((index, timeStamp, deltaSec, timeCumSec, \
+                                  radioOnCumSec, seqNum, pod_progress, msgType, \
                                   msgMeaning, insulinDelivered, reqTB, \
                                   reqBolus, Bolus, TB, schBa, row['logAddr'], \
                                   row['address'], msgDict))
         else:
             colNames = colNamesMsg
-            list_of_states.append((index, timeStamp, time_delta, timeCumSec, \
-                                  radioOnCumSec, seq_num, pod_progress, msgType, \
+            list_of_states.append((index, timeStamp, deltaSec, timeCumSec, \
+                                  radioOnCumSec, seqNum, pod_progress, msgType, \
                                   msgMeaning, insulinDelivered, reqTB, \
                                   reqBolus, Bolus, TB, schBa, \
                                   row['address'], msgDict))

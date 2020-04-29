@@ -96,17 +96,17 @@ def splitFullMsg(hexToParse):
         CRC = '0000' # indicates no CRC provided
         # an empty msg_body is treated as an ACK
         msg_body = ''
-        seq_num = -1
+        seqNum = -1
     else:
         # new-style ACK is handled properly here (msg_body is empty)
         B9_b = combineByte(list(bytearray.fromhex(hexToParse[8:10])))
-        seq_num = (B9_b & 0x3C)>>2
+        seqNum = (B9_b & 0x3C)>>2
         BLEN = hexToParse[10:12]
         msg_body = hexToParse[12:-4]
         CRC = hexToParse[-4:]
     msgDict = processMsg(msg_body)
     CRC = '0x'+CRC
-    return address, seq_num, BLEN, msgDict, CRC
+    return address, seqNum, BLEN, msgDict, CRC
 
 ## orginal version for MessageLog format
 """
@@ -120,10 +120,10 @@ def message_dict(data):
     stringToUnpack = data[26:]
 
     action, hexToParse = stringToUnpack.rsplit(' ', 1)
-    address, seq_num, BLEN, msgDict, CRC = splitFullMsg(hexToParse)
+    address, seqNum, BLEN, msgDict, CRC = splitFullMsg(hexToParse)
     podMessagesDict = dict(
         time=timestamp,
-        address=address, type=action, seq_num=seq_num,
+        address=address, type=action, seqNum=seqNum,
         msgDict=msgDict, CRC=CRC )
     return podMessagesDict
 
@@ -143,7 +143,7 @@ def device_message_dict(data):
     address = 'unknown'
     logAddr = 'unknown'
     action = 'unknown'
-    seq_num = -1
+    seqNum = -1
     msgDict = {}
     CRC    = 'unknown'
 
@@ -166,7 +166,7 @@ def device_message_dict(data):
     device, logAddr, action, restOfLine = stringToUnpack.split(' ',3)
     if device=="Omnipod":
         # address is what pod thinks address is
-        address, seq_num, BLEN, msgDict, CRC = splitFullMsg(restOfLine)
+        address, seqNum, BLEN, msgDict, CRC = splitFullMsg(restOfLine)
         if (logAddr.lower() != address) and (address != 'ffffffff'):
             print('\nThe two message numbers do not agree \n', logAddr, address)
             print(msg_body)
@@ -176,7 +176,7 @@ def device_message_dict(data):
 
     deviceMessagesDict = dict(
           time=timestamp, device=device,
-          logAddr=logAddr, address=address, type=action, seq_num=seq_num,
+          logAddr=logAddr, address=address, type=action, seqNum=seqNum,
           msgDict=msgDict, CRC=CRC )
     if noisy:
         print('\n')
@@ -193,8 +193,8 @@ def extract_pod_state(data):
 def generate_table(podFrame, radio_on_time):
     # add columns to the DataFrame - valid only when a single pod is included
     podFrame['time'] = pd.to_datetime(podFrame['time'])
-    podFrame['time_delta'] = (podFrame['time']-podFrame['time'].shift()).dt.seconds.fillna(0).astype(float)
-    podFrame['time_asleep'] = podFrame['time_delta'].loc[podFrame['time_delta'] > radio_on_time] - radio_on_time  # radio_on_time seconds the radio stays awake
+    podFrame['deltaSec'] = (podFrame['time']-podFrame['time'].shift()).dt.seconds.fillna(0).astype(float)
+    podFrame['timeAsleep'] = podFrame['deltaSec'].loc[podFrame['deltaSec'] > radio_on_time] - radio_on_time  # radio_on_time seconds the radio stays awake
     return podFrame
 
 # parse the person in the filename

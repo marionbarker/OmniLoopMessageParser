@@ -38,16 +38,18 @@ def printActionSummary(actionSummary, vFlag):
     #    print('    #TB repeated value           : {:5.0f}'.format(numRepeatedTB))
     #    print('    #TB repeated value <30s      : {:5.0f}'.format(numRepeatedShortTB))
     #    print('    #TB rep value >=30s & <19min : {:5.0f}'.format(numrepeated19MinTB))
+    return
 
 def printInitFrame(podInitFrame):
-    print('\n  CumSec, seqNum, expectAction  , expMT, status, actMT, ' \
+    print('\n  CumSec, seqNum, expectAction  , expMT  ,success, actMT  , ' \
            'actPP, ppMeaning')
     for index, row in podInitFrame.iterrows():
-        print('  {:5.0f}, {:7d}, {:14s}, {:7s}, {:5d}, {:7s}, ' \
+        print('  {:5.0f}, {:7d}, {:14s}, {:7s},    {:3s}, {:7s}, ' \
             '{:5d}, {:14s}'.format(row['timeCumSec'],
-            row['seq_num'], row['expectAction'], row['expectMT'],
-            row['status'], row['actualMT'],
+            row['seqNum'], row['expectAction'], row['expectMT'],
+            getStringFromLogic(row['statusBool']), row['actualMT'],
             row['actualPP'], row['ppMeaning']))
+    return
 
 def printPodInfo(podInfo, nomNumSteps):
     if 'rssi_value' in podInfo:
@@ -94,22 +96,33 @@ def printFrameDebug(frame):
     print('\n')
     print(frame.tail())
     print('\n')
+    return
 
+def writePodInitStateToOutputFile(outFile, commentString, podInitState):
+    print('\n *** Sending podInitState {:s}, to \n     {:s}'.format(commentString, outFile))
+    # select the desired columns and order for output
+    columnList = ['logIdx','timeStamp','deltaSec','timeCumSec',
+        'seqNum','expectAction','expectMT','expectPP','success',
+        'actualMT','actualPP','ppMeaning','address','msgDict']
+    podInitState['success'] = podInitState['statusBool'].apply(getStringFromLogic)
+    podInitState = podInitState[columnList]
+    podInitState.to_csv(outFile)
+    return
 
-def writePodStateToOutputFile(outFile, thisFile, podState):
-    print(' *** Sending podState from {:s} to\n     {:s}'.format(thisFile, outFile))
+def writePodStateToOutputFile(outFile, commentString, podState):
+    print('\n *** Sending podState {:s}, to \n     {:s}'.format(commentString, outFile))
     # change the True False columns to 'y' and '' (make Joe happy)
-    podState['TB_on'] = podState['TB'].apply(getStringFromLogic)
+    podState['TB'] = podState['TB'].apply(getStringFromLogic)
     podState['SchB'] = podState['SchBasal'].apply(getStringFromLogic)
-    podState['Bol'] = podState['Bolus'].apply(getStringFromLogic)
-    #podState.delete('TB')
-    columnList = ['logIdx','timeStamp','time_delta','timeCumSec',
-        'radioOnCumSec','seq_num','pod_progress','msgType',
-        'insulinDelivered','reqTB','reqBolus','TB_on','SchB','Bol',
+    podState['Bolus'] = podState['Bolus'].apply(getStringFromLogic)
+    # select the desired columns and order for output
+    columnList = ['logIdx','timeStamp','deltaSec','timeCumSec',
+        'radioOnCumSec','seqNum','pod_progress','msgType',
+        'insulinDelivered','reqTB','TB','SchB','reqBolus','Bolus',
         'address','msgDict']
-
     podState = podState[columnList]
     podState.to_csv(outFile)
+    return
 
 def getStringFromLogic(bool):
     if bool:

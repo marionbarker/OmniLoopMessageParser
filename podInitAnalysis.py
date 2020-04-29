@@ -27,33 +27,33 @@ def getInitState(frame):
     actualPP = 0
     ppMeaning = getPodProgressMeaning(actualPP)
     podInitDict = getPodInitDict()
-    statusOK = 1
-    statusNotOK = 0
     # if need to restart sequence, then need updated podInitDict
     # currently, there is only one restartType
     restartType = 0
 
-    colNames = ('logIdx', 'timeStamp', 'time_delta', 'timeCumSec', \
-                'seq_num', 'expectAction', 'expectMT', 'expectPP', \
-                'status', 'actualMT', 'actualPP', \
-                'ppMeaning', 'msgDict' )
+    colNames = ('logIdx', 'timeStamp', 'deltaSec', 'timeCumSec', \
+                'seqNum', 'expectAction', 'expectMT', 'expectPP', \
+                'statusBool', 'actualMT', 'actualPP', \
+                'ppMeaning', 'msgDict', 'address' )
 
     # iterate through the DataFrame
     for index, row in frame.iterrows():
         # reset each time
         timeStamp = row['time']
-        time_delta = row['time_delta']
-        timeCumSec += time_delta
-        status = statusNotOK
+        deltaSec = row['deltaSec']
+        timeCumSec += deltaSec
+        statusBool = False
         initIdx = min(initIdx, len(podInitDict)-1)
         expectAction = podInitDict[initIdx][0]
         expectMT = podInitDict[initIdx][1]
         ppRange = podInitDict[initIdx][2]
         msgDict = row['msgDict']
         # prevent excel from treating 1e as exponent
-        seq_num = row['seq_num']
+        seqNum = row['seqNum']
+        address = row['address']
 
         actualMT = msgDict['msgType']
+
         if 'pod_progress' in msgDict:
             actualPP = msgDict['pod_progress']
             ppMeaning = getPodProgressMeaning(actualPP)
@@ -62,7 +62,7 @@ def getInitState(frame):
         if actualMT == expectMT and \
             ((actualPP >= ppRange[0]) or \
             (actualPP <= ppRange[-1]) ):
-            status = statusOK
+            statusBool = True
             initIdx = initIdx + 1
         elif actualMT == '0x07' and initIdx >= 2:
             # restarting the pairing from the beginning
@@ -80,9 +80,9 @@ def getInitState(frame):
                 ppRange = podInitDict[initIdx][2]
                 initIdx = initIdx+1
 
-        list_of_states.append((index, timeStamp, time_delta, timeCumSec, \
-                seq_num, expectAction, expectMT, ppRange, \
-                status, actualMT, actualPP, ppMeaning, msgDict))
+        list_of_states.append((index, timeStamp, deltaSec, timeCumSec, \
+                seqNum, expectAction, expectMT, ppRange, \
+                statusBool, actualMT, actualPP, ppMeaning, msgDict, address))
 
     podInitFrame = pd.DataFrame(list_of_states, columns=colNames)
     return podInitFrame
