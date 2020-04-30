@@ -41,11 +41,11 @@ def printActionSummary(actionSummary, vFlag):
     return
 
 def printInitFrame(podInitFrame):
-    print('\n  CumSec, seqNum, expectAction  , expMT  ,success, actMT  , ' \
-           'actPP, ppMeaning')
+    print('\n  CumSec: seqNum: expectAction  : expMT  :success: actMT  : ' \
+           'actPP: ppMeaning')
     for index, row in podInitFrame.iterrows():
-        print('  {:5.0f}, {:7d}, {:14s}, {:7s},    {:3s}, {:7s}, ' \
-            '{:5d}, {:14s}'.format(row['timeCumSec'],
+        print('  {:5.0f}: {:7d}: {:14s}: {:7s}:    {:3s}: {:7s}: ' \
+            '{:5d}: {:14s}'.format(row['timeCumSec'],
             row['seqNum'], row['expectAction'], row['expectMT'],
             getStringFromLogic(row['statusBool']), row['actualMT'],
             row['actualPP'], row['ppMeaning']))
@@ -117,7 +117,7 @@ def writePodStateToOutputFile(outFile, commentString, podState):
     podState['Bolus'] = podState['Bolus'].apply(getStringFromLogic)
     # select the desired columns and order for output
     columnList = ['logIdx','timeStamp','deltaSec','timeCumSec',
-        'radioOnCumSec','seqNum','pod_progress','msgType',
+        'radioOnCumSec','seqNum','pod_progress','type','msgType',
         'insulinDelivered','reqTB','TB','SchB','reqBolus','Bolus',
         'address','msgDict']
     podState = podState[columnList]

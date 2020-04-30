@@ -43,12 +43,12 @@ def getPodState(frame):
     list_of_states = []
 
     colNamesMsg = ('logIdx', 'timeStamp', 'deltaSec', 'timeCumSec', \
-                'radioOnCumSec', 'seqNum', 'pod_progress', 'msgType', \
+                'radioOnCumSec', 'seqNum', 'pod_progress', 'type', 'msgType', \
                 'msgMeaning', 'insulinDelivered', 'reqTB', \
                 'reqBolus', 'Bolus','TB','SchBasal', 'address', 'msgDict' )
 
     colNamesDev = ('logIdx', 'timeStamp', 'deltaSec', 'timeCumSec', \
-                'radioOnCumSec', 'seqNum', 'pod_progress', 'msgType', \
+                'radioOnCumSec', 'seqNum', 'pod_progress', 'type', 'msgType', \
                 'msgMeaning', 'insulinDelivered', 'reqTB', \
                 'reqBolus', 'Bolus','TB','SchBasal', 'logAddr', 'address', 'msgDict' )
 
@@ -107,7 +107,7 @@ def getPodState(frame):
         if row.get('logAddr'):
             colNames = colNamesDev
             list_of_states.append((index, timeStamp, deltaSec, timeCumSec, \
-                                  radioOnCumSec, seqNum, pod_progress, msgType, \
+                                  radioOnCumSec, seqNum, pod_progress, row['type'], msgType, \
                                   msgMeaning, insulinDelivered, reqTB, \
                                   reqBolus, Bolus, TB, schBa, row['logAddr'], \
                                   row['address'], msgDict))
