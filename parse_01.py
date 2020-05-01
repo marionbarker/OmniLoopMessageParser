@@ -48,6 +48,10 @@ def parse_01(byteList, msgDict):
     mlen = byteList[1]
     msgDict['mlen'] = mlen
 
+    # put place holders for msgDict values I want near beginning
+    msgDict['pod_progress'] = -1 # will be overwritten
+    msgDict['podAddr'] = 'tbd' # will be overwritten
+
     if mlen == 0x15:
         msgDict['msgMeaning'] = 'IdAssigned'
         pmVer = byteList[2:5]

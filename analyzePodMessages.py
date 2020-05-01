@@ -65,7 +65,7 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
     podID, hasPodInit = returnPodID(podDict, podInfo)
 
     # if pod initialization exists, get just the frames associated with it
-    if hasPodInit:
+    if numInitSteps > 0:
         podInfo['numInitSteps'] = numInitSteps
         thisFrame = df.iloc[initIdx]
         podInitFrame = getInitState(thisFrame)
@@ -73,7 +73,7 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
     # Special handling for vFlag = 3 (aka REPORT_INIT_ONLY)
     if vFlag == REPORT_INIT_ONLY:
         # If number of initializations steps not nominal, print initFrame
-        if hasPodInit and podInfo['numInitSteps']!=nomNumInitSteps:
+        if numInitSteps > 0 and podInfo['numInitSteps']!=nomNumInitSteps:
             printInitFrame(podInitFrame)
         # output summary to outfile if provided
         #if hasPodInit and outFile:
@@ -92,7 +92,7 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
         if hasPodInit and podInfo['numInitSteps']!=nomNumInitSteps:
             printInitFrame(podInitFrame)
 
-    if vFlag == VERBOSE_OUT_FILE and hasPodInit:
+    if vFlag == VERBOSE_OUT_FILE and numInitSteps > 0:
         # print to terminal
         printInitFrame(podInitFrame)
         # write to file
