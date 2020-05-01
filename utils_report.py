@@ -52,7 +52,7 @@ def printInitFrame(podInitFrame):
     return
 
 def printPodInfo(podInfo, nomNumSteps):
-    if 'rssi_value' in podInfo:
+    if 'rssiValue' in podInfo:
         print('\n')
         if podInfo['numInitSteps'] > nomNumSteps:
             print('    *** pod exceeded nominal init steps of {:d}' \
@@ -60,7 +60,7 @@ def printPodInfo(podInfo, nomNumSteps):
         print('    Pod: Address {:s}, Lot {:s}, PI: {:s}, gain {:d}, rssi {:d}, ' \
               'numInitSteps {:d}'.format(podInfo['address'], podInfo['lot'],
               podInfo['piVersion'],
-              podInfo['recv_gain'], podInfo['rssi_value'], podInfo['numInitSteps']))
+              podInfo['recvGain'], podInfo['rssiValue'], podInfo['numInitSteps']))
     return
 
 def writePodInfoToOutputFile(outFile, lastDate, thisFile, podInfo):
@@ -76,7 +76,7 @@ def writePodInfoToOutputFile(outFile, lastDate, thisFile, podInfo):
     stream_out.write(f'{lastDate},')
     stream_out.write('{:s},'.format(thisFile))
     stream_out.write('{:s},'.format(podInfo['lot']))
-    stream_out.write('{:d},'.format(podInfo['rssi_value']))
+    stream_out.write('{:d},'.format(podInfo['rssiValue']))
     stream_out.write('{:d},'.format(podInfo['numInitSteps']))
     stream_out.write('\n')
     stream_out.close()
@@ -129,3 +129,32 @@ def getStringFromLogic(bool):
         return 'y'
     else:
         return ''
+
+def writePodox0115ToOutputFile(outFile, thisFile, pod0x0115Response):
+    # check if file exists
+    isItThere = os.path.isfile(outFile)
+    # now open the file
+    stream_out = open(outFile,mode='at')
+    if not isItThere:
+        # set up a table format order
+        headerString = 'time, cumSec, #07toPod, #03toPod, #0115frmPod, ' + \
+            'address, gain, rssi, podProg, podAddr, piVer, ' + \
+            'lot, tid, filename'
+        stream_out.write(headerString)
+        stream_out.write('\n')
+    for index, row in pod0x0115Response.iterrows():
+        stream_out.write(f'{row.timeStamp},')
+        stream_out.write(f'{row.timeCumSec},')
+        stream_out.write(f'{row.num07},')
+        stream_out.write(f'{row.num03},')
+        stream_out.write(f'{row.num0115},')
+        stream_out.write(f'{row.address},')
+        stream_out.write(f'{row.recvGain},')
+        stream_out.write(f'{row.rssiValue},')
+        stream_out.write(f'{row.pod_progress},')
+        stream_out.write(f'{row.podAddr},')
+        stream_out.write(f'{row.piVersion},')
+        stream_out.write(f'{row.lot},')
+        stream_out.write(f'{row.tid},')
+        stream_out.write(f'{thisFile}\n')
+    stream_out.close()

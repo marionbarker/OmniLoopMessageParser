@@ -62,8 +62,8 @@ def parse_01(byteList, msgDict):
         gg = gS & 0xC0 >> 6
         ss = gS & 0x3F
         msgDict['msgType'] = '0x0115'
-        msgDict['recv_gain'] = gg
-        msgDict['rssi_value'] = ss
+        msgDict['recvGain'] = gg
+        msgDict['rssiValue'] = ss
     elif mlen == 0x1b:
         msgDict['msgMeaning'] = 'PodSetupOK'
         fixedWord = byteList[2:9]

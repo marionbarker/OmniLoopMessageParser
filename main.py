@@ -16,7 +16,7 @@ def main(thisPath, thisFile, outFile, vFlag):
     if fileType == "unknown":
         print('\n *** Did not recognize file type')
         print('  Parser did not find required section in file: \n', \
-              '     {:s}}\n'.format(thisFile), \
+              '     ', thisFile, '\n',  \
               '     ## MessageLog or\n', \
               '     ## Device Communication Log')
         return

@@ -94,8 +94,8 @@ def getPodState(frame):
             podInfo['lot']  = str(msgDict['lot'])
             podInfo['tid']  = str(msgDict['tid'])
             podInfo['address']  = msgDict['podAddr']
-            podInfo['recv_gain']  = msgDict['recv_gain']
-            podInfo['rssi_value']  = msgDict['rssi_value']
+            podInfo['recvGain']  = msgDict['recvGain']
+            podInfo['rssiValue']  = msgDict['rssiValue']
 
         elif msgType == '0x011b':
             pod_progress = msgDict['pod_progress']
@@ -107,14 +107,16 @@ def getPodState(frame):
         if row.get('logAddr'):
             colNames = colNamesDev
             list_of_states.append((index, timeStamp, deltaSec, timeCumSec, \
-                                  radioOnCumSec, seqNum, pod_progress, row['type'], msgType, \
+                                  radioOnCumSec, seqNum, pod_progress, \
+                                  row['type'], msgType, \
                                   msgMeaning, insulinDelivered, reqTB, \
                                   reqBolus, Bolus, TB, schBa, row['logAddr'], \
                                   row['address'], msgDict))
         else:
             colNames = colNamesMsg
             list_of_states.append((index, timeStamp, deltaSec, timeCumSec, \
-                                  radioOnCumSec, seqNum, pod_progress, msgType, \
+                                  radioOnCumSec, seqNum, pod_progress, \
+                                  row['type'], msgType, \
                                   msgMeaning, insulinDelivered, reqTB, \
                                   reqBolus, Bolus, TB, schBa, \
                                   row['address'], msgDict))

@@ -5,7 +5,7 @@ from messagePatternParsing import *
 
 ## This file has higher level pod-specific functions
 
-# iterate through all messages and apply parsers to update the pod state
+# iterate through all msgDict to update the pod state
 # some messages are not parsed (they show up as 0x##)
 def getInitState(frame):
     """
@@ -86,3 +86,59 @@ def getInitState(frame):
 
     podInitFrame = pd.DataFrame(list_of_states, columns=colNames)
     return podInitFrame
+
+# iterate through all msgDict to extract gain and rssi from 0x0115 responses
+def getPod0x0115Response(frame):
+    """
+    Purpose: Return gain and rssi from pod 0x0115 response(s)
+
+    Input:
+        frame: DataFrame initialization messages
+
+    Output:
+       pod0x115Response       dataframe gain and rssi
+
+    """
+    # initialize values for pod states that we will update
+    list_of_states = []
+    timeCumSec = 0
+    num07 = 0
+    num03 = 0
+    num08 = 0
+    num0115 = 0
+
+    colNames = ('timeStamp', 'timeCumSec', \
+                'recvGain', 'rssiValue', 'piVersion', 'pod_progress', \
+                'lot','tid','address', 'podAddr', 'msgDict')
+
+    # iterate through the DataFrame
+    for index, row in frame.iterrows():
+        # reset each time
+        timeStamp = row['time']
+        deltaSec = row['deltaSec']
+        timeCumSec += deltaSec
+        msgDict = row['msgDict']
+        address = row['address']
+
+        if msgDict['msgType'] == '0x07':
+            num07 += 1
+
+        elif msgDict['msgType'] == '0x03':
+            num03 += 1
+
+        elif msgDict['msgType'] == '0x08':
+            num08 += 1
+
+        elif msgDict['msgType'] == '0x0115':
+            num0115 += 1
+            list_of_states.append((timeStamp, timeCumSec, \
+                msgDict['recvGain'], msgDict['rssiValue'], msgDict['piVersion'], \
+                msgDict['pod_progress'], msgDict['lot'], msgDict['tid'], \
+                address, msgDict['podAddr'], msgDict))
+
+    pod0x0115Response = pd.DataFrame(list_of_states, columns=colNames)
+    pod0x0115Response['num07'] = num07
+    pod0x0115Response['num03'] = num03
+    pod0x0115Response['num08'] = num08
+    pod0x0115Response['num0115'] = num0115
+    return pod0x0115Response

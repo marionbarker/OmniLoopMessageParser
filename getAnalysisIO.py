@@ -39,11 +39,11 @@ def getAnalysisIO(pathOption, outputOption):
     if outputOption == 0:
         outFile = 0
     elif outputOption == 1:
-        outFile = topPath + '/' + 'LoopReportPythonAnalysis' + '/' + 'output_master_rev4.csv'
+        outFile = topPath + '/' + 'LoopReportPythonAnalysis' + '/' + 'output_survey.csv'
     elif outputOption == 2:
         outFile = 0
     elif outputOption == 3:
-        outFile = topPath + '/' + 'LoopReportPythonAnalysis' + '/' + 'init_master.csv'
+        outFile = topPath + '/' + 'LoopReportPythonAnalysis' + '/' + 'init_survey.csv'
     elif outputOption == 4:
         outFile = topPath + '/' + 'LoopReportPythonAnalysis' + '/' + 'verboseOutput' + '/'
     else:

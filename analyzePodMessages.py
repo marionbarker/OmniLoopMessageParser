@@ -53,12 +53,20 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
     #   initIdx      indices in podState to extract pod initilization
     actionFrame, initIdx = checkAction(podState)
 
+    numInitSteps = len(initIdx)
+    if numInitSteps > 0:
+        thisFrame = df.iloc[initIdx]
+        pod0x0115Response = getPod0x0115Response(thisFrame)
+        if vFlag == REPORT_INIT_ONLY:
+            print('  output info from 0x0115 response to ', outFile)
+            writePodox0115ToOutputFile(outFile, thisFile, pod0x0115Response)
+
     # if pod initialization exists, put that into podID, otherwise use podDict
     podID, hasPodInit = returnPodID(podDict, podInfo)
 
     # if pod initialization exists, get just the frames associated with it
     if hasPodInit:
-        podInfo['numInitSteps'] = len(initIdx)
+        podInfo['numInitSteps'] = numInitSteps
         thisFrame = df.iloc[initIdx]
         podInitFrame = getInitState(thisFrame)
 
@@ -68,8 +76,8 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
         if hasPodInit and podInfo['numInitSteps']!=nomNumInitSteps:
             printInitFrame(podInitFrame)
         # output summary to outfile if provided
-        if hasPodInit and outFile:
-            writePodInfoToOutputFile(outFile, lastDate, thisFile, podInfo)
+        #if hasPodInit and outFile:
+        #    writePodInfoToOutputFile(outFile, lastDate, thisFile, podInfo)
         # return now, so set returned args not yet defined to []
         actionSummary = []
         return df, podState, actionFrame, actionSummary
@@ -272,7 +280,7 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
         stream_out.write(f'{numberTBSepLessThan30sec},{numRepeatedTB},{numRepeatedShortTB},')
         stream_out.write(f'{numrepeated19MinTB},{numIncomplCancelTB},')
         stream_out.write('{:.2f},'.format(insulinDelivered))
-        stream_out.write('{:d}, {:d}, {:d},'.format(len(initIdx), numberOfAssignID, numberOfSetUpPod))
+        stream_out.write('{:d}, {:d}, {:d},'.format(numInitSteps, numberOfAssignID, numberOfSetUpPod))
         stream_out.write('{:s}, {:s},'.format(lot, piv))
         stream_out.write(f'{rawFault},{thisFile}')
         stream_out.write('\n')
