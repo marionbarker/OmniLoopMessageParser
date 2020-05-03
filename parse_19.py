@@ -60,11 +60,7 @@ def parse_19(byteList, msgDict):
         for a triple alert $19 command is $16.
     """
 
-    mlen = byteList[1]
-    nonce = combineByte(byteList[2:6])
-
-    msgDict['mlen'] = mlen
-    msgDict['nonce'] = nonce
     msgDict['msgMeaning'] = 'cnfgAlerts'
+    msgDict['nonce'] = hex(combineByte(byteList[2:6]))
 
     return msgDict

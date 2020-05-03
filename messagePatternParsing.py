@@ -4,7 +4,9 @@ from utils import *
 
 from parse_01 import *
 from parse_02 import *
+from parse_03 import *
 from parse_06 import *
+from parse_08 import *
 from parse_0e import *
 from parse_1a13 import *
 from parse_1a16 import *
@@ -15,13 +17,10 @@ from parse_1d import *
 from parse_1f import *
 
 def unparsedMsg(byteList, msgDict):
-    # byteList not used, but have it to match all other calls
+    # 0x07 is so simple, just parse it here
     if byteList[0] == 0x07:
         msgDict['msgMeaning'] = 'assignID'
-    elif byteList[0] == 0x03:
-        msgDict['msgMeaning'] = 'setupPod'
-    elif byteList[0] == 0x08:
-        msgDict['msgMeaning'] = 'cnfgDelivFlags'
+        msgDict['useAddr'] = hex(combineByte(byteList[2:6]))
     else:
         msgDict['msgMeaning'] = 'checkWiki'
     return msgDict
@@ -50,7 +49,9 @@ def parse_1a(byteList, msgDict):
 chooseMsgType = {
     0x01: parse_01,
     0x02: parse_02,
+    0x03: parse_03,
     0x06: parse_06,
+    0x08: parse_08,
     0x0e: parse_0e,
     0x19: parse_19,
     0x1a: parse_1a,

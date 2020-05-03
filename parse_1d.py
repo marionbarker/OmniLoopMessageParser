@@ -40,13 +40,25 @@ def parse_1d(byteList, msgDict):
         rrrrrrrrrr 10 bits, Reservoir 0.05U pulses remaining (if <= 50U) or $3ff (if > 50U left)
     """
 
+    msgDict['msgMeaning'] = 'PodStatus'
+    # only fixed length message where byte_1 has a different meaning
+    msgDict['mlen'] = 12
+
     byte_1 = byteList[1]
     dword_3 = combineByte(byteList[2:6])
     dword_4 = combineByte(byteList[6:10])
-    cksm   = combineByte(byteList[10:12])
+    cksm   = hex(combineByte(byteList[10:12]))
 
-    msgDict['mlen'] = 12
-    msgDict['msgMeaning'] = 'PodStatus'
+    msgDict['pod_active_minutes'] = (dword_4 >> 10) & 0x1FFF
+    msgDict['reservoir'] = '' # placeholder for desired order
+
+    # get pulses and units of insulin delivered
+    pulsesDelivered = (dword_3 >> 15) & 0x1FFF
+    insulinDelivered = getUnitsFromPulses(pulsesDelivered)
+    msgDict['pulsesTotal'] = pulsesDelivered
+    msgDict['insulinDelivered']  = insulinDelivered
+
+    msgDict['seqNum']  = (dword_3 >> 11) & 0xF
 
     msgDict['extended_bolus_active']   = (byte_1 >> 4 & 0x8) != 0
     msgDict['immediate_bolus_active']  = (byte_1 >> 4 & 0x4) != 0
@@ -56,29 +68,20 @@ def parse_1d(byteList, msgDict):
     msgDict['pod_progress']  = byte_1 & 0xF
     msgDict['pod_progress_meaning']  = getPodProgressMeaning(byte_1 & 0xF)
 
-    # get pulses and units of insulin delivered
-    pulses = (dword_3 >> 15) & 0x1FFF
-    insulin = getUnitsFromPulses(pulses)
-    msgDict['total_pulses_delivered'] = pulses
-    msgDict['insulinDelivered_delivered']  = insulin
-
-    msgDict['sequence']  = (dword_3 >> 11) & 0xF
-
     # get pulses and units of insulin NOT delivered
-    pulses = dword_3 & 0x007F
-    insulin = getUnitsFromPulses(pulses)
-    msgDict['pulses_not_delivered'] = pulses
-    msgDict['insulin_not_delivered'] = insulin
+    pulsesNot = dword_3 & 0x007F
+    insulinNot = getUnitsFromPulses(pulsesNot)
+    msgDict['pulses_not_delivered'] = pulsesNot
+    msgDict['insulin_not_delivered'] = insulinNot
 
     msgDict['fault_bit'] = (dword_4 >> 31)
     msgDict['alerts_bit_mask'] = (dword_4 >> 23) & 0xFF
-    msgDict['pod_active_minutes'] = (dword_4 >> 10) & 0x1FFF
 
     if (dword_4 & 0x3FF) == 0x3FF:
-        msgDict['reservoir_remaining'] = '>50 u'
+        msgDict['reservoir'] = '>50 u'
     else:
         pulses = dword_4 & 0x3FF
         insulin = getUnitsFromPulses(pulses)
-        msgDict['reservoir_remaining'] = insulin
+        msgDict['reservoir'] = insulin
 
     return msgDict

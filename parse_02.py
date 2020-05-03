@@ -99,11 +99,11 @@ def parse_02(byteList, msgDict):
     msgDict['logged_fault'] = f'0x%X'%(byte_P)
 
     msgDict['fault_time_minutes_since_pod_activation']  = word_Q
-    pulses = word_R & 0x3FF
-    if pulses == 0x3FF:
-        msgDict['reservoir_remaining'] = '>50 u'
+    resLevel = word_R & 0x3FF
+    if resLevel == 0x3FF:
+        msgDict['reservoir'] = '>50 u'
     else:
-        msgDict['reservoir_remaining'] = getUnitsFromPulses(pulses)
+        msgDict['reservoir'] = getUnitsFromPulses(resLevel)
 
     msgDict['pod_active_minutes'] = word_S
     msgDict['alerts_bit_mask'] = byte_T
@@ -116,7 +116,7 @@ def parse_02(byteList, msgDict):
     # but if logged_fault is 0x34, many registers are reset
     if msgDict['logged_fault'] == '0x34':
         msgDict['pulses_not_delivered'] = np.nan
-        msgDict['total_pulses_delivered'] = np.nan
+        msgDict['pulsesTotal'] = np.nan
         msgDict['fault_time_minutes_since_pod_activation'] = np.nan
         msgDict['pod_active_minutes'] = np.nan
         msgDict['pulses_not_delivered'] = np.nan

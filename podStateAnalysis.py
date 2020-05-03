@@ -83,7 +83,7 @@ def getPodState(frame):
 
         elif msgType == '0x1d':
             pod_progress = msgDict['pod_progress']
-            insulinDelivered = msgDict['insulinDelivered_delivered']
+            insulinDelivered = msgDict['insulinDelivered']
             Bolus = msgDict['immediate_bolus_active']
             TB    = msgDict['temp_basal_active']
             schBa = msgDict['basal_active']

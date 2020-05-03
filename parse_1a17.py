@@ -57,8 +57,7 @@ def parse_1a17(byteList, msgDict):
     """
     #              0  1  2        6  7    9  10   12   14
     #First half:   1a LL NNNNNNNN 02 CCCC HH SSSS PPPP 0ppp [napp...]  17...
-    mlen = byteList[1]
-    nonce = combineByte(byteList[2:6])
+    msgDict['msgMeaning'] = 'SetBolus'
     TableNum = byteList[6]
     chsum   = combineByte(byteList[7:9])
     hhEntries = byteList[9]
@@ -80,9 +79,8 @@ def parse_1a17(byteList, msgDict):
     if extendedTenthPulses != 0:
         print('Warning - bolus not properly configured, extended pulses not 0')
 
-    msgDict['msgMeaning'] = 'SetBolus'
-    msgDict['mlen'] = mlen
-    msgDict['nonce'] = nonce
+    msgDict['prompt_bolus_u']  =  getUnitsFromPulses(pulsesPerHhr)
+    msgDict['nonce'] = hex(combineByte(byteList[2:6]))
     msgDict['TableNum'] = TableNum
     msgDict['chsum'] = chsum
     msgDict['hhEntries'] = hhEntries
@@ -97,7 +95,5 @@ def parse_1a17(byteList, msgDict):
     msgDict['promptDelay'] = promptDelay
     msgDict['extendedTenthPulses'] = extendedTenthPulses
     msgDict['extendedDelay'] = extendedDelay
-
-    msgDict['prompt_bolus_u']  =  getUnitsFromPulses(pulsesPerHhr)
 
     return msgDict

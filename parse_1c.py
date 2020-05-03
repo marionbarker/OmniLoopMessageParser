@@ -17,11 +17,7 @@ def parse_1c(byteList, msgDict):
     NN (4 byte): nonce
     """
 
-    mlen = byteList[1]
-    nonce = combineByte(byteList[2:])
-
-    msgDict['mlen'] = mlen
-    msgDict['nonce'] = nonce
     msgDict['msgMeaning'] = 'DeactivatePod'
+    msgDict['nonce'] = hex(combineByte(byteList[2:]))
 
     return msgDict

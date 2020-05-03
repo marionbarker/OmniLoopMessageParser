@@ -50,8 +50,9 @@ def parse_1a13(byteList, msgDict):
     """
     #              0  1  2        6  7    9  10   12   14   15 ... to mlen
     #First half:   1a LL NNNNNNNN 00 CCCC HH SSSS PPPP napp napp  13...
+    msgDict['msgMeaning'] = 'SetBasalSch'
     mlen = byteList[1]
-    nonce = combineByte(byteList[2:6])
+    msgDict['nonce'] = hex(combineByte(byteList[2:6]))
     TableNum = byteList[6]
     chsum   = combineByte(byteList[7:9])
     currentHH = byteList[9]
@@ -66,9 +67,6 @@ def parse_1a13(byteList, msgDict):
     reminders = byteList[mlen+4]
     scheduleEntryIndex = byteList[mlen+5]
 
-    msgDict['msgMeaning'] = 'SetBasalSch'
-    msgDict['mlen'] = mlen
-    msgDict['nonce'] = nonce
     msgDict['TableNum'] = TableNum
     msgDict['chsum'] = chsum
     msgDict['currentHH'] = currentHH

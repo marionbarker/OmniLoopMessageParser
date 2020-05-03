@@ -26,8 +26,6 @@ def parse_1f(byteList, msgDict):
     The Pod responds to the $1F command with a $1D status message.
     """
 
-    mlen = byteList[1]
-    nonce = combineByte(byteList[2:6])
     cancelByte = byteList[6]
     alertValue = (cancelByte >> 4) & 0xF
     cancelBolus = (cancelByte & 0x04) != 0
@@ -46,12 +44,11 @@ def parse_1f(byteList, msgDict):
         msgDict['msgMeaning'] = 'SuspendPod'
     else:
         msgDict['msgMeaning'] = 'Canx'
-    msgDict['mlen'] = mlen
-    msgDict['nonce'] = nonce
     msgDict['cancelByte'] = cancelByte
     msgDict['alertValue'] = alertValue
     msgDict['cancelBolus'] = cancelBolus
     msgDict['cancelTB'] = cancelTB
     msgDict['suspend'] = suspend
+    msgDict['nonce'] = hex(combineByte(byteList[2:6]))
 
     return msgDict

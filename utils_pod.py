@@ -129,7 +129,7 @@ def returnPodID(podDict, podInfo):
         'address': 'unknown'}
     hasPodInit = False
     # if captured initialization steps, update podInfo
-    if podInfo.get('rssi_value'):
+    if podInfo.get('rssiValue'):
         hasPodInit = True
         podID['lot'] = podInfo['lot']
         podID['tid'] = podInfo['tid']

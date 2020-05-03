@@ -54,12 +54,13 @@ def parse_1a16(byteList, msgDict):
     #              0  1  2        6  7    9  10   12   14
     #First half:   1a LL NNNNNNNN 01 CCCC HH SSSS PPPP napp [napp...]  16...
 
+    msgDict['msgMeaning'] = 'SetTempBasal'
     mlen = byteList[1]
     # use mlen to determine when the 16 follow on command starts
     # two values are 14 (0x0e) or 16 (0x10)
-    nonce = combineByte(byteList[2:6])
+    msgDict['nonce'] = hex(combineByte(byteList[2:6]))
     TableNum = byteList[6]
-    chsum   = combineByte(byteList[7:9])
+    chsum   = hex(combineByte(byteList[7:9]))
     hhEntries = byteList[9]  # number of half hour entries, max is 24 = 12 hours
     secsX8Left = combineByte(byteList[10:12]) # always 0x3840
     pulsesPerHhr = combineByte(byteList[12:14])   # pulses per half hour segment
@@ -93,9 +94,6 @@ def parse_1a16(byteList, msgDict):
     if firstDelayMicroSec != delayMicroSec:
         print('Warning - temp basal not properly configured, # microsec')
 
-    msgDict['msgMeaning'] = 'SetTempBasal'
-    msgDict['mlen'] = mlen
-    msgDict['nonce'] = nonce
     msgDict['TableNum'] = TableNum
     msgDict['chsum'] = chsum
     msgDict['hhEntries'] = hhEntries

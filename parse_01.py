@@ -44,15 +44,11 @@ def parse_01(byteList, msgDict):
         IIIIIIII (4 bytes) [$19:$1C]: Connection ID (Pod address)
     """
 
-    # extract information the indicator for type of 0x01 command
-    mlen = byteList[1]
-    msgDict['mlen'] = mlen
-
     # put place holders for msgDict values I want near beginning
     msgDict['pod_progress'] = -1 # will be overwritten
     msgDict['podAddr'] = 'tbd' # will be overwritten
 
-    if mlen == 0x15:
+    if msgDict['mlen'] == 0x15:
         msgDict['msgMeaning'] = 'IdAssigned'
         pmVer = byteList[2:5]
         piVer = byteList[5:8]
@@ -68,7 +64,7 @@ def parse_01(byteList, msgDict):
         msgDict['msgType'] = '0x0115'
         msgDict['recvGain'] = gg
         msgDict['rssiValue'] = ss
-    elif mlen == 0x1b:
+    elif msgDict['mlen'] == 0x1b:
         msgDict['msgMeaning'] = 'PodSetupOK'
         fixedWord = byteList[2:9]
         pmVer = byteList[9:12]
@@ -81,7 +77,7 @@ def parse_01(byteList, msgDict):
         msgDict['msgType'] = '0x011b'
         msgDict['fixedWord'] = fixedWord
 
-    if mlen == 0x15 or mlen == 0x1b:
+    if msgDict['mlen'] == 0x15 or msgDict['mlen'] == 0x1b:
         # fill in rest of common msgDict
         msgDict['pmVersion'] = versionString(pmVer)
         msgDict['piVersion'] = versionString(piVer)
