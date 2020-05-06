@@ -87,6 +87,7 @@ def getPodState(frame):
             Bolus = msgDict['immediate_bolus_active']
             TB    = msgDict['temp_basal_active']
             schBa = msgDict['basal_active']
+            podInfo['pod_active_minutes'] = msgDict['pod_active_minutes']
 
         elif msgType == '0x0115':
             pod_progress = msgDict['pod_progress']

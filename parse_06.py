@@ -30,11 +30,9 @@ def parse_06(byteList, msgDict):
       (Lot, TID, MessageSeq, FakeNonce)
     """
 
-    mlen = byteList[1]
     errorCode = byteList[2]
     wordCode = combineByte(byteList[3:5])
 
-    msgDict['mlen'] = mlen
     msgDict['is_nonce_resync'] = errorCode==0x14
     if msgDict['is_nonce_resync']:
         msgDict['nonce_reseed_word'] = wordCode

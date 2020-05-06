@@ -108,9 +108,9 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
     # From the podState, extract some values to use in reports
     msgLogHrs = podState.iloc[-1]['timeCumSec']/3600
     radioOnHrs = podState.iloc[-1]['radioOnCumSec']/3600
-    numberOfAssignID = len(podState[podState.msgType=='0x7'])
-    numberOfSetUpPod = len(podState[podState.msgType=='0x3'])
-    numberOfNonceResync = len(podState[podState.msgType=='06'])
+    numberOfAssignID = len(podState[podState.msgType=='0x07'])
+    numberOfSetUpPod = len(podState[podState.msgType=='0x03'])
+    numberOfNonceResync = len(podState[podState.msgType=='0x06'])
     insulinDelivered = podState.iloc[-1]['insulinDelivered']
     sourceString = 'from last 0x1d'
 
@@ -164,13 +164,15 @@ def analyzePodMessages(thisFile, podFrame, podDict, fault_report, outFile, vFlag
         print('\n            First message for pod :', first_msg)
         print('            Last  message for pod :', last_msg)
         print('  Total elapsed time in log (hrs) : {:6.1f}'.format(msgLogHrs))
+        if podInfo.get('pod_active_minutes'):
+            print(' Total elapsed time for pod (hrs) : {:6.1f}'.format(podInfo['pod_active_minutes']/60))
         print('                Radio on estimate : {:6.1f}, {:5.1f}%'.format(radioOnHrs, 100*radioOnHrs/msgLogHrs))
-        print('   Number of messages (sent/recv) : {:6d} ({:4d} / {:4d})'.format(number_of_messages,
+        print('   Number of messages (sent/recv) :{:5d} ({:4d} / {:4d})'.format(number_of_messages,
             send_receive_messages[1], send_receive_messages[0]))
-        print('    Messages in completed actions : {:6d} : {:.1f}%'.format( \
+        print('    Messages in completed actions :{:5d} : {:.1f}%'.format( \
             totalCompletedMessages, percentCompleted))
-        print('          Number of nonce resyncs : {:6d}'.format(numberOfNonceResync))
-        print('            Insulin delivered (u) : {:6.2f} ({:s})'.format(insulinDelivered, sourceString))
+        print('          Number of nonce resyncs :{:5d}'.format(numberOfNonceResync))
+        print('            Insulin delivered (u) : {:7.2f} ({:s})'.format(insulinDelivered, sourceString))
         if hasFault:
             thisFinish = thisFault
             thisFinish2 = 'Fault'
