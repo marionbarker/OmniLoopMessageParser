@@ -37,7 +37,8 @@ FIXME_RE = re.compile(r'(?!#).(##+.*)')
 # Add new ## PodInfoFaultEvent markdown heading
 # Add new ## Device Communication Log markdown heading - this replaces MessageLog
 #  note it's either MessageLog or Device Communication Log
-MARKDOWN_HEADINGS_TO_EXTRACT = ['OmnipodPumpManager', 'MessageLog', 'PodState', 'PodInfoFaultEvent', 'Device Communication Log']
+MARKDOWN_HEADINGS_TO_EXTRACT = ['OmnipodPumpManager', 'MessageLog', 'PodState', \
+  'PodInfoFaultEvent', 'Device Communication Log', 'LoopVersion']
 
 def parse_filehandle(filehandle):
     """Given a filehandle, extract the content from below markdown headings.
@@ -183,12 +184,28 @@ def device_message_dict(data):
         printDict(deviceMessagesDict)
     return deviceMessagesDict
 
-def extract_pod_state(data):
-    podStateDict = {}
-    if 'PodState' in data:
-        podStateDict = dict([[x.strip() for x in v.split(':', 1)]
+def extract_pod_manager(data):
+    # set up default
+    podMgrDict = {}
+    if data.get('OmnipodPumpManager'):
+        podMgrDict = dict([[x.strip() for x in v.split(':', 1)]
                 for v in data['PodState']])
-    return podStateDict
+    return podMgrDict
+
+def extract_fault_info(data):
+    faultInfoDict = {}
+    if 'PodInfoFaultEvent' in data:
+        faultInfoDict = dict([[x.strip() for x in v.split(':', 1)]
+                for v in data['PodInfoFaultEvent']])
+    return faultInfoDict
+
+def extract_loop_version(data):
+    # set up default
+    loopVersionDict = {}
+    if 'LoopVersion' in data:
+        loopVersionDict = dict([[x.strip() for x in v.split(':', 1)]
+                for v in data['LoopVersion']])
+    return loopVersionDict
 
 def generate_table(podFrame, radio_on_time):
     # add columns to the DataFrame - valid only when a single pod is included
@@ -222,13 +239,12 @@ def getPersonFromFilename(filename, last_timestamp):
     return thisPerson, thisDate
 
 """
-  Add new versions of code, use prefix persist_ to indicate this was added to
-  handle either MessageLog or Device Communication Log
+  Handles either MessageLog or Device Communication Log
   Note - there were several version of having status being tacked
          on to the end of the MessageLog, handle these cases
   Break into more modular chunks
 """
-def persist_read_file(filename):
+def loop_read_file(filename):
     fileType = "unknown"
     file = open(filename, "r", encoding='UTF8')
     parsed_content = parse_filehandle(file)
@@ -250,24 +266,11 @@ def persist_read_file(filename):
     if parsed_content.get('Device Communication Log'):
         fileType = "deviceLog"
     # now return dataframe from entire log, podDict, fault_report separately
-    logDF = persist_message(fileType, parsed_content)
-    pod_dict = persist_pod_dict(parsed_content)
-    fault_report = persist_fault_report(parsed_content)
-    return fileType, logDF, pod_dict, fault_report
-
-def persist_pod_dict(parsed_content):
-    # set up default
-    pod_dict = ['nil']
-    if parsed_content.get('OmnipodPumpManager'):
-      pod_dict = extract_pod_state(parsed_content)
-    return pod_dict
-
-def persist_fault_report(parsed_content):
-    # set up default
-    fault_report = []
-    if parsed_content.get('OmnipodPumpManager'):
-      pod_dict = extract_pod_state(parsed_content)
-    return fault_report
+    logDF = extract_messages(fileType, parsed_content)
+    podMgrDict = extract_pod_manager(parsed_content)
+    faultInfoDict = extract_fault_info(parsed_content)
+    loopVersionDict = extract_loop_version(parsed_content)
+    return fileType, logDF, podMgrDict, faultInfoDict, loopVersionDict
 
 def omnipodP(message):
     return message['device'] == "Omnipod"
@@ -276,7 +279,7 @@ def omnipodP(message):
 def otherP(message):
     return message['device'] != "Omnipod"
 
-def persist_message(fileType, parsed_content):
+def extract_messages(fileType, parsed_content):
     # set up default
     noisy = 0
     pod_messages = ['nil']

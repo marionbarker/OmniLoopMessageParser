@@ -11,7 +11,12 @@ import pandas as pd
 def main(thisPath, thisFile, outFile, vFlag):
     # determine type of Loop Report
     filename = thisPath + '/' + thisFile
-    fileType, logDF, podDict, fault_report = persist_read_file(filename)
+    fileType, logDF, podMgrDict, faultInfoDict, loopVersionDict = loop_read_file(filename)
+
+    print('\n----------------------------------------')
+    print('  File: {:s}'.format(thisFile))
+    if len(loopVersionDict):
+        printDict(loopVersionDict)
 
     if fileType == "unknown":
         print('\n *** Did not recognize file type')
@@ -22,12 +27,12 @@ def main(thisPath, thisFile, outFile, vFlag):
         return
 
     if fileType == "messageLog":
-        print('\n----------------------------------------')
-        print('  This file uses MessageLog, {:s}'.format(thisFile))
-        print('----------------------------------------')
+        print('  ----------------------------------------')
+        print('  This file uses MessageLog')
+        print('  ----------------------------------------')
         numChunks = 1 # number of pods in log file is always 1
         podFrame, podState, actionFrame, actionSummary = analyzePodMessages(thisFile,
-            logDF, podDict, fault_report, outFile, vFlag, numChunks)
+            logDF, podMgrDict, faultInfoDict, outFile, vFlag, numChunks)
         if vFlag == 4:
             thisOutFile = 'm:/SharedFiles/LoopReportPythonAnalysis' + '/' \
                 + 'verboseOutput' + '/' + 'logDF_out.csv'
@@ -35,10 +40,10 @@ def main(thisPath, thisFile, outFile, vFlag):
             logDF.to_csv(thisOutFile)
 
     elif fileType == "deviceLog":
-        print('\n----------------------------------------')
-        print('  This file uses Device Communication Log, {:s}'.format(thisFile))
+        print('  ----------------------------------------')
+        print('  This file uses Device Communication Log')
         analyzeAllPodsInDeviceLog(thisFile,
-            logDF, podDict, fault_report, outFile, vFlag)
+            logDF, podMgrDict, faultInfoDict, outFile, vFlag)
         if vFlag == 4:
             thisOutFile = 'm:/SharedFiles/LoopReportPythonAnalysis' + '/' \
                 + 'verboseOutput' + '/' + 'logDFCmb_out.csv'
