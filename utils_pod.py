@@ -143,3 +143,29 @@ def returnPodID(podDict, podInfo):
         podID['address'] = podDict['address']
 
     return podID, hasPodInit
+
+def getLogInfoFromState(podState):
+    logInfoDict = {}
+    logInfoDict['first_msg'] = podState.iloc[0]['timeStamp']
+    logInfoDict['last_msg'] = podState.iloc[-1]['timeStamp']
+    logInfoDict['lastDate'] = logInfoDict['first_msg'].date()
+    logInfoDict['send_receive_messages'] = podState.groupby(['type']).size()
+    logInfoDict['msgLogHrs'] = podState.iloc[-1]['timeCumSec']/3600
+    logInfoDict['radioOnHrs'] = podState.iloc[-1]['radioOnCumSec']/3600
+    logInfoDict['numberOfAssignID'] = len(podState[podState.msgType=='0x07'])
+    logInfoDict['numberOfSetUpPod'] = len(podState[podState.msgType=='0x03'])
+    logInfoDict['numberOfNonceResync'] = len(podState[podState.msgType=='0x06'])
+    logInfoDict['insulinDelivered'] = podState.iloc[-1]['insulinDelivered']
+    logInfoDict['sourceString'] = 'from last 0x1d'
+    logInfoDict['numMsgs'] = len(podState)
+    bolusState = podState[podState.msgType=='0x1a17']
+    logInfoDict['totB'] = bolusState.sum()['reqBolus']
+    logInfoDict['podOnTime'] = podState.iloc[-1]['podOnTime']
+    # if autoBolus is present and any values are true, add that to logInfoDict
+    if 'autoBolus' in podState.columns:
+        bolusState = podState[podState.msgType=='0x1a17']
+        bolusSum = bolusState.groupby('autoBolus').sum()['reqBolus']
+        logInfoDict['manB'] = bolusSum[0]
+        logInfoDict['autB'] = bolusSum[1]
+
+    return logInfoDict

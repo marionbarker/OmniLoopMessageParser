@@ -105,7 +105,7 @@ def parse_02(byteList, msgDict):
     else:
         msgDict['reservoir'] = getUnitsFromPulses(resLevel)
 
-    msgDict['pod_active_minutes'] = word_S
+    msgDict['podOnTime'] = word_S
     msgDict['alerts_bit_mask'] = byte_T
     msgDict['table_fault'] = (byte_U == 2)
     msgDict['byte_V'] = byte_V
@@ -118,7 +118,7 @@ def parse_02(byteList, msgDict):
         msgDict['pulses_not_delivered'] = np.nan
         msgDict['pulsesTotal'] = np.nan
         msgDict['fault_time_minutes_since_pod_activation'] = np.nan
-        msgDict['pod_active_minutes'] = np.nan
+        msgDict['podOnTime'] = np.nan
         msgDict['pulses_not_delivered'] = np.nan
 
     return msgDict

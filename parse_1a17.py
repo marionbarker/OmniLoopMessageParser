@@ -58,6 +58,7 @@ def parse_1a17(byteList, msgDict):
     #              0  1  2        6  7    9  10   12   14
     #First half:   1a LL NNNNNNNN 02 CCCC HH SSSS PPPP 0ppp [napp...]  17...
     msgDict['msgMeaning'] = 'SetBolus'
+    msgDict['autoBolus'] = False
     TableNum = byteList[6]
     chsum   = combineByte(byteList[7:9])
     hhEntries = byteList[9]
@@ -71,6 +72,7 @@ def parse_1a17(byteList, msgDict):
     xtype = byteList[16]
     xlen = byteList[17]
     reminders = byteList[18]
+    msgDict['autoBolus'] = 0x3f & reminders == 0x3f
     promptTenthPulses = combineByte(byteList[19:21])
     promptDelay = combineByte(byteList[21:25])
     extendedTenthPulses = combineByte(byteList[25:27])

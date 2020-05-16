@@ -14,7 +14,7 @@ analyzeAllPodsInDeviceLog
         noPod/ffffffff + address3: group 3, etc
 """
 
-def analyzeAllPodsInDeviceLog(thisFile, logDF, podDict, fault_report, outFile, vFlag):
+def analyzeAllPodsInDeviceLog(thisFile, logDF, podMgrDict, faultInfoDict, outFile, vFlag):
     # break logDF into chunks and process each chunk
     #  unique address list, breakPoints in logDF
     podAddresses, breakPoints = findBreakPoints(logDF)
@@ -27,8 +27,8 @@ def analyzeAllPodsInDeviceLog(thisFile, logDF, podDict, fault_report, outFile, v
         if idx > numChunks-1:
             continue
         # overwrite the pod address with value within the breakPoints
-        if 'address' in podDict:
-            podDict['address'] = podAddresses[idx]
+        if 'address' in podMgrDict:
+            podMgrDict['address'] = podAddresses[idx]
         idx = idx+1
         stopRow = breakPoints[idx]-1
         thisFrame = logDF.loc[startRow:stopRow][:]
@@ -39,6 +39,7 @@ def analyzeAllPodsInDeviceLog(thisFile, logDF, podDict, fault_report, outFile, v
         print('     Block {:d} of {:d}'.format(idx, numChunks))
 
         podFrame, podState, actionFrame, actionSummary = analyzePodMessages(thisFile,
-            thisFrame, podDict, fault_report, outFile, vFlag, idx)
+            thisFrame, podMgrDict, faultInfoDict, outFile, vFlag, idx)
+
 
     return

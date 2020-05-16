@@ -49,7 +49,7 @@ def parse_1d(byteList, msgDict):
     dword_4 = combineByte(byteList[6:10])
     cksm   = hex(combineByte(byteList[10:12]))
 
-    msgDict['pod_active_minutes'] = (dword_4 >> 10) & 0x1FFF
+    msgDict['podOnTime'] = (dword_4 >> 10) & 0x1FFF
     msgDict['reservoir'] = '' # placeholder for desired order
 
     # get pulses and units of insulin delivered

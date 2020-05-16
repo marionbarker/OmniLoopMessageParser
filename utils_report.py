@@ -63,6 +63,37 @@ def printPodInfo(podInfo, nomNumSteps):
               podInfo['recvGain'], podInfo['rssiValue'], podInfo['numInitSteps']))
     return
 
+def printLogInfoSummary(logInfoDict):
+    #
+    # print out summary information to stdout window
+    # need this True to get the actionSummary used to fill csv file
+    print('\n            First message for pod :', logInfoDict['first_msg'])
+    print('            Last  message for pod :', logInfoDict['last_msg'])
+    print('  Total elapsed time in log (hrs) : {:6.1f}'.format(logInfoDict['msgLogHrs']))
+    if logInfoDict.get('podOnTime'):
+        print('            Pod active time (hrs) : {:6.1f}'.format(logInfoDict['podOnTime']/60))
+    print('                Radio on estimate : {:6.1f}, {:5.1f}%'.format(logInfoDict['radioOnHrs'], 100*logInfoDict['radioOnHrs']/logInfoDict['msgLogHrs']))
+    print('   Number of messages (sent/recv) :{:5d} ({:4d} / {:4d})'.format(logInfoDict['numMsgs'],
+        logInfoDict['send_receive_messages'][1], logInfoDict['send_receive_messages'][0]))
+    print('    Messages in completed actions :{:5d} : {:.1f}%'.format( \
+        logInfoDict['totalCompletedMessages'], logInfoDict['percentCompleted']))
+    print('          Number of nonce resyncs :{:5d}'.format(logInfoDict['numberOfNonceResync']))
+    print('            Insulin delivered (u) : {:7.2f} ({:s})'.format(logInfoDict['insulinDelivered'], logInfoDict['sourceString']))
+    print('       Total Bolus Req in log (u) : {:7.2f}'.format(logInfoDict['totB']))
+    if 'manB' in logInfoDict:
+        if logInfoDict['manB'] < logInfoDict['totB']:
+            print('                       Manual (u) : {:7.2f}, {:3.0f} %'.format(logInfoDict['manB'], 100*logInfoDict['manB']/logInfoDict['totB']))
+            print('                    Automatic (u) : {:7.2f}, {:3.0f} %'.format(logInfoDict['autB'], 100*logInfoDict['autB']/logInfoDict['totB']))
+    return
+
+def printLoopVersion(loopVersionDict):
+    print('  ----------------------------------------')
+    print('        Version : {:s}'.format(loopVersionDict['Version']))
+    print('      gitBranch : {:s}'.format(loopVersionDict['gitBranch']))
+    print('      gitRev    : {:s}'.format(loopVersionDict['gitRevision'][0:8]))
+    print('      buildDate : {:s}'.format(loopVersionDict['buildDateString']))
+    return
+
 def writePodInfoToOutputFile(outFile, lastDate, thisFile, podInfo):
     # check if file exists
     isItThere = os.path.isfile(outFile)
@@ -109,17 +140,24 @@ def writePodInitStateToOutputFile(outFile, commentString, podInitState):
     podInitState.to_csv(outFile)
     return
 
-def writePodStateToOutputFile(outFile, commentString, podState):
+def writePodStateToOutputFile(outFile, commentString, podState, logInfoDict):
     print('\n *** Sending podState {:s}, to \n     {:s}'.format(commentString, outFile))
     # change the True False columns to 'y' and '' (make Joe happy)
     podState['TB'] = podState['TB'].apply(getStringFromLogic)
     podState['SchB'] = podState['SchBasal'].apply(getStringFromLogic)
     podState['Bolus'] = podState['Bolus'].apply(getStringFromLogic)
     # select the desired columns and order for output
-    columnList = ['logIdx','timeStamp','deltaSec','timeCumSec',
-        'radioOnCumSec','seqNum','pod_progress','type','msgType',
-        'insulinDelivered','reqTB','TB','SchB','reqBolus','Bolus',
-        'address','msgDict']
+    if 'manB' in logInfoDict:
+        podState['autoBolus'] = podState['autoBolus'].apply(getStringFromLogic)
+        columnList = ['logIdx','timeStamp','deltaSec','timeCumSec',
+            'radioOnCumSec','seqNum','pod_progress','type','msgType',
+            'insulinDelivered','reqTB','TB','SchB','reqBolus','Bolus',
+            'autoBolus','address','msgDict']
+    else:
+        columnList = ['logIdx','timeStamp','deltaSec','timeCumSec',
+            'radioOnCumSec','seqNum','pod_progress','type','msgType',
+            'insulinDelivered','reqTB','TB','SchB','reqBolus','Bolus',
+            'address','msgDict']
     podState = podState[columnList]
     podState.to_csv(outFile)
     return

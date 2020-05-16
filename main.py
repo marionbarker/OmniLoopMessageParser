@@ -13,10 +13,10 @@ def main(thisPath, thisFile, outFile, vFlag):
     filename = thisPath + '/' + thisFile
     fileType, logDF, podMgrDict, faultInfoDict, loopVersionDict = loop_read_file(filename)
 
-    print('\n----------------------------------------')
+    print('\n------------------------------------------')
     print('  File: {:s}'.format(thisFile))
     if len(loopVersionDict):
-        printDict(loopVersionDict)
+        printLoopVersion(loopVersionDict)
 
     if fileType == "unknown":
         print('\n *** Did not recognize file type')
