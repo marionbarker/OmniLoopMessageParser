@@ -79,11 +79,11 @@ def printLogInfoSummary(logInfoDict):
         logInfoDict['totalCompletedMessages'], logInfoDict['percentCompleted']))
     print('          Number of nonce resyncs :{:5d}'.format(logInfoDict['numberOfNonceResync']))
     print('            Insulin delivered (u) : {:7.2f} ({:s})'.format(logInfoDict['insulinDelivered'], logInfoDict['sourceString']))
-    print('       Total Bolus Req in log (u) : {:7.2f}'.format(logInfoDict['totB']))
+    print('       Total Bolus Req in log (u) : {:7.2f}'.format(logInfoDict['totBolus']))
     if 'manB' in logInfoDict:
-        if logInfoDict['manB'] < logInfoDict['totB']:
-            print('                       Manual (u) : {:7.2f}, {:3.0f} %'.format(logInfoDict['manB'], 100*logInfoDict['manB']/logInfoDict['totB']))
-            print('                    Automatic (u) : {:7.2f}, {:3.0f} %'.format(logInfoDict['autB'], 100*logInfoDict['autB']/logInfoDict['totB']))
+        if logInfoDict['manB'] < logInfoDict['totBolus']:
+            print('                       Manual (u) : {:7.2f}, {:3.0f} %'.format(logInfoDict['manB'], 100*logInfoDict['manB']/logInfoDict['totBolus']))
+            print('                    Automatic (u) : {:7.2f}, {:3.0f} %'.format(logInfoDict['autB'], 100*logInfoDict['autB']/logInfoDict['totBolus']))
     return
 
 def printLoopVersion(loopVersionDict):
@@ -92,6 +92,7 @@ def printLoopVersion(loopVersionDict):
     print('      gitBranch : {:s}'.format(loopVersionDict['gitBranch']))
     print('      gitRev    : {:s}'.format(loopVersionDict['gitRevision'][0:8]))
     print('      buildDate : {:s}'.format(loopVersionDict['buildDateString']))
+    print('     sourceRoot : {:s}'.format(loopVersionDict['sourceRoot']))
     return
 
 def writePodInfoToOutputFile(outFile, lastDate, thisFile, podInfo):

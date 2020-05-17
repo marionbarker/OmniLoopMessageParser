@@ -51,18 +51,18 @@ def getActionDict():
       'AssignID'        : (0, ('0x07' , '0x0115')), \
       'SetupPod'        : (0, ('0x03' , '0x011b')), \
       'CnfgDelivFlg'    : (0, ('0x08' , '0x1d')), \
-      'CnxSetTmpBasal'  : (2, ('0x1f02', '0x1d', '0x1a16', '0x1d')), \
+      'CnxSetTmpBasal'  : (2, ('0x1f2', '0x1d', '0x1a16', '0x1d')), \
       'Status&Bolus'    : (2, ('0x0e',   '0x1d', '0x1a17', '0x1d')), \
-      'CnxAllSetBasal'  : (2, ('0x1f07', '0x1d', '0x1a13', '0x1d')), \
+      'CnxAllSetBasal'  : (2, ('0x1f7', '0x1d', '0x1a13', '0x1d')), \
       'StatusCheck'     : (0, ('0x0e'  , '0x1d')), \
       'AcknwlAlerts'    : (0, ('0x11', '0x1d')), \
       'CnfgAlerts'      : (0, ('0x19', '0x1d')), \
       'SetBeeps'        : (0, ('0x1e', '0x1d')), \
       'CnxDelivery'     : (0, ('0x1f'  , '0x1d')), \
-      'CnxBasal'        : (0, ('0x1f01', '0x1d')), \
-      'CnxTmpBasal'     : (0, ('0x1f02', '0x1d')), \
-      'CnxBolus'        : (0, ('0x1f04', '0x1d')), \
-      'CnxAll'          : (0, ('0x1f07', '0x1d')), \
+      'CnxBasal'        : (0, ('0x1f1', '0x1d')), \
+      'CnxTmpBasal'     : (0, ('0x1f2', '0x1d')), \
+      'CnxBolus'        : (0, ('0x1f4', '0x1d')), \
+      'CnxAll'          : (0, ('0x1f7', '0x1d')), \
       'BolusAlone'      : (0, ('0x1a17', '0x1d')), \
       'DeactivatePod'   : (0, ('0x1c', '0x1d')), \
       'PrgBasalSch'     : (0, ('0x1a13', '0x1d'))
@@ -158,12 +158,12 @@ def getLogInfoFromState(podState):
     logInfoDict['insulinDelivered'] = podState.iloc[-1]['insulinDelivered']
     logInfoDict['sourceString'] = 'from last 0x1d'
     logInfoDict['numMsgs'] = len(podState)
-    bolusState = podState[podState.msgType=='0x1a17']
-    logInfoDict['totB'] = bolusState.sum()['reqBolus']
     logInfoDict['podOnTime'] = podState.iloc[-1]['podOnTime']
+    # extract all 0x1a17 command (bolus)
+    bolusState = podState[podState.msgType=='0x1a17']
+    logInfoDict['totBolus'] = bolusState.sum()['reqBolus']
     # if autoBolus is present and any values are true, add that to logInfoDict
     if 'autoBolus' in podState.columns:
-        bolusState = podState[podState.msgType=='0x1a17']
         bolusSum = bolusState.groupby('autoBolus').sum()['reqBolus']
         logInfoDict['manB'] = bolusSum[0]
         logInfoDict['autB'] = bolusSum[1]
