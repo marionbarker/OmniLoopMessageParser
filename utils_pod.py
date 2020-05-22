@@ -146,6 +146,8 @@ def returnPodID(podDict, podInfo):
 
 def getLogInfoFromState(podState):
     logInfoDict = {}
+    # if first message is not 0x07, then not a complete record
+    logInfoDict['logFileHasInit'] = podState.iloc[0]['msgType'] == '0x07'
     logInfoDict['first_msg'] = podState.iloc[0]['timeStamp']
     logInfoDict['last_msg'] = podState.iloc[-1]['timeStamp']
     logInfoDict['lastDate'] = logInfoDict['first_msg'].date()
@@ -166,6 +168,87 @@ def getLogInfoFromState(podState):
     if 'autoBolus' in podState.columns:
         bolusSum = bolusState.groupby('autoBolus').sum()['reqBolus']
         logInfoDict['manB'] = bolusSum[0]
-        logInfoDict['autB'] = bolusSum[1]
+        if len(bolusSum)>1:
+            logInfoDict['autB'] = bolusSum[1]
 
     return logInfoDict
+
+def getDescriptiveStringFromPodStateRow(md, reqTB, reqBolus, pod_progress):
+    # generate a descriptive string based on the msgDict.msgType
+    dStr = ''
+    #print(md)
+    #print(reqTB, reqBolus)
+    # organize by loop sent then pod sent
+    loopPrefix = 'Loop Sent: '
+    podPrefix  = 'Pod  Sent: '
+    # Sent by loop to pod (group the initialization commands first and in expected order)
+    if md['msgType'] == '0x07':
+        dStr = loopPrefix + 'Assign address of {:s} to Pod'.format(md['useAddr'])
+    elif md['msgType'] == '0x03':
+        dStr = loopPrefix + 'Setup pod (address = {:s})'.format(md['podAddr'])
+    elif md['msgType'] == '0x08':
+        dStr = loopPrefix + 'Configure Delivery Flags, (Values are {:d}, {:d})'.format(md['JJ(1)'], md['KK(0)'])
+    elif md['msgType'] == '0x19':
+        dStr = loopPrefix + 'Configure Alerts'
+    elif md['msgType'] == '0x1a13':
+        if pod_progress < 5:
+            dStr = loopPrefix + 'Set Basal Schedule during initialization'
+        else:
+            dStr = loopPrefix + 'Modify Basal Schedule'
+    elif md['msgType'] == '0x1a16':
+        dStr = loopPrefix + 'Set Temp Basal Rate of {:.2f} u/hr'.format(md['temp_basal_rate_u_per_hr'])
+    elif md['msgType'] == '0x1a17':
+        if pod_progress < 5:
+            dStr = loopPrefix + 'Prime of {:.2f} u'.format(md['prompt_bolus_u'])
+        elif pod_progress < 8:
+            dStr = loopPrefix + 'InsertCannula with {:.2f} u'.format(md['prompt_bolus_u'])
+        elif 'autoBolus' in md and md['autoBolus']:
+            dStr = loopPrefix + 'AutoBolus of {:.2f} u'.format(md['prompt_bolus_u'])
+        else:
+            dStr = loopPrefix + 'SetBolus of {:.2f} u'.format(md['prompt_bolus_u'])
+    elif md['msgType'] == '0x06':
+        dStr = loopPrefix + '{:s}, fault_code {:s}, reseed_word {:x} '.format(md['msgMeaning'],
+            md['fault_code'], md['nonce_reseed_word'])
+    elif md['msgType'] == '0x0e':
+        if md['msgMeaning'] == 'CheckWiki':
+            dStr = loopPrefix + '{:s} for 0x0e command, request code {:x}'.format(md['msgMeaning'], md['requestCode'])
+        else:
+            dStr = loopPrefix + '{:s}'.format(md['msgMeaning'])
+    elif md['msgType'] == '0x11':
+        dStr = loopPrefix + '0x11 message, {:s}'.format(md['msgMeaning'])
+    elif md['msgType'] == '0x1c':
+        dStr = loopPrefix + '{:s}'.format(md['msgMeaning'])
+    elif md['msgType'] == '0x1e':
+        dStr = loopPrefix + '0x1e message, request code {:s}'.format(md['msgMeaning'])
+    elif md['msgType'][0:4] == '0x1f':
+        dStr = loopPrefix + md['msgMeaning']
+
+    # Sent by pod back to Loop
+    elif md['msgType'] == '0x0115':
+        dStr = podPrefix + 'Assign Address Accepted; gain {:d}, ' \
+            'rssi {:d}, Lot {:d}, TID {:d}, PI: {:s}, pod address {:s}'.format(md['recvGain'],
+            md['rssiValue'], md['lot'], md['tid'], md['piVersion'], md['podAddr'])
+    elif md['msgType'] == '0x011b':
+        dStr = podPrefix + '{:s}; Lot {:d}, ' \
+            'TID {:d}, PI: {:s}, pod address {:s}'.format(md['msgMeaning'],
+            md['lot'], md['tid'], md['piVersion'],  md['podAddr'])
+    elif md['msgType'] == '0x1d':
+        basalStr = ''
+        bolusStr = ''
+        if md['temp_basal_active']:
+            basalStr = ' TmpBasal running, {:.2f} u/hr'.format(reqTB)
+        elif md['basal_active']:
+            basalStr = ' SchBasal running'
+        else:
+            basalStr = ' Basal suspended'
+        if md['immediate_bolus_active']:
+            bolusStr = '; Bolus accepted, {:.2f} u not yet delivered'.format(md['insulin_not_delivered'])
+        elif md['insulin_not_delivered'] > 0:
+            bolusStr = '; Bolus cancelled,  {:.2f} u not delivered'.format(md['insulin_not_delivered'])
+        dStr = podPrefix + basalStr + bolusStr
+    elif md['msgType'] == '0x02':
+        dStr = podPrefix + '0x02 message'
+    elif md['msgType'] == 'ACK':
+        dStr = podPrefix + 'ACK (I heard you but I did not understand)'
+
+    return dStr

@@ -36,7 +36,7 @@ def main(thisPath, thisFile, outFile, vFlag):
         if vFlag == 4:
             thisOutFile = 'm:/SharedFiles/LoopReportPythonAnalysis' + '/' \
                 + 'verboseOutput' + '/' + 'logDF_out.csv'
-            print('\n  Sending log dataframe output to \n    ',thisOutFile)
+            #print('\n  Sending log dataframe output to \n    ',thisOutFile)
             logDF.to_csv(thisOutFile)
 
     elif fileType == "deviceLog":
@@ -47,5 +47,5 @@ def main(thisPath, thisFile, outFile, vFlag):
         if vFlag == 4:
             thisOutFile = 'm:/SharedFiles/LoopReportPythonAnalysis' + '/' \
                 + 'verboseOutput' + '/' + 'logDFCmb_out.csv'
-            print('\n  Sending log dataframe (all pods in report) to \n    ',thisOutFile)
+            #print('\n  Sending log dataframe (all pods in report) to \n    ',thisOutFile)
             logDF.to_csv(thisOutFile)

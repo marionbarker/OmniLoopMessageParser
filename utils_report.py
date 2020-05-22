@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
+from utils_pod import *
 
 """
 utils_report.py
@@ -53,7 +54,7 @@ def printInitFrame(podInitFrame):
 
 def printPodInfo(podInfo, nomNumSteps):
     if 'rssiValue' in podInfo:
-        print('\n')
+        # print('\n')
         if podInfo['numInitSteps'] > nomNumSteps:
             print('    *** pod exceeded nominal init steps of {:d}' \
                   ' ***'.format(nomNumSteps))
@@ -67,11 +68,19 @@ def printLogInfoSummary(logInfoDict):
     #
     # print out summary information to stdout window
     # need this True to get the actionSummary used to fill csv file
+    podOnTimeString = ''
+    if logInfoDict.get('podOnTime'):
+        podOnTimeString = '            Pod active time (hrs) : {:6.1f}'.format(logInfoDict['podOnTime']/60)
+    if logInfoDict.get('logFileHasInit'):
+        print('\n  This log starts from initialization of pod')
+        print(podOnTimeString)
+    else:
+        print('\n  This log contains only a portion of pod messages')
+        print(podOnTimeString)
+        print('\n  Report below is just for the portion contained in the log')
     print('\n            First message for pod :', logInfoDict['first_msg'])
     print('            Last  message for pod :', logInfoDict['last_msg'])
     print('  Total elapsed time in log (hrs) : {:6.1f}'.format(logInfoDict['msgLogHrs']))
-    if logInfoDict.get('podOnTime'):
-        print('            Pod active time (hrs) : {:6.1f}'.format(logInfoDict['podOnTime']/60))
     print('                Radio on estimate : {:6.1f}, {:5.1f}%'.format(logInfoDict['radioOnHrs'], 100*logInfoDict['radioOnHrs']/logInfoDict['msgLogHrs']))
     print('   Number of messages (sent/recv) :{:5d} ({:4d} / {:4d})'.format(logInfoDict['numMsgs'],
         logInfoDict['send_receive_messages'][1], logInfoDict['send_receive_messages'][0]))
@@ -163,11 +172,36 @@ def writePodStateToOutputFile(outFile, commentString, podState, logInfoDict):
     podState.to_csv(outFile)
     return
 
+
+def writeDescriptivePodStateToOutputFile(outFile, commentString, podState):
+    print('\n *** Sending descriptivePodState {:s}, to \n     {:s}'.format(commentString, outFile))
+    # create descriptive string based on message
+    podState['description'] = podState.apply(lambda row : getDescriptiveStringFromPodStateRow(row['msgDict'],
+                                  row['reqTB'], row['reqBolus'], row['pod_progress']), axis = 1)
+    # select the desired columns and order for output
+    podState['timeCumMin'] = podState['timeCumSec'].apply(minStrFromSec)
+    verboseFlag = 1
+    # add ,'msgDict' if want more verbosity
+    if verboseFlag:
+        columnList = ['timeStamp','deltaSec','timeCumSec',
+            'radioOnCumSec','seqNum','address','pod_progress',
+            'type','msgType', 'insulinDelivered','description']
+    else:
+        columnList = ['timeStamp','deltaSec','timeCumMin',
+            'pod_progress', 'msgType', 'insulinDelivered','description']
+    podState = podState[columnList]
+    podState.to_csv(outFile)
+    return
+
 def getStringFromLogic(bool):
     if bool:
         return 'y'
     else:
         return ''
+
+def minStrFromSec(value):
+    minStr = '{:.1f}'.format(value / 60)
+    return minStr
 
 def writePodox0115ToOutputFile(outFile, thisFile, pod0x0115Response):
     # check if file exists

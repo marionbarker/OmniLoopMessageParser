@@ -101,7 +101,8 @@ def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile, vFla
     if vFlag == VERBOSE_OUT_FILE:
         thisOutFile = outFile +'podState_' + thisPerson + '_' + thisDate + '_' + str(chunkNum) + '.csv'
         commentString = str(chunkNum)
-        writePodStateToOutputFile(thisOutFile, commentString, podState, logInfoDict)
+        # writePodStateToOutputFile(thisOutFile, commentString, podState, logInfoDict)
+        writeDescriptivePodStateToOutputFile(thisOutFile, commentString, podState)
 
     # special handling if an 0x02 messages aka fault was received
     checkInsulin = 0

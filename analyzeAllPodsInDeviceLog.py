@@ -34,9 +34,9 @@ def analyzeAllPodsInDeviceLog(thisFile, logDF, podMgrDict, faultInfoDict, outFil
         thisFrame = logDF.loc[startRow:stopRow][:]
         startRow = stopRow+1
 
-        print('  ----------------------------------------')
+        print('  ----------------------------------------\n')
         print('  Report on Omnipod from {:s}'.format(thisFile))
-        print('     Block {:d} of {:d}'.format(idx, numChunks))
+        print('     Block {:d} of {:d}\n'.format(idx, numChunks))
 
         podFrame, podState, actionFrame, actionSummary = analyzePodMessages(thisFile,
             thisFrame, podMgrDict, faultInfoDict, outFile, vFlag, idx)

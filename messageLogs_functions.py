@@ -50,6 +50,9 @@ def parse_filehandle(filehandle):
     """
     # read content from file
     content = filehandle.read()
+    # saved first lines in case LoopVersion not found
+    maxChars = 1000
+    firstChars = content[0:maxChars]
 
     # remove << which breaks one line into two (in the soup section later)
     content = content.replace('<<', '')
@@ -73,7 +76,7 @@ def parse_filehandle(filehandle):
                 if nextNode.name in ['h2', 'h3']:
                     break
                 data[header.text].extend([text for text in nextNode.stripped_strings])
-    return data
+    return data, firstChars
 
 """
     splitFullMsg splits the hexToParse from Loop report into components
@@ -92,7 +95,7 @@ def splitFullMsg(hexToParse):
     thisLen = len(hexToParse)
     if thisLen <= 10:
         # "old-style" ACK
-        print( '\n *** ', len(hexToParse), hexToParse, '\n')
+        # print( '\n *** ', len(hexToParse), hexToParse, '\n')
         BLEN = 0
         CRC = '0000' # indicates no CRC provided
         # an empty msg_body is treated as an ACK
@@ -199,13 +202,52 @@ def extract_fault_info(data):
                 for v in data['PodInfoFaultEvent']])
     return faultInfoDict
 
-def extract_loop_version(data):
+def extract_loop_version(data, firstChars):
     # set up default
     loopVersionDict = {}
     if 'LoopVersion' in data:
         loopVersionDict = dict([[x.strip() for x in v.split(':', 1)]
                 for v in data['LoopVersion']])
+
+    """
+    else:
+        print(firstChars)
+        # break this at \n
+        versionLines = []
+        idx = 0
+        foundIt = 0
+        for line in firstChars.strip().split("\n"):
+            versionLines[idx] = line
+            print(idx, versionLines[idx])
+            if versionLines[idx][3:9] == "gitRev":
+                foundIt = idx
+            idx += 1
+
+        print('FoundIt = ', foundIt)
+        print(versionLines)
+        # search for keywords in versionLines, try to extract loopVersionDict
+        if foundIt > 0:
+            idx = 0
+            loopVersionDict['Version'] = versionLines[foundIt + idx]
+            while idx < 6:
+                idx += 1
+                v = versionLines[foundIt + idx]
+                #loopVersionDict = dict([[x.strip() for x in v.split(':', 1)]
+    """
+
     return loopVersionDict
+
+    """
+    sample from file without ## LoopVersion
+
+    Loop (Automatic Bolusing) v2.1.0
+    * gitRevision: 002bb127bb571a00e26f74c7f34c2220c0a4e661
+    * gitBranch: automatic-bolus
+    * sourceRoot: /Users/Joe/Documents/LoopWorkspace-04-07-mojo-AB-newBeeps-noncePad-verifiedPairing-Decode-Restart-MaxTBR-MinTBR/Loop
+    * buildDateString: Thu Apr 16 00:52:24 PDT 2020
+    * xcodeVersion: 11E146
+
+    """
 
 def generate_table(podFrame, radio_on_time):
     # add columns to the DataFrame - valid only when a single pod is included
@@ -247,7 +289,7 @@ def getPersonFromFilename(filename, last_timestamp):
 def loop_read_file(filename):
     fileType = "unknown"
     file = open(filename, "r", encoding='UTF8')
-    parsed_content = parse_filehandle(file)
+    parsed_content, firstChars = parse_filehandle(file)
     if parsed_content.get('MessageLog'):
         fileType = "messageLog"
         # handle various versions of status: being tacked onto end
@@ -269,7 +311,7 @@ def loop_read_file(filename):
     logDF = extract_messages(fileType, parsed_content)
     podMgrDict = extract_pod_manager(parsed_content)
     faultInfoDict = extract_fault_info(parsed_content)
-    loopVersionDict = extract_loop_version(parsed_content)
+    loopVersionDict = extract_loop_version(parsed_content, firstChars)
     return fileType, logDF, podMgrDict, faultInfoDict, loopVersionDict
 
 def omnipodP(message):
