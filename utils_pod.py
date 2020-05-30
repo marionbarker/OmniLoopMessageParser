@@ -167,7 +167,8 @@ def getLogInfoFromState(podState):
     # if autoBolus is present and any values are true, add that to logInfoDict
     if 'autoBolus' in podState.columns:
         bolusSum = bolusState.groupby('autoBolus').sum()['reqBolus']
-        logInfoDict['manB'] = bolusSum[0]
+        if len(bolusSum)>0:
+            logInfoDict['manB'] = bolusSum[0]
         if len(bolusSum)>1:
             logInfoDict['autB'] = bolusSum[1]
 

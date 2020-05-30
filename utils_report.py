@@ -89,7 +89,7 @@ def printLogInfoSummary(logInfoDict):
     print('          Number of nonce resyncs :{:5d}'.format(logInfoDict['numberOfNonceResync']))
     print('            Insulin delivered (u) : {:7.2f} ({:s})'.format(logInfoDict['insulinDelivered'], logInfoDict['sourceString']))
     print('       Total Bolus Req in log (u) : {:7.2f}'.format(logInfoDict['totBolus']))
-    if 'manB' in logInfoDict:
+    if 'autB' in logInfoDict:
         if logInfoDict['manB'] < logInfoDict['totBolus']:
             print('                       Manual (u) : {:7.2f}, {:3.0f} %'.format(logInfoDict['manB'], 100*logInfoDict['manB']/logInfoDict['totBolus']))
             print('                    Automatic (u) : {:7.2f}, {:3.0f} %'.format(logInfoDict['autB'], 100*logInfoDict['autB']/logInfoDict['totBolus']))
