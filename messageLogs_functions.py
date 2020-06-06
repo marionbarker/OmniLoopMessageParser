@@ -191,8 +191,11 @@ def extract_pod_manager(data):
     # set up default
     podMgrDict = {}
     if data.get('OmnipodPumpManager'):
-        podMgrDict = dict([[x.strip() for x in v.split(':', 1)]
-                for v in data['PodState']])
+        try:
+            podMgrDict = dict([[x.strip() for x in v.split(':', 1)]
+                    for v in data['PodState']])
+        except:
+            print('Information Only: PodState not defined in log file')
     return podMgrDict
 
 def extract_fault_info(data):

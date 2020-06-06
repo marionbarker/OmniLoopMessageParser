@@ -42,10 +42,15 @@ def checkAction(frame):
     # determine initIdx from pod_progress value
     podInit = frame[frame.pod_progress < 8]
     # get list of indices for initializing the pod
-    # note when first message is a send, no pod_progress state is set
     initIdx = np.array(podInit.index.to_list())
     if len(initIdx) == 0 or initIdx[-1] == 0:
-        initIdx = [];
+        initIdx = []
+    # note assumed pod_progress state is 0 until first recv message from pod
+    elif len(initIdx) < len(frame) and \
+            frame.loc[initIdx[-1], 'type'] == 'send' and \
+            frame.loc[initIdx[-1], 'pod_progress'] == 0 and \
+            frame.loc[initIdx[-1]+1, 'pod_progress'] >= 8:
+        initIdx = []
     else:
         # need to add the next row too - but keep going until it is a '0x1d'
         checkIdx = initIdx[-1]

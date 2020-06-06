@@ -71,15 +71,15 @@ def printLogInfoSummary(logInfoDict):
     podOnTimeString = ''
     if logInfoDict.get('podOnTime'):
         podOnTimeString = '            Pod active time (hrs) : {:6.1f}'.format(logInfoDict['podOnTime']/60)
+    print('\n  This pod status:')
+    print(podOnTimeString)
+    print('     Insulin delivered by pod (u) : {:7.2f} ({:s})'.format(logInfoDict['insulinDelivered'], logInfoDict['sourceString']))
     if logInfoDict.get('logFileHasInit'):
-        print('\n  This log starts from initialization of pod')
-        print(podOnTimeString)
+        print('\n  Report below is for all messages for this pod')
     else:
-        print('\n  This log contains only a portion of pod messages')
-        print(podOnTimeString)
-        print('\n  Report below is just for the portion contained in the log')
-    print('\n            First message for pod :', logInfoDict['first_msg'])
-    print('            Last  message for pod :', logInfoDict['last_msg'])
+        print('\n  Report below is for the subset of messages contained in the log')
+    print('\n            First message in log :', logInfoDict['first_msg'])
+    print('            Last  message in log :', logInfoDict['last_msg'])
     print('  Total elapsed time in log (hrs) : {:6.1f}'.format(logInfoDict['msgLogHrs']))
     print('                Radio on estimate : {:6.1f}, {:5.1f}%'.format(logInfoDict['radioOnHrs'], 100*logInfoDict['radioOnHrs']/logInfoDict['msgLogHrs']))
     print('   Number of messages (sent/recv) :{:5d} ({:4d} / {:4d})'.format(logInfoDict['numMsgs'],
@@ -87,7 +87,6 @@ def printLogInfoSummary(logInfoDict):
     print('    Messages in completed actions :{:5d} : {:.1f}%'.format( \
         logInfoDict['totalCompletedMessages'], logInfoDict['percentCompleted']))
     print('          Number of nonce resyncs :{:5d}'.format(logInfoDict['numberOfNonceResync']))
-    print('            Insulin delivered (u) : {:7.2f} ({:s})'.format(logInfoDict['insulinDelivered'], logInfoDict['sourceString']))
     print('       Total Bolus Req in log (u) : {:7.2f}'.format(logInfoDict['totBolus']))
     if 'autB' in logInfoDict:
         if logInfoDict['manB'] < logInfoDict['totBolus']:
@@ -126,8 +125,7 @@ def printPodDict(podDict):
     # print a few things then returns
     # add protection here
     if 'address' in podDict:
-        print('    Pod: Address {:s} (pod), (newest pod)(Lot {:s}, PI: {:s}'.format(podDict['address'],
-                podDict['lot'], podDict['piVersion']))
+        print('    Pod: Address {:s}'.format(podDict['address']))
     else:
         print('      Missing podDict, check report for ## OmnipodPumpManager section')
 
@@ -183,8 +181,8 @@ def writeDescriptivePodStateToOutputFile(outFile, commentString, podState):
     verboseFlag = 1
     # add ,'msgDict' if want more verbosity
     if verboseFlag:
-        columnList = ['timeStamp','deltaSec','timeCumSec',
-            'radioOnCumSec','seqNum','address','pod_progress',
+        columnList = ['timeStamp','deltaSec','timeCumMin',
+            'seqNum','address','pod_progress',
             'type','msgType', 'insulinDelivered','description']
     else:
         columnList = ['timeStamp','deltaSec','timeCumMin',
@@ -231,3 +229,11 @@ def writePodox0115ToOutputFile(outFile, thisFile, pod0x0115Response):
         stream_out.write(f'{row.tid},')
         stream_out.write(f'{thisFile}\n')
     stream_out.close()
+
+def writeCombinedLogToOutputFile(outFile, logDF):
+    print('\n *** Sending Report Dataframe to \n     {:s}'.format(outFile))
+    columnList = ['time','seqNum','address',
+            'type','msgDict']
+    logDF = logDF[columnList]
+    logDF.to_csv(outFile)
+    return

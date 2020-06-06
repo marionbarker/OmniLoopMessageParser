@@ -37,7 +37,8 @@ def main(thisPath, thisFile, outFile, vFlag):
             thisOutFile = 'm:/SharedFiles/LoopReportPythonAnalysis' + '/' \
                 + 'verboseOutput' + '/' + 'logDF_out.csv'
             #print('\n  Sending log dataframe output to \n    ',thisOutFile)
-            logDF.to_csv(thisOutFile)
+            writeCombinedLogToOutputFile(thisOutFile, logDF)
+
 
     elif fileType == "deviceLog":
         print('  ----------------------------------------')
@@ -48,4 +49,4 @@ def main(thisPath, thisFile, outFile, vFlag):
             thisOutFile = 'm:/SharedFiles/LoopReportPythonAnalysis' + '/' \
                 + 'verboseOutput' + '/' + 'logDFCmb_out.csv'
             #print('\n  Sending log dataframe (all pods in report) to \n    ',thisOutFile)
-            logDF.to_csv(thisOutFile)
+            writeCombinedLogToOutputFile(thisOutFile, logDF)

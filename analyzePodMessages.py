@@ -87,12 +87,13 @@ def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile, vFla
         printPodDict(podDict)
 
     if vFlag == 2:
-        if hasPodInit and podInfo['numInitSteps']!=nomNumInitSteps:
+        if hasPodInit and podInfo['numInitSteps'] != nomNumInitSteps:
             printInitFrame(podInitFrame)
 
     if vFlag == VERBOSE_OUT_FILE and numInitSteps > 0:
-        # print to terminal
-        printInitFrame(podInitFrame)
+        # print to terminal if not nominal
+        if numInitSteps != nomNumInitSteps:
+            printInitFrame(podInitFrame)
         # write to file
         thisOutFile = outFile +'initSteps_' + thisPerson + '_' + thisDate + '_' + str(chunkNum) + '.csv'
         commentString = str(chunkNum)
