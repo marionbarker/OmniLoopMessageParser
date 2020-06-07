@@ -25,7 +25,7 @@ def parse_0e(byteList, msgDict):
     alwaysOne = byteList[1]
     requestCode = byteList[2]
 
-    msgDict['requestCode'] = requestCode
+    msgDict['requestCode'] = '{0:#0{1}x}'.format(requestCode,4)
     if requestCode == 0:
         msgDict['msgMeaning'] = 'RequestStatus'
     elif requestCode == 1:
@@ -33,6 +33,6 @@ def parse_0e(byteList, msgDict):
     elif requestCode == 2:
         msgDict['msgMeaning'] = 'RequestFault'
     else:
-        msgDict['msgMeaning'] = 'CheckWiki'
+        msgDict['msgMeaning'] = 'requestCode' + msgDict['requestCode'] 
 
     return msgDict

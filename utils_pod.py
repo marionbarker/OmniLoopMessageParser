@@ -211,10 +211,7 @@ def getDescriptiveStringFromPodStateRow(md, reqTB, reqBolus, pod_progress):
         dStr = loopPrefix + '{:s}, fault_code {:s}, reseed_word {:x} '.format(md['msgMeaning'],
             md['fault_code'], md['nonce_reseed_word'])
     elif md['msgType'] == '0x0e':
-        if md['msgMeaning'] == 'CheckWiki':
-            dStr = loopPrefix + '{:s} for 0x0e command, request code {:x}'.format(md['msgMeaning'], md['requestCode'])
-        else:
-            dStr = loopPrefix + '{:s}'.format(md['msgMeaning'])
+        dStr = loopPrefix + '{:s}'.format(md['msgMeaning'])
     elif md['msgType'] == '0x11':
         dStr = loopPrefix + '0x11 message, {:s}'.format(md['msgMeaning'])
     elif md['msgType'] == '0x1c':
@@ -247,8 +244,8 @@ def getDescriptiveStringFromPodStateRow(md, reqTB, reqBolus, pod_progress):
         elif md['insulin_not_delivered'] > 0:
             bolusStr = '; Bolus cancelled,  {:.2f} u not delivered'.format(md['insulin_not_delivered'])
         dStr = podPrefix + basalStr + bolusStr
-    elif md['msgType'] == '0x02':
-        dStr = podPrefix + '0x02 message'
+    elif md['msgType'][0:4] == '0x02':
+        dStr = podPrefix + md['msgMeaning']
     elif md['msgType'] == 'ACK':
         dStr = podPrefix + 'ACK (I heard you but I did not understand)'
 
