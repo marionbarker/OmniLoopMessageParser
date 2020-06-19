@@ -4,6 +4,7 @@ from utils import *
 
 from parse_01 import *
 from parse_02 import *
+from parse_0202 import *
 from parse_03 import *
 from parse_06 import *
 from parse_08 import *
@@ -34,7 +35,7 @@ def ackMsg(byteList, msgDict):
 
 def parse_1a(byteList, msgDict):
     # extract information the indicator for type of 1a command
-    xtype = byteList[2+msgDict['mlen']]
+    xtype = byteList[2+byteList[1]]
     xtypeStr = '{0:x}'.format(xtype,2)
     msgDict['msgType'] = msgDict['msgType']+xtypeStr
     if xtype == 0x16:
@@ -72,9 +73,10 @@ def processMsg(msg):
         thisMessage = ackMsg(byteList, msgDict)
         # print(thisMessage)
     else:
-        msgDict['mlen'] = byteList[1]
         msgDict['msgType'] = '{0:#0{1}x}'.format(byteList[0],4)
         thisMessage = chooseMsgType.get(byteList[0],unparsedMsg)(byteList, msgDict)
     # add msg_body last cause it's long
+    if 'mlen' not in msgDict:
+        msgDict['mlen'] = byteList[1]
     msgDict['msg_body'] = msg
     return thisMessage

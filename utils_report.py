@@ -75,7 +75,7 @@ def printLogInfoSummary(logInfoDict):
     print(podOnTimeString)
     print('     Insulin delivered by pod (u) : {:7.2f} ({:s})'.format(logInfoDict['insulinDelivered'], logInfoDict['sourceString']))
     if logInfoDict.get('logFileHasInit'):
-        print('\n  Report below is for all messages for this pod')
+        print('\n  Report below is for all messages to date for this pod')
     else:
         print('\n  Report below is for the subset of messages contained in the log')
     print('\n            First message in log :', logInfoDict['first_msg'])
@@ -231,8 +231,9 @@ def writePodox0115ToOutputFile(outFile, thisFile, pod0x0115Response):
     stream_out.close()
 
 def writeCombinedLogToOutputFile(outFile, logDF):
-    print('\n *** Sending Report Dataframe to \n     {:s}'.format(outFile))
-    columnList = ['time','seqNum','address',
+    # print('\n *** Sending Report Dataframe to \n     {:s}'.format(outFile))
+    # print('   input columns', logDF.columns)
+    columnList = ['time','deltaSec','address','seqNum',
             'type','msgDict']
     logDF = logDF[columnList]
     logDF.to_csv(outFile)

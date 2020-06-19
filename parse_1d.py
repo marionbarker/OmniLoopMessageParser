@@ -42,9 +42,9 @@ def parse_1d(byteList, msgDict):
 
     msgDict['msgMeaning'] = 'PodStatus'
     # only fixed length message where byte_1 has a different meaning
-    msgDict['mlen'] = 12
-
     byte_1 = byteList[1]
+    msgDict['pod_progress']  = byte_1 & 0xF
+
     dword_3 = combineByte(byteList[2:6])
     dword_4 = combineByte(byteList[6:10])
     cksm   = hex(combineByte(byteList[10:12]))
@@ -65,7 +65,6 @@ def parse_1d(byteList, msgDict):
     msgDict['temp_basal_active']       = (byte_1 >> 4 & 0x2) != 0
     msgDict['basal_active']            = (byte_1 >> 4 & 0x1) != 0
 
-    msgDict['pod_progress']  = byte_1 & 0xF
     msgDict['pod_progress_meaning']  = getPodProgressMeaning(byte_1 & 0xF)
 
     # get pulses and units of insulin NOT delivered
@@ -83,5 +82,7 @@ def parse_1d(byteList, msgDict):
         pulses = dword_4 & 0x3FF
         insulin = getUnitsFromPulses(pulses)
         msgDict['reservoir'] = insulin
+
+    msgDict['mlen'] = 12
 
     return msgDict

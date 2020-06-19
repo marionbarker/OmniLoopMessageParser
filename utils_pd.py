@@ -36,10 +36,11 @@ def findBreakPoints(podFrame):
     frameLength = len(addressList)
     breakPoints = [0]
     idx = 0
+    # Joe has version with 10 fs instead of 8
     noPodAddress = 'ffffffff'
     thisAddress = addressList[idx]
     for val in addressList:
-        if (thisAddress != val) and (thisAddress != noPodAddress):
+        if (thisAddress != val) and (thisAddress[0:8] != noPodAddress):
             breakPoints.append(idx)
         thisAddress = val
         idx = idx+1

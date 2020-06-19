@@ -77,7 +77,7 @@ def parse_02(byteList, msgDict):
     # Since byte_2 was 2, update msgType
     msgDict['msgType'] = '0x0202'
 
-    msgDict['pod_progress_value']   = pod_progress
+    msgDict['pod_progress']   = pod_progress
 
     msgDict['extended_bolus_active']   = (byte_4 & 0x8) != 0
     msgDict['immediate_bolus_active']  = (byte_4 & 0x4) != 0

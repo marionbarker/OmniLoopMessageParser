@@ -15,6 +15,7 @@ def getAnalysisIO(pathOption, outputOption):
     #                    2 return name for test.csv
     #                    3 return name for init_master.csv
     #                    4 return prefix for verbose output for podInit and podState
+    #                    5 return prefix for verbose output for log with pairing problems
 
     thisPlatform = platform.system()
 
@@ -46,6 +47,8 @@ def getAnalysisIO(pathOption, outputOption):
         outFile = topPath + '/' + 'LoopReportPythonAnalysis' + '/' + 'init_survey.csv'
     elif outputOption == 4:
         outFile = topPath + '/' + 'LoopReportPythonAnalysis' + '/' + 'verboseOutput' + '/'
+    elif outputOption == 5:
+        outFile = topPath + '/' + 'LoopReportPythonAnalysis' + '/' + 'verboseOutputPairing' + '/'
     else:
         print('  outputOption not recognized for getAnalysisIO')
         outFile = 0

@@ -26,7 +26,7 @@ def parse_03(byteList, msgDict):
 
     msgDict['msgMeaning'] = 'setupPod'
 
-    if msgDict['mlen'] != 0x13:
+    if byteList[1] != 0x13:
         print('Unexpected length of 0x03 command for Loop')
         return msgDict
 

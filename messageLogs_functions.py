@@ -195,7 +195,9 @@ def extract_pod_manager(data):
             podMgrDict = dict([[x.strip() for x in v.split(':', 1)]
                     for v in data['PodState']])
         except:
-            print('Information Only: PodState not defined in log file')
+            #print('Information Only: PodState not defined in log file')
+            ab = 4 # non op
+
     return podMgrDict
 
 def extract_fault_info(data):
@@ -254,8 +256,6 @@ def extract_loop_version(data, firstChars):
 
 def generate_table(podFrame, radio_on_time):
     # add columns to the DataFrame - valid only when a single pod is included
-    podFrame['time'] = pd.to_datetime(podFrame['time'])
-    podFrame['deltaSec'] = (podFrame['time']-podFrame['time'].shift()).dt.seconds.fillna(0).astype(float)
     podFrame['timeAsleep'] = podFrame['deltaSec'].loc[podFrame['deltaSec'] > radio_on_time] - radio_on_time  # radio_on_time seconds the radio stays awake
     return podFrame
 
@@ -348,4 +348,7 @@ def extract_messages(fileType, parsed_content):
             printList(cgm_messages[-2:-1])
     # logDF all pod messages in Report (can be across multiple pods)
     logDF = pd.DataFrame(pod_messages)
+    logDF['time'] = pd.to_datetime(logDF['time'])
+    logDF['deltaSec'] = (logDF['time']-logDF['time'].shift()).dt.seconds.fillna(0).astype(float)
+
     return logDF

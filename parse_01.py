@@ -48,7 +48,7 @@ def parse_01(byteList, msgDict):
     msgDict['pod_progress'] = -1 # will be overwritten
     msgDict['podAddr'] = 'tbd' # will be overwritten
 
-    if msgDict['mlen'] == 0x15:
+    if byteList[1] == 0x15:
         msgDict['msgMeaning'] = 'IdAssigned'
         pmVer = byteList[2:5]
         piVer = byteList[5:8]
@@ -64,7 +64,7 @@ def parse_01(byteList, msgDict):
         msgDict['msgType'] = '0x0115'
         msgDict['recvGain'] = gg
         msgDict['rssiValue'] = ss
-    elif msgDict['mlen'] == 0x1b:
+    elif byteList[1] == 0x1b:
         msgDict['msgMeaning'] = 'PodSetupOK'
         fixedWord = byteList[2:9]
         pmVer = byteList[9:12]
@@ -77,13 +77,12 @@ def parse_01(byteList, msgDict):
         msgDict['msgType'] = '0x011b'
         msgDict['fixedWord'] = fixedWord
 
-    if msgDict['mlen'] == 0x15 or msgDict['mlen'] == 0x1b:
-        # fill in rest of common msgDict
-        msgDict['pmVersion'] = versionString(pmVer)
-        msgDict['piVersion'] = versionString(piVer)
-        msgDict['pod_progress']  = pprog
-        msgDict['lot']  = podLot
-        msgDict['tid']  = podTid
-        msgDict['podAddr']  = hex(podAddr)
+    # fill in rest of common msgDict
+    msgDict['pmVersion'] = versionString(pmVer)
+    msgDict['piVersion'] = versionString(piVer)
+    msgDict['pod_progress']  = pprog
+    msgDict['lot']  = podLot
+    msgDict['tid']  = podTid
+    msgDict['podAddr']  = hex(podAddr)
 
     return msgDict
