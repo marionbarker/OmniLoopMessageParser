@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import os
 from utils_pod import *
+from utils import *
 
 """
 utils_report.py
@@ -13,17 +14,17 @@ def printActionSummary(actionSummary, vFlag):
     numShortTB = np.nan
     numSchBasalbeforeTB = np.nan
     numRepeatedTB = np.nan
-    print('\n  Action Summary with sequential 4 or 2 message sequences with action response times in sec')
-    print('      Action        : #Success,  mean, [  min,  max  ] : #Incomplete')
+    print('\n  Action Summary with sequential messages (2 or 4)\n    Action Completion times in sec')
+    #print('      Action        : #Success,  mean, [  min,  max  ] : #Incomplete')
+    print('      Action        : #Complete, mean, [  min,  max  ] : #msgInAction')
     #actionSummary
     #printDict(actionSummary)
 
     for keys, values in actionSummary.items():
         subDict = values
-        print('    {:14s}  :  {:5.0f},  {:5.0f},  [{:5.0f}, {:5.0f} ] : {:5d}'.format( \
+        print('    {:14s}  :  {:5.0f},  {:5.0f},  [{:5.0f}, {:5.0f} ] : {:5.0f}'.format( \
           keys, subDict['countCompleted'], subDict['meanResponseTime'], \
-          subDict['minResponseTime'], subDict['maxResponseTime'], \
-          subDict['countIncomplete']))
+          subDict['minResponseTime'], subDict['maxResponseTime'], subDict['msgPerAction']))
         # deprecated (Pete fixed code)
         #if keys=='CnxSetTmpBasal':
         #    numShortTB          = subDict['numShortTB']
@@ -78,8 +79,8 @@ def printLogInfoSummary(logInfoDict):
         print('\n  Report below is for all messages to date for this pod')
     else:
         print('\n  Report below is for the subset of messages contained in the log')
-    print('\n            First message in log :', logInfoDict['first_msg'])
-    print('            Last  message in log :', logInfoDict['last_msg'])
+    print('\n             First message in log :', logInfoDict['first_msg'])
+    print('             Last  message in log :', logInfoDict['last_msg'])
     print('  Total elapsed time in log (hrs) : {:6.1f}'.format(logInfoDict['msgLogHrs']))
     print('                Radio on estimate : {:6.1f}, {:5.1f}%'.format(logInfoDict['radioOnHrs'], 100*logInfoDict['radioOnHrs']/logInfoDict['msgLogHrs']))
     print('   Number of messages (sent/recv) :{:5d} ({:4d} / {:4d})'.format(logInfoDict['numMsgs'],
@@ -146,6 +147,27 @@ def writePodInitStateToOutputFile(outFile, commentString, podInitState):
     podInitState['success'] = podInitState['statusBool'].apply(getStringFromLogic)
     podInitState = podInitState[columnList]
     podInitState.to_csv(outFile)
+    return
+
+def reportUncategorizedMessages(frameBalance, podState):
+    # used to report uncategorized messages
+    if len(frameBalance)==0:
+        return
+
+    print('\n *** There were {:d} messages not in completed Actions'.format(len(frameBalance)))
+    # extract msgType and number of occurences
+    nonCatDict = frameBalance.groupby(['msgType']).groups
+    print('       msgType     : Meaning             : #NotCategorized')
+    for keys,values in nonCatDict.items():
+        print('        {:10s} :  {:18s} :     {:3d}'.format(keys, getNameFromMsgType(keys), len(values)))
+    print('\n')
+
+    frameBalance['description'] = frameBalance.apply(lambda row : getDescriptiveStringFromPodStateRow(row['msgDict'],
+                                  row['reqTB'], row['reqBolus'], row['pod_progress']), axis = 1)
+    columnList = ['timeStamp','deltaSec',
+            'pod_progress','type','msgType',
+            'description']
+    frameBalance = frameBalance[columnList]
     return
 
 def writePodStateToOutputFile(outFile, commentString, podState, logInfoDict):

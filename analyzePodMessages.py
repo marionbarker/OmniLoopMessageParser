@@ -49,7 +49,7 @@ def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile, vFla
     #     see also function getActionDict
     #   actionFrame  dataframe of processed analysis from podState (by action)
     #   initIdx      indices in podState to extract pod initilization
-    actionFrame, initIdx = checkAction(podState)
+    actionFrame, initIdx, frameBalance = checkAction(podState)
 
     numInitSteps = len(initIdx)
     if numInitSteps > 0:
@@ -181,6 +181,10 @@ def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile, vFla
 
 
         printActionSummary(actionSummary, vFlag)
+
+        # report for uncategorized commands
+        if len(frameBalance)>0:
+            reportUncategorizedMessages(frameBalance, podState)
 
         # add this printout to look for message types other than 14 for 06 responses
         #  added message logging to record this around Dec 2, 2019

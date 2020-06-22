@@ -42,6 +42,10 @@ def getActionDict():
     These will be searched for in this order and those indices removed from
     pod frame before the next search (see getPodState in checkAction.py)
 
+    Remove 'Status&Bolus'    : (2, ('0x0e',   '0x1d', '0x1a17', '0x1d')),
+    in preparation of newer Loop code that no longer issues a status request
+    prior to a bolus command
+
     Ordering: with the exception of messages that are only used during
             initialization, put the sequences of 4 messages first so that
             getPodState pulls those out of the frame of sequential frames
@@ -54,18 +58,18 @@ def getActionDict():
       'CnxSetTmpBasal'  : (2, ('0x1f2', '0x1d', '0x1a16', '0x1d')), \
       'Status&Bolus'    : (2, ('0x0e',   '0x1d', '0x1a17', '0x1d')), \
       'CnxAllSetBasal'  : (2, ('0x1f7', '0x1d', '0x1a13', '0x1d')), \
-      'StatusCheck'     : (0, ('0x0e'  , '0x1d')), \
+      'Bolus'           : (0, ('0x1a17', '0x1d')), \
+      'StatusRequest'   : (0, ('0x0e'  , '0x1d')), \
       'AcknwlAlerts'    : (0, ('0x11', '0x1d')), \
       'CnfgAlerts'      : (0, ('0x19', '0x1d')), \
       'SetBeeps'        : (0, ('0x1e', '0x1d')), \
-      'CnxDelivery'     : (0, ('0x1f'  , '0x1d')), \
+      'CnxDelivery'     : (0, ('0x1f0'  , '0x1d')), \
       'CnxBasal'        : (0, ('0x1f1', '0x1d')), \
       'CnxTmpBasal'     : (0, ('0x1f2', '0x1d')), \
       'CnxBolus'        : (0, ('0x1f4', '0x1d')), \
       'CnxAll'          : (0, ('0x1f7', '0x1d')), \
-      'BolusAlone'      : (0, ('0x1a17', '0x1d')), \
+      'PrgBasalSch'     : (0, ('0x1a13', '0x1d')) \
       'DeactivatePod'   : (0, ('0x1c', '0x1d')), \
-      'PrgBasalSch'     : (0, ('0x1a13', '0x1d'))
        }
     return actionDict
 
@@ -250,3 +254,54 @@ def getDescriptiveStringFromPodStateRow(md, reqTB, reqBolus, pod_progress):
         dStr = podPrefix + 'ACK (I heard you but I did not understand)'
 
     return dStr
+
+def getNameFromMsgType(msgType):
+    """
+    return english name for a given msgType
+    """
+    msgName = 'unknown'
+    if msgType == '0x0115':
+        msgName = 'PodRespSetup'
+    elif msgType == '0x011b':
+        msgName = 'PodRespAssignID'
+    elif msgType == '0x02':
+        msgName = 'PodResp0x02Status'
+    elif msgType == '0x0202':
+        msgName = 'PodRespErrStatus'
+    elif msgType == '0x03':
+        msgName = 'SetupPod'
+    elif msgType == '0x06':
+        msgName = 'PodRespBadNonce'
+    elif msgType == '0x07':
+        msgName = 'AssignID'
+    elif msgType == '0x08':
+        msgName = 'CnfgDelivFlg'
+    elif msgType == '0x0e':
+        msgName = 'StatusRequest'
+    elif msgType == '0x11':
+        msgName = 'AcknwlAlerts'
+    elif msgType == '0x19':
+        msgName = 'CnfgAlerts'
+    elif msgType == '0x1a13':
+        msgName = 'PrgBasalSch'
+    elif msgType == '0x1a16':
+        msgName = 'TempBasal'
+    elif msgType == '0x1a17':
+        msgName = 'Bolus'
+    elif msgType == '0x1c':
+        msgName = 'DeactivatePod'
+    elif msgType == '0x1d':
+        msgName = 'PodRespStatus'
+    elif msgType == '0x1e':
+        msgName = 'SetBeeps'
+    elif msgType == '0x1f0':
+        msgName = 'CnxDelivery'
+    elif msgType == '0x1f1':
+        msgName = 'CnxBasal'
+    elif msgType == '0x1f2':
+        msgName = 'CnxTmpBasal'
+    elif msgType == '0x1f4':
+        msgName = 'CnxBolus'
+    elif msgType == '0x1f7':
+        msgName = 'CnxAll'
+    return msgName

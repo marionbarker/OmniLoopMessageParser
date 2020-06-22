@@ -1,6 +1,7 @@
 from utils import *
 from utils_pd import *
 from utils_pod import *
+from utils_report import *
 import numpy as np
 
 def checkAction(frame):
@@ -17,6 +18,10 @@ def checkAction(frame):
     Method:
         actionFrame is a dataframe with indices and times for every action
         Uses the actionDict for which send-recv patterns go with actions
+
+        on 6/21/2020 - check for time before message for 4-msg sequences
+                       and keep track of uncategorized items
+
         Steps:
             # - identify the indices associated with initilizing the pod
                 (use pod_progress < 8) plus next 0x1d messages
@@ -39,6 +44,8 @@ def checkAction(frame):
     actionColumnNames = ('actionName', 'msgPerAction', 'cumStartSec', \
       'responseTime' , 'SchBasalState', 'incompleteList','completedList' )
 
+    # determine if a 4-message sequence should be grouped together
+    maxDeltaInSeq = 10  # seconds - phone responds quicker than pod, so can be very short
     # determine initIdx from pod_progress value
     podInit = frame[frame.pod_progress < 8]
     # get list of indices for initializing the pod
@@ -79,6 +86,7 @@ def checkAction(frame):
     # if all the expected messages are found in the correct order, then the
     #     indices for all the messages are removed from frameBalance before
     #     searching for the next actionDict item
+    #     AND for 4-step sequences, deltaTime for 3rd time in list <= maxDeltaInSeq
 
     actionList = []
 
@@ -89,7 +97,12 @@ def checkAction(frame):
         thisID = values[0]           # used to index into matchList, identifier for Action
         matchList = values[1]
         msgPerAction = len(matchList)  # always 2 or 4
-        thisFrame = frameBalance[frameBalance.msgType == matchList[thisID]]
+        if msgPerAction == 2:
+            thisFrame = frameBalance[frameBalance.msgType == matchList[thisID]]
+        else:
+            # add time check for 4-msg sequences
+            thisFrame = frameBalance[(frameBalance.msgType == matchList[thisID]) & \
+                (frameBalance.deltaSec <= maxDeltaInSeq)]
         if len(thisFrame) == 0:
             continue
         thisIdx = np.array(thisFrame.index.to_list())
@@ -145,7 +158,7 @@ def checkAction(frame):
         frameBalance = frameBalance.drop(thisList)
 
     actionFrame = pd.DataFrame(actionList, columns=actionColumnNames)
-    return actionFrame, initIdx
+    return actionFrame, initIdx, frameBalance
 
 def processActionFrame(actionFrame, podState):
     """
