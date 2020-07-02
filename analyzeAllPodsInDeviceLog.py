@@ -1,8 +1,5 @@
-import numpy as np
-import pandas as pd
-from utils import *
-from utils_pd import *
-from analyzePodMessages import *
+from utils_pd import findBreakPoints
+from analyzePodMessages import analyzePodMessages
 
 """
 analyzeAllPodsInDeviceLog
@@ -14,9 +11,13 @@ analyzeAllPodsInDeviceLog
         noPod/ffffffff + address3: group 3, etc
 """
 
-def analyzeAllPodsInDeviceLog(thisFile, logDF, podMgrDict, faultInfoDict, outFile, vFlag):
-    # break logDF into chunks and process each chunk
-    #  unique address list, breakPoints in logDF
+
+def analyzeAllPodsInDeviceLog(thisFile, logDF, podMgrDict, faultInfoDict,
+                              outFile, vFlag):
+    """
+    break logDF into chunks and process each chunk
+    unique address list, breakPoints in logDF
+    """
     podAddresses, breakPoints = findBreakPoints(logDF)
 
     numChunks = len(breakPoints)-1
@@ -38,8 +39,8 @@ def analyzeAllPodsInDeviceLog(thisFile, logDF, podMgrDict, faultInfoDict, outFil
         print('  Report on Omnipod from {:s}'.format(thisFile))
         print('     Block {:d} of {:d}\n'.format(idx, numChunks))
 
-        podFrame, podState, actionFrame, actionSummary = analyzePodMessages(thisFile,
-            thisFrame, podMgrDict, faultInfoDict, outFile, vFlag, idx)
-
+        podFrame, podState, actionFrame, actionSummary = \
+            analyzePodMessages(thisFile, thisFrame, podMgrDict, faultInfoDict,
+                               outFile, vFlag, idx)
 
     return
