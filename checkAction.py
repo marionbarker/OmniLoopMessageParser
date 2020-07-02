@@ -1,7 +1,9 @@
-from utils import *
+from utils import flatten
 from utils_pd import *
-from utils_pod import *
+from utils_pod import getActionDict
 import numpy as np
+import pandas as pd
+
 
 def checkAction(frame):
     """
@@ -36,8 +38,9 @@ def checkAction(frame):
 
     actionDict = getActionDict()
 
-    actionColumnNames = ('actionName', 'msgPerAction', 'cumStartSec', \
-      'responseTime' , 'SchBasalState', 'incompleteList','completedList' )
+    actionColumnNames = ('actionName', 'msgPerAction', 'cumStartSec',
+                         'responseTime', 'SchBasalState', 'incompleteList',
+                         'completedList')
 
     # determine initIdx from pod_progress value
     podInit = frame[frame.pod_progress < 8]
@@ -54,16 +57,14 @@ def checkAction(frame):
     else:
         # need to add the next row too - but keep going until it is a '0x1d'
         checkIdx = initIdx[-1]
-        while checkIdx<len(frame) and (frame.loc[checkIdx,'msgType']) != '0x1d':
+        while checkIdx < len(frame) and \
+                (frame.loc[checkIdx, 'msgType']) != '0x1d':
             checkIdx += 1
             initIdx = np.append(initIdx, checkIdx)
 
     if len(initIdx) > len(frame):
         print('Pod never reached pod_progress of 8')
-        #print('len(initIdx):', len(initIdx))
-        #print('len(frame):', len(frame))
         initIdx = initIdx[0:len(frame)]
-        #print('len(initIdx):', len(initIdx))
         actionFrame = pd.DataFrame([], columns=actionColumnNames)
         return actionFrame, initIdx
 
@@ -82,11 +83,11 @@ def checkAction(frame):
 
     actionList = []
 
-    for keys,values in actionDict.items():
-        badIdx = []         # accumulate action identifier indices that don't have all their messages
-        incompleteList = [] # list of badIdx lists by action
+    for keys, values in actionDict.items():
+        badIdx = []          # accumulate action identifier indices that don't have all their messages
+        incompleteList = []  # list of badIdx lists by action
         thisAction = keys
-        thisID = values[0]           # used to index into matchList, identifier for Action
+        thisID = values[0]   # used to index into matchList, identifier for Action
         matchList = values[1]
         msgPerAction = len(matchList)  # always 2 or 4
         thisFrame = frameBalance[frameBalance.msgType == matchList[thisID]]
@@ -94,25 +95,25 @@ def checkAction(frame):
             continue
         thisIdx = np.array(thisFrame.index.to_list())
         # go thru adjacent messages to ensure they match the matchList
-        for ii in range (-thisID, msgPerAction-thisID):
+        for ii in range(-thisID, msgPerAction-thisID):
             if ii == thisID:
                 # we already know it matches the ID for this action
                 continue
-            thisList = thisIdx+ii
+            thisList = thisIdx + ii
             # to avoid missing indices already removed from frameBalance, use frame here
-            checkFrame=frame.loc[thisList,:]
+            checkFrame = frame.loc[thisList, :]
             # identify any mismatches with respect to action message
-            badFrame = checkFrame[checkFrame.msgType != matchList[ii+thisID]]
+            badFrame = checkFrame[checkFrame.msgType != matchList[ii + thisID]]
             if len(badFrame) > 0:
                 thisBad = np.array(badFrame.index.to_list())
-                thisBad = thisBad-ii
-                badIdx  = np.append(badIdx, thisBad)
+                thisBad = thisBad - ii
+                badIdx = np.append(badIdx, thisBad)
 
         # all required messages in the action have now been checked
         if len(badIdx):
             # need to remove the "bad" aka incomplete action indices from thisIdx
             badIdx = np.unique(badIdx)
-            incompleteList = thisFrame.loc[badIdx,'logIdx'].to_list()
+            incompleteList = thisFrame.loc[badIdx, 'logIdx'].to_list()
             # use thisFrame to transfer completed indices in next step
             thisFrame = thisFrame.drop(badIdx)
 
@@ -121,31 +122,30 @@ def checkAction(frame):
         if len(idx) == 0:
             continue
 
-        #print('Status: ', thisAction, 'Complete: ', len(idx), 'Incomplete: ', len(badIdx))
-
         if msgPerAction == 4:
-            thisList = np.unique(flatten([idx-2, idx-1, idx, idx+1 ]))
-            t0 = np.array(frame.loc[idx-2,'timeCumSec'].to_list())
-            t1 = np.array(frame.loc[idx+1,'timeCumSec'].to_list())
-            responseTime = t1-t0
-            SchBasalState = frame.loc[idx-2,'SchBasal'].to_list()
+            thisList = np.unique(flatten([idx - 2, idx - 1, idx, idx + 1]))
+            t0 = np.array(frame.loc[idx-2, 'timeCumSec'].to_list())
+            t1 = np.array(frame.loc[idx+1, 'timeCumSec'].to_list())
+            responseTime = t1 - t0
+            SchBasalState = frame.loc[idx-2, 'SchBasal'].to_list()
         else:
-            thisList = np.unique(flatten([idx, idx+1]))
-            t0 = np.array(frame.loc[idx,'timeCumSec'].to_list())
-            t1 = np.array(frame.loc[idx+1,'timeCumSec'].to_list())
-            responseTime = t1-t0
-            SchBasalState = frame.loc[idx,'SchBasal'].to_list()
+            thisList = np.unique(flatten([idx, idx + 1]))
+            t0 = np.array(frame.loc[idx, 'timeCumSec'].to_list())
+            t1 = np.array(frame.loc[idx+1, 'timeCumSec'].to_list())
+            responseTime = t1 - t0
+            SchBasalState = frame.loc[idx, 'SchBasal'].to_list()
 
         # append this action to the list
         # go from np.array to list as appropriate
-        actionList.append(( thisAction, msgPerAction, t0, \
-          responseTime, SchBasalState, incompleteList, thisList))
+        actionList.append((thisAction, msgPerAction, t0, responseTime,
+                           SchBasalState, incompleteList, thisList))
 
         # remove these indices from the frameBalance, reset and keep going
         frameBalance = frameBalance.drop(thisList)
 
     actionFrame = pd.DataFrame(actionList, columns=actionColumnNames)
     return actionFrame, initIdx
+
 
 def processActionFrame(actionFrame, podState):
     """
@@ -165,13 +165,13 @@ def processActionFrame(actionFrame, podState):
         numCompleted = len(row['completedList'])/row['msgPerAction']
         numIncomplete = len(row['incompleteList'])
         thisName = row['actionName']
-        subDict = { \
-          'msgPerAction': row['msgPerAction'], \
-          'countCompleted': numCompleted, \
-          'countIncomplete': numIncomplete, \
-          'meanResponseTime': np.mean(respTime), \
-          'minResponseTime':  np.min(respTime), \
-          'maxResponseTime': np.max(respTime) }
+        subDict = {
+          'msgPerAction': row['msgPerAction'],
+          'countCompleted': numCompleted,
+          'countIncomplete': numIncomplete,
+          'meanResponseTime': np.mean(respTime),
+          'minResponseTime':  np.min(respTime),
+          'maxResponseTime': np.max(respTime)}
         # for Temp Basal, add a few more items to the subDict
         if thisName == 'CnxSetTmpBasal':
             startTime = row['cumStartSec']
@@ -180,14 +180,14 @@ def processActionFrame(actionFrame, podState):
             # insert 399 as the first index result for timeSinceLastTB
             deltaTime[:0] = [399]
             timeSinceLastTB = np.array(deltaTime)
-            numShortTB = np.sum(timeSinceLastTB<30)
+            numShortTB = np.sum(timeSinceLastTB < 30)
             numSchBasalbeforeTB = np.sum(row['SchBasalState'])
             SchBasalState = row['SchBasalState']
             completedList = row['completedList']
             # find TB that are enacted while SchBasalState is false
             # with initial TB and final TB the same value
-            priorIdx   = list(range(0,len(completedList), 4)) # current status before cancel
-            postIdx    = list(range(2, len(completedList), 4)) # req TB
+            priorIdx   = list(range(0, len(completedList), 4))  # current status before cancel
+            postIdx    = list(range(2, len(completedList), 4))  # req TB
             priorReqTB = np.array(podState.loc[completedList[priorIdx]]['reqTB'])
             postReqTB  = np.array(podState.loc[completedList[postIdx]]['reqTB'])
             deltaReqTB = postReqTB - priorReqTB
