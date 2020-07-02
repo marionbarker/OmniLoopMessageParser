@@ -2,7 +2,7 @@
 
 from utils import *
 from utils_pod import *
-from parse_0202 import *
+from parsers.parse_0202 import *
 
 import numpy as np
 

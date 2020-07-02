@@ -2,20 +2,20 @@
 import numpy as np
 from utils import *
 
-from parse_01 import *
-from parse_02 import *
-from parse_0202 import *
-from parse_03 import *
-from parse_06 import *
-from parse_08 import *
-from parse_0e import *
-from parse_1a13 import *
-from parse_1a16 import *
-from parse_1a17 import *
-from parse_19 import *
-from parse_1c import *
-from parse_1d import *
-from parse_1f import *
+from parsers.parse_01 import *
+from parsers.parse_02 import *
+from parsers.parse_0202 import *
+from parsers.parse_03 import *
+from parsers.parse_06 import *
+from parsers.parse_08 import *
+from parsers.parse_0e import *
+from parsers.parse_1a13 import *
+from parsers.parse_1a16 import *
+from parsers.parse_1a17 import *
+from parsers.parse_19 import *
+from parsers.parse_1c import *
+from parsers.parse_1d import *
+from parsers.parse_1f import *
 
 def unparsedMsg(byteList, msgDict):
     # 0x07 is so simple, just parse it here

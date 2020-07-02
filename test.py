@@ -1,6 +1,7 @@
 # run the example files - output to screen should match corresponding example output files
 # usage:  python test.py > exampleFiles/exampleOutput_test.txt
 from main import *
+import pandas as pd
 
 outFile = 0
 vFlag = 0
