@@ -1,7 +1,3 @@
-# file: parse_0e - is a request of a nonce resync returned from the pod
-
-from utils import *
-
 def parse_0e(byteList, msgDict):
     # request status from the pod
     """
@@ -15,17 +11,17 @@ def parse_0e(byteList, msgDict):
         $01 02 Response, Type 1 - expired alert status
         $02 02 Response, Type 2 - fault event information
         $03 02 Response, Type 3 - contents of data log
-        $05 02 Response, Type 5 - fault information with Pod initialization time
+        $05 02 Response, Type 5 - fault information with Pod init time
         $06 02 Response, Type 6 - hardcoded values
-        $46 02 Response, Type 46 - flash variables including state, initialization time, any faults
-        $50 02 Response, Type 50 - dumps up to 50 entries data from the flash log
-        $51 02 Response, Type 51 - like Type $50, but dumps entries before the last 50
+        $46 02 Response, Type 46 - flash variables including state,
+                                   initialization time, any faults
+        $50 02 Response, Type 50 - dumps up to 50 entries from the flash log
+        $51 02 Response, Type 51 - like Type $50,  dumps entries before last 50
     """
 
-    alwaysOne = byteList[1]
     requestCode = byteList[2]
 
-    msgDict['requestCode'] = '{0:#0{1}x}'.format(requestCode,4)
+    msgDict['requestCode'] = '{0:#0{1}x}'.format(requestCode, 4)
     if requestCode == 0:
         msgDict['msgMeaning'] = 'RequestStatus'
     elif requestCode == 1:
@@ -33,6 +29,6 @@ def parse_0e(byteList, msgDict):
     elif requestCode == 2:
         msgDict['msgMeaning'] = 'RequestFault'
     else:
-        msgDict['msgMeaning'] = 'requestCode' + msgDict['requestCode'] 
+        msgDict['msgMeaning'] = 'requestCode' + msgDict['requestCode']
 
     return msgDict
