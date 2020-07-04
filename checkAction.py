@@ -26,13 +26,14 @@ def checkAction(frame):
                 (note that incompleteList remain in frameBalance)
                 frameBalance = frame
                 for each item in actionDict
-                    * find prime-indices for action, e.g., for 'TB' find all '1a16'
+                    * find prime-indices for action, e.g., 'TB' find  '1a16'
                     * check adjacent indices for correct message types
                     * incorrect adjacency => prime-index into incompleteList
                     * the completedList includes prime + adjacent msg indices
                     * fill in the actionFrame row for these column headers
-                    ['actionName', 'msgPerAction', 'cumStartSec', 'responseTime', \
-                        'SchBasalState', 'incompleteList', 'completedList']
+                    ['actionName', 'msgPerAction', 'cumStartSec',
+                        'responseTime', 'SchBasalState', 'incompleteList',
+                        'completedList']
                     frameBalance = frame.drop(completedList)
     """
 
@@ -75,7 +76,8 @@ def checkAction(frame):
     #    actionName from actionDic
     #    list of lists of the completedList for that action,
     #             e.g., (34, 35, 36, 37), (60, 61, 62, 63)
-    #    responseTime calculated by taking timeCumSec at end - timeCumSec at end
+    #    responseTime calculated by taking
+    #        timeCumSec at end - timeCumSec at end
     #    SchBasal is the scheduled basal state at the beginning of the action
     # if all the expected messages are found in the correct order, then the
     #     indices for all the messages are removed from frameBalance before
@@ -84,10 +86,11 @@ def checkAction(frame):
     actionList = []
 
     for keys, values in actionDict.items():
-        badIdx = []          # accumulate action identifier indices that don't have all their messages
+        # accumulate action identifier indices that don't have all messages
+        badIdx = []
         incompleteList = []  # list of badIdx lists by action
         thisAction = keys
-        thisID = values[0]   # used to index into matchList, identifier for Action
+        thisID = values[0]   # index into matchList, identifier for Action
         matchList = values[1]
         msgPerAction = len(matchList)  # always 2 or 4
         thisFrame = frameBalance[frameBalance.msgType == matchList[thisID]]
@@ -100,7 +103,7 @@ def checkAction(frame):
                 # we already know it matches the ID for this action
                 continue
             thisList = thisIdx + ii
-            # to avoid missing indices already removed from frameBalance, use frame here
+            # use frame here to avoid missing indices already removed
             checkFrame = frame.loc[thisList, :]
             # identify any mismatches with respect to action message
             badFrame = checkFrame[checkFrame.msgType != matchList[ii + thisID]]
@@ -111,7 +114,7 @@ def checkAction(frame):
 
         # all required messages in the action have now been checked
         if len(badIdx):
-            # need to remove the "bad" aka incomplete action indices from thisIdx
+            # remove the "bad" (incomplete) action indices from thisIdx
             badIdx = np.unique(badIdx)
             incompleteList = thisFrame.loc[badIdx, 'logIdx'].to_list()
             # use thisFrame to transfer completed indices in next step
@@ -186,42 +189,46 @@ def processActionFrame(actionFrame, podState):
             completedList = row['completedList']
             # find TB that are enacted while SchBasalState is false
             # with initial TB and final TB the same value
-            priorIdx   = list(range(0, len(completedList), 4))  # current status before cancel
-            postIdx    = list(range(2, len(completedList), 4))  # req TB
-            priorReqTB = np.array(podState.loc[completedList[priorIdx]]['reqTB'])
-            postReqTB  = np.array(podState.loc[completedList[postIdx]]['reqTB'])
+            # current status before cancel
+            priorIdx = list(range(0, len(completedList), 4))
+            # req TB
+            postIdx = list(range(2, len(completedList), 4))
+            priorReqTB = np.array(podState.loc[completedList
+                                  [priorIdx]]['reqTB'])
+            postReqTB = np.array(podState.loc[completedList[postIdx]]['reqTB'])
             deltaReqTB = postReqTB - priorReqTB
-                # by definition, prior and post TB are same, so only need to include one value along with time
-            repeatedTB = [x[2:6] for x in zip(SchBasalState, deltaReqTB, startTime, priorReqTB, completedList[postIdx], timeSinceLastTB) if (not x[0] and x[1]==0)]
+            # by definition, prior and post TB are same,
+            # so only need to include one value along with time
+            repeatedTB = [x[2:6]
+                          for x in zip(SchBasalState, deltaReqTB, startTime,
+                                       priorReqTB, completedList[postIdx],
+                                       timeSinceLastTB)
+                          if (not x[0] and x[1] == 0)]
             subDict['numShortTB'] = numShortTB
             subDict['numSchBasalbeforeTB'] = numSchBasalbeforeTB
             subDict['numRepeatedTB'] = len(repeatedTB)
             subDict['repeatedTB'] = repeatedTB
-            repeatedShortTB = [x[2:6] for x in zip(SchBasalState, deltaReqTB, startTime, priorReqTB, completedList[postIdx], timeSinceLastTB) if (not x[0] and x[1]==0 and x[5]<30)]
+            repeatedShortTB = [x[2:6]
+                               for x in zip(SchBasalState, deltaReqTB,
+                                            startTime, priorReqTB,
+                                            completedList[postIdx],
+                                            timeSinceLastTB)
+                               if (not x[0] and x[1] == 0 and x[5] < 30)]
             subDict['numRepeatedShortTB'] = len(repeatedShortTB)
             subDict['repeatedShortTB'] = repeatedShortTB
-            # in practice - there were many repeated TB that were just under 20 min, so change to 19 min
-            repeated19MinTB = [x[2:6] for x in zip(SchBasalState, deltaReqTB, startTime, priorReqTB, completedList[postIdx], timeSinceLastTB) if (not x[0] and x[1]==0 and (x[5]>=30 and x[5]<1140))]
+            # in practice - there were many repeated TB that were
+            # code - has been fixed - this is archaic - may drop after reorg
+            # just under 20 min, so change to 19 min
+            repeated19MinTB = [x[2:6]
+                               for x in zip(SchBasalState, deltaReqTB,
+                                            startTime, priorReqTB,
+                                            completedList[postIdx],
+                                            timeSinceLastTB)
+                               if (not x[0] and x[1] == 0 and
+                                   (x[5] >= 30 and x[5] < 1140))]
             subDict['numrepeated19MinTB'] = len(repeated19MinTB)
             subDict['repeated19MinTB'] = repeated19MinTB
-            ## new dictionary items start here - don't change any old ones
-            # Each of these is cummulative, e.g., lt30 - lt10 yield # between 10 and 30s
-            repeatedTBlt10s = [x[2:6] for x in zip(SchBasalState, deltaReqTB, startTime, priorReqTB, completedList[postIdx], timeSinceLastTB) if (not x[0] and x[1]==0 and x[5]<10)]
-            subDict['numrepTBlt10s'] = len(repeatedTBlt10s)
-            repeatedTBlt20s = [x[2:6] for x in zip(SchBasalState, deltaReqTB, startTime, priorReqTB, completedList[postIdx], timeSinceLastTB) if (not x[0] and x[1]==0 and(x[5]>=10 and x[5]<20))]
-            subDict['numrepTBlt20s'] = len(repeatedTBlt20s)
-            repeatedTBlt30s = [x[2:6] for x in zip(SchBasalState, deltaReqTB, startTime, priorReqTB, completedList[postIdx], timeSinceLastTB) if (not x[0] and x[1]==0 and (x[5]>=20 and x[5]<30))]
-            subDict['numrepTBlt30s'] = len(repeatedTBlt30s)
-            repeatedTBlt05m = [x[2:6] for x in zip(SchBasalState, deltaReqTB, startTime, priorReqTB, completedList[postIdx], timeSinceLastTB) if (not x[0] and x[1]==0 and (x[5]>=30 and x[5]<300))]
-            subDict['numrepTBlt05m'] = len(repeatedTBlt05m)
-            repeatedTBlt10m = [x[2:6] for x in zip(SchBasalState, deltaReqTB, startTime, priorReqTB, completedList[postIdx], timeSinceLastTB) if (not x[0] and x[1]==0 and (x[5]>=300 and x[5]<600))]
-            subDict['numrepTBlt10m'] = len(repeatedTBlt10m)
-            repeatedTBlt15m = [x[2:6] for x in zip(SchBasalState, deltaReqTB, startTime, priorReqTB, completedList[postIdx], timeSinceLastTB) if (not x[0] and x[1]==0 and (x[5]>=600 and x[5]<900))]
-            subDict['numrepTBlt15m'] = len(repeatedTBlt15m)
-            repeatedTBlt20m = [x[2:6] for x in zip(SchBasalState, deltaReqTB, startTime, priorReqTB, completedList[postIdx], timeSinceLastTB) if (not x[0] and x[1]==0 and (x[5]>=900 and x[5]<1200))]
-            subDict['numrepTBlt20m'] = len(repeatedTBlt20m)
-            repeatedTBlt30m = [x[2:6] for x in zip(SchBasalState, deltaReqTB, startTime, priorReqTB, completedList[postIdx], timeSinceLastTB) if (not x[0] and x[1]==0 and (x[5]>=1200 and x[5]<1800))]
-            subDict['numrepTBlt30m'] = len(repeatedTBlt30m)
+            # delete all the other time parses - Loop works now
 
         actionSummary[thisName] = subDict
 

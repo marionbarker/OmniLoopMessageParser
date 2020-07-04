@@ -127,18 +127,15 @@ def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile,
             checkInsulin = faultProcessedMsg['insulinDelivered']
         else:
             thisFault = faultProcessedMsg['fault_type']
-        rawFault = faultProcessedMsg['msg_body']
         # update logInfoDict with insulinDelivered and sourceString if needed
         if checkInsulin >= logInfoDict['insulinDelivered']:
             logInfoDict['insulinDelivered'] = checkInsulin
             logInfoDict['sourceString'] = 'from 0x02 msg'
     elif faultInfoDict == {}:
         hasFault = False
-        rawFault = 'n/a'
         thisFault = 'Nominal'
     else:
         hasFault = True
-        rawFault = 'n/a'
         thisFault = 'PodInfoFaultEvent'
 
     # process the action frame
@@ -171,30 +168,32 @@ def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile,
     if True:
         printLogInfoSummary(logInfoDict)
         if hasFault:
-            thisFinish = thisFault
-            thisFinish2 = 'Fault'
             if thisFault == '0x1C':
-                print('    An 0x0202 message of {:s} reported - 80 hour time limit'.format(thisFault))
-                thisFinish2 = 'Success'
+                print('    An 0x0202 message of ' +
+                      '{:s} reported 80 hour time limit'.format(thisFault))
+                hasFault = 0
             elif thisFault == '0x18':
-                print('    An 0x0202 message of {:s} reported - out of insulin'.format(thisFault))
-                thisFinish2 = 'Success'
+                print('    An 0x0202 message of ' +
+                      '{:s} reported  out of insulin'.format(thisFault))
+                hasFault = 0
             elif thisFault == '0x34':
-                print('    An 0x0202 message of {:s} reported - this wipes out registers'.format(thisFault))
+                print('    An 0x0202 message of ' +
+                      '{:s} reported wipes out registers'.format(thisFault))
             else:
-                print('    An 0x0202 message of {:s} reported - details later'.format(thisFault))
-                # hasFault = 0
+                print('    An 0x0202 message of ' +
+                      '{:s} reported details later'.format(thisFault))
 
         if ackMessageList:
-            print('    ***  Detected {:d} ACK(s) during life of the pod'.format(len(ackMessageList)))
+            print('    ***  Detected {:d} ACK(s) during life of pod'.format(
+                  len(ackMessageList)))
             print('    ***  indices :', ackMessageList)
-
 
         printActionSummary(actionSummary, vFlag)
 
-        # add this printout to look for message types other than 14 for 06 responses
-        #  added message logging to record this around Dec 2, 2019
-        # print('\n Search for non-type 14 in 06 messages\n',podState[podState.msgType=='06'])
+        # old : look for message types other than 14 for 06
+        # added message logging to record this around Dec 2, 2019
+        # print('\n Search for non-type 14 in 06 messages\n',
+        #       podState[podState.msgType=='06'])
 
     if hasFault:
         print('\nFault Details')
