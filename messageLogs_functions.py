@@ -25,9 +25,8 @@ import pandas as pd
 # import os
 import markdown
 from bs4 import BeautifulSoup, NavigableString, Tag
-from utils import combineByte
-from utils import printDict
-from utils import printList
+from util.misc import combineByte
+from util.misc import printDict, printList
 from messagePatternParsing import processMsg
 
 # Some markdown headings don't start on their own line. This regular expression

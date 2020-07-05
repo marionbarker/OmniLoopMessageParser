@@ -1,5 +1,5 @@
 # file: messagePatternParsing
-from utils import combineByte
+from util.misc import combineByte
 
 from parsers.parse_01 import parse_01
 from parsers.parse_02 import parse_02

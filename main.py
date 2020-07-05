@@ -1,7 +1,7 @@
 from messageLogs_functions import loop_read_file
 from analyzePodMessages import analyzePodMessages
 from analyzeAllPodsInDeviceLog import analyzeAllPodsInDeviceLog
-from utils_report import printLoopVersion, writeCombinedLogToOutputFile
+from util.report import printLoopVersion, writeCombinedLogToOutputFile
 
 # Configure for new Device Communication Log (Loop 2.2)
 # Need this to work with either format - change logic stepwise to be
