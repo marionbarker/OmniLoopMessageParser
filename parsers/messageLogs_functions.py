@@ -27,7 +27,7 @@ import markdown
 from bs4 import BeautifulSoup, NavigableString, Tag
 from util.misc import combineByte
 from util.misc import printDict, printList
-from messagePatternParsing import processMsg
+from parsers.messagePatternParsing import processMsg
 
 # Some markdown headings don't start on their own line. This regular expression
 # finds them so we can insert a newline. (Needed for some MessageLog files)

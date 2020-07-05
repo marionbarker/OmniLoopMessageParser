@@ -1,4 +1,4 @@
-from messageLogs_functions import loop_read_file
+from parsers.messageLogs_functions import loop_read_file
 from util.pd import findBreakPoints
 from util.report import writeCombinedLogToOutputFile
 

@@ -1,5 +1,5 @@
 from util.pd import findBreakPoints
-from analyzePodMessages import analyzePodMessages
+from analysis.analyzePodMessages import analyzePodMessages
 
 """
 analyzeAllPodsInDeviceLog
