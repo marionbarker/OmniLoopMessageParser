@@ -1,5 +1,5 @@
-from utils import combineByte
-from utils import versionString
+from util.misc import combineByte
+from util.misc import versionString
 
 
 def parse_01(byteList, msgDict):

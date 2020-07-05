@@ -1,5 +1,4 @@
-# utils_pod - lower level functions related to omnipod
-
+# lower level functions related to omnipod
 # and the nomenclature for pod_progress here:
 # website ref: https://github.com/openaps/openomni/wiki/Pod-Progress-State
 

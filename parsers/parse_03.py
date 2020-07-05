@@ -1,7 +1,7 @@
 # file: parse_03 - setup pod, follows successful 07 (assignID) and 0x0115 response
 #  wiki: https://github.com/openaps/openomni/wiki/Command-03-Setup-Pod
 
-from utils import *
+from util.misc import combineByte
 
 def parse_03(byteList, msgDict):
     # Command to pod to finish initialization of address, TID, Lot

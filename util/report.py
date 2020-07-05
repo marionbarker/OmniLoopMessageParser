@@ -1,11 +1,10 @@
 import pandas as pd
 import numpy as np
 import os
-from utils_pod import *
+from util.pod import *
 
 """
-utils_report.py
-    This code has functions to handle reporting to stdout
+    This code has functions to handle reporting to stdout or files
 """
 
 def printActionSummary(actionSummary, vFlag):

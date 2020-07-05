@@ -1,5 +1,5 @@
 # file: parse_1f - does the parsing for cancel commond
-from utils import *
+from util.misc import combineByte
 from decimal import Decimal
 
 def parse_1f(byteList, msgDict):

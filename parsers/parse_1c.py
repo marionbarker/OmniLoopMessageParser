@@ -1,6 +1,6 @@
 # file: parse_1c - is a request to deactivate the pod
 
-from utils import *
+from util.misc import combineByte
 
 def parse_1c(byteList, msgDict):
     """

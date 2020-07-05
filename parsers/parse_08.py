@@ -1,7 +1,7 @@
 # file: parse_08 - is a request to configure delivery flags for the pod
 #  wiki: https://github.com/openaps/openomni/wiki/Command-08-Configure-Delivery-Flags
 
-from utils import *
+from util.misc import combineByte
 
 def parse_08(byteList, msgDict):
     """
