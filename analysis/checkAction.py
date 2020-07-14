@@ -38,6 +38,8 @@ def checkAction(frame):
     """
 
     actionDict = getActionDict()
+    # initialize frameBalance
+    frameBalance = frame
 
     actionColumnNames = ('actionName', 'msgPerAction', 'cumStartSec',
                          'responseTime', 'SchBasalState', 'incompleteList',
@@ -67,7 +69,7 @@ def checkAction(frame):
         print('Pod never reached pod_progress of 8')
         initIdx = initIdx[0:len(frame)]
         actionFrame = pd.DataFrame([], columns=actionColumnNames)
-        return actionFrame, initIdx
+        return actionFrame, initIdx, frameBalance
 
     # prepare to search by actions
     frameBalance = frame.copy()
@@ -147,7 +149,7 @@ def checkAction(frame):
         frameBalance = frameBalance.drop(thisList)
 
     actionFrame = pd.DataFrame(actionList, columns=actionColumnNames)
-    return actionFrame, initIdx
+    return actionFrame, initIdx, frameBalance
 
 
 def processActionFrame(actionFrame, podState):
