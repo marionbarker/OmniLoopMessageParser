@@ -125,8 +125,8 @@ def parse_0202(byteList, msgDict):
     msgDict['total_pulses_delivered'] = word_N
     msgDict['insulinDelivered'] = getUnitsFromPulses(word_N)
 
-    # msgDict['logged_fault'] = f'0x%X'(byte_P)
-    msgDict['logged_fault'] = f'{byte_P: 0x%X}'
+    msgDict['logged_fault'] = '{:#04x}'.format(byte_P)
+    # msgDict['logged_fault'] = f'{byte_P: 0x%X}'
 
     msgDict['fault_time_minutes_since_pod_activation'] = word_Q
     resLevel = word_R & 0x3FF
