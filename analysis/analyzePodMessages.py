@@ -4,6 +4,7 @@ from util.report import writePodox0115ToOutputFile, printInitFrame
 from util.report import printPodInfo, printPodDict, printLogInfoSummary
 from util.report import writePodInitStateToOutputFile, printActionSummary
 from util.report import writeDescriptivePodStateToOutputFile
+from util.report import reportUncategorizedMessages
 from util.pod import getLogInfoFromState, returnPodID
 from analysis.podStateAnalysis import getPodState
 from analysis.podInitAnalysis import getPod0x0115Response, getInitState
@@ -59,7 +60,7 @@ def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile,
     #     see also function getActionDict
     #   actionFrame  dataframe of processed analysis from podState (by action)
     #   initIdx      indices in podState to extract pod initilization
-    actionFrame, initIdx = checkAction(podState)
+    actionFrame, initIdx, frameBalance = checkAction(podState)
 
     numInitSteps = len(initIdx)
     if numInitSteps > 0:
@@ -190,10 +191,13 @@ def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile,
 
         printActionSummary(actionSummary, vFlag)
 
-        # old : look for message types other than 14 for 06
-        # added message logging to record this around Dec 2, 2019
-        # print('\n Search for non-type 14 in 06 messages\n',
-        #       podState[podState.msgType=='06'])
+        # report for uncategorized commands
+        if len(frameBalance) > 0:
+            reportUncategorizedMessages(frameBalance, podState)
+
+        # add this printout to look for message types other than 14 for 06 responses
+        #  added message logging to record this around Dec 2, 2019
+        # print('\n Search for non-type 14 in 06 messages\n',podState[podState.msgType=='06'])
 
     if hasFault:
         print('\nFault Details')
