@@ -171,12 +171,15 @@ def getLogInfoFromState(podState):
     bolusState = podState[podState.msgType == '0x1a17']
     logInfoDict['totBolus'] = bolusState.sum()['reqBolus']
     # if autoBolus is present and any values are true, add that to logInfoDict
+    """
+    # todo - this is not robust
     if 'autoBolus' in podState.columns:
         bolusSum = bolusState.groupby('autoBolus').sum()['reqBolus']
         if len(bolusSum) > 0:
             logInfoDict['manB'] = bolusSum[0]
         if len(bolusSum) > 1:
             logInfoDict['autB'] = bolusSum[1]
+    """
 
     return logInfoDict
 
@@ -272,3 +275,56 @@ def getDescriptiveStringFromPodStateRow(md, reqTB, reqBolus, pod_progress):
         dStr = podPrefix + 'ACK (I heard you but I did not understand)'
 
     return dStr
+
+
+def getNameFromMsgType(msgType):
+    """
+    return english name for a given msgType
+    TO DO - this should be a dictionary
+    """
+    msgName = 'unknown'
+    if msgType == '0x0115':
+        msgName = 'PodRespSetup'
+    elif msgType == '0x011b':
+        msgName = 'PodRespAssignID'
+    elif msgType == '0x02':
+        msgName = 'PodResp0x02Status'
+    elif msgType == '0x0202':
+        msgName = 'PodRespErrStatus'
+    elif msgType == '0x03':
+        msgName = 'SetupPod'
+    elif msgType == '0x06':
+        msgName = 'PodRespBadNonce'
+    elif msgType == '0x07':
+        msgName = 'AssignID'
+    elif msgType == '0x08':
+        msgName = 'CnfgDelivFlg'
+    elif msgType == '0x0e':
+        msgName = 'StatusRequest'
+    elif msgType == '0x11':
+        msgName = 'AcknwlAlerts'
+    elif msgType == '0x19':
+        msgName = 'CnfgAlerts'
+    elif msgType == '0x1a13':
+        msgName = 'PrgBasalSch'
+    elif msgType == '0x1a16':
+        msgName = 'TempBasal'
+    elif msgType == '0x1a17':
+        msgName = 'Bolus'
+    elif msgType == '0x1c':
+        msgName = 'DeactivatePod'
+    elif msgType == '0x1d':
+        msgName = 'PodRespStatus'
+    elif msgType == '0x1e':
+        msgName = 'SetBeeps'
+    elif msgType == '0x1f0':
+        msgName = 'CnxDelivery'
+    elif msgType == '0x1f1':
+        msgName = 'CnxBasal'
+    elif msgType == '0x1f2':
+        msgName = 'CnxTmpBasal'
+    elif msgType == '0x1f4':
+        msgName = 'CnxBolus'
+    elif msgType == '0x1f7':
+        msgName = 'CnxAll'
+    return msgName
