@@ -1,6 +1,7 @@
 # file: parse_1d - does the parsing for the 1d message returned from the pod
-from utils import *
-from utils_pod import *
+from util.misc import combineByte
+from util.pod import getUnitsFromPulses, getPodProgressMeaning
+
 
 def parse_1d(byteList, msgDict):
     # extract information from the 1d response and return as a dictionary
@@ -47,25 +48,25 @@ def parse_1d(byteList, msgDict):
 
     dword_3 = combineByte(byteList[2:6])
     dword_4 = combineByte(byteList[6:10])
-    cksm   = hex(combineByte(byteList[10:12]))
+    cksm = hex(combineByte(byteList[10:12]))
 
     msgDict['podOnTime'] = (dword_4 >> 10) & 0x1FFF
-    msgDict['reservoir'] = '' # placeholder for desired order
+    msgDict['reservoir'] = ''  # placeholder for desired order
 
     # get pulses and units of insulin delivered
     pulsesDelivered = (dword_3 >> 15) & 0x1FFF
     insulinDelivered = getUnitsFromPulses(pulsesDelivered)
     msgDict['pulsesTotal'] = pulsesDelivered
-    msgDict['insulinDelivered']  = insulinDelivered
+    msgDict['insulinDelivered'] = insulinDelivered
 
-    msgDict['seqNum']  = (dword_3 >> 11) & 0xF
+    msgDict['seqNum'] = (dword_3 >> 11) & 0xF
 
-    msgDict['extended_bolus_active']   = (byte_1 >> 4 & 0x8) != 0
-    msgDict['immediate_bolus_active']  = (byte_1 >> 4 & 0x4) != 0
-    msgDict['temp_basal_active']       = (byte_1 >> 4 & 0x2) != 0
-    msgDict['basal_active']            = (byte_1 >> 4 & 0x1) != 0
+    msgDict['extended_bolus_active'] = (byte_1 >> 4 & 0x8) != 0
+    msgDict['immediate_bolus_active'] = (byte_1 >> 4 & 0x4) != 0
+    msgDict['temp_basal_active'] = (byte_1 >> 4 & 0x2) != 0
+    msgDict['basal_active'] = (byte_1 >> 4 & 0x1) != 0
 
-    msgDict['pod_progress_meaning']  = getPodProgressMeaning(byte_1 & 0xF)
+    msgDict['pod_progress_meaning'] = getPodProgressMeaning(byte_1 & 0xF)
 
     # get pulses and units of insulin NOT delivered
     pulsesNot = dword_3 & 0x007F
@@ -84,5 +85,6 @@ def parse_1d(byteList, msgDict):
         msgDict['reservoir'] = insulin
 
     msgDict['mlen'] = 12
+    msgDict['checkSum'] = cksm
 
     return msgDict

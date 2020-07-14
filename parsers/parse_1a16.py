@@ -1,6 +1,7 @@
 # file: parse_1a16 - does the parsing a temporary basal commond
-from utils import *
+from util.misc import combineByte
 from decimal import Decimal
+
 
 def parse_1a16(byteList, msgDict):
     # extract information from the 1a16 temporary basal command

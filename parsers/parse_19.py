@@ -1,7 +1,8 @@
 # file: parse_19 - is a request to configure alerts for the pod
 #  wiki: https://github.com/openaps/openomni/wiki/Command-19-Configure-Alerts
 
-from utils import *
+from util.misc import combineByte
+
 
 def parse_19(byteList, msgDict):
     """

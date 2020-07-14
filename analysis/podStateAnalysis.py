@@ -1,9 +1,9 @@
-from utils import *
-from utils_pd import *
-from utils_pod import *
-from messagePatternParsing import *
+from util.pod import getUnitsFromPulses
+import numpy as np
+import pandas as pd
 
-## This file has higher level pod-specific functions
+
+# This file has higher level pod-specific functions
 
 # iterate through all messages and apply parsers to update the pod state
 # some messages are not parsed (they show up as 0x##)
@@ -29,32 +29,33 @@ def getPodState(frame):
     insulinDelivered = getUnitsFromPulses(0)
     reqTB = getUnitsFromPulses(0)
     reqBolus = getUnitsFromPulses(0)
-    #extBo = False # since extended bolus is always false, don't put into dataframe
+    # extBo = False # extended bolus is always false, don't put into dataframe
     # to make this print out nicely, use '' for FALSE, 'y' for TRUE
     # NOPE - have to have logic for checkAction to be valid
     Bolus = False
-    TB    = False
+    TB = False
     schBa = False
     ackMessageList = []
-    radio_on_time = 30 # radio is on for 30 seconds every time pod wakes up
+    radio_on_time = 30  # radio is on for 30 seconds every time pod wakes up
     radioOnCumSec = radio_on_time
 
     podInfo = {}
 
     list_of_states = []
 
-    colNamesMsg = ('logIdx', 'timeStamp', 'deltaSec', 'timeCumSec', \
-                'radioOnCumSec', 'podOnTime', 'seqNum', 'pod_progress', \
-                'type', 'msgType', 'msgMeaning', 'insulinDelivered', 'reqTB', \
-                'reqBolus', 'Bolus','TB','SchBasal', 'address', 'msgDict' )
+    colNamesMsg = ('logIdx', 'timeStamp', 'deltaSec', 'timeCumSec',
+                   'radioOnCumSec', 'podOnTime', 'seqNum', 'pod_progress',
+                   'type', 'msgType', 'msgMeaning', 'insulinDelivered',
+                   'reqTB', 'reqBolus', 'Bolus', 'TB', 'SchBasal', 'address',
+                   'msgDict')
 
-    colNamesDev = ('logIdx', 'timeStamp', 'deltaSec', 'timeCumSec', \
-                'radioOnCumSec', 'podOnTime', 'seqNum', 'pod_progress', \
-                'type', 'msgType', 'msgMeaning', 'insulinDelivered', 'reqTB', \
-                'reqBolus', 'autoBolus', 'Bolus','TB','SchBasal', 'logAddr', \
-                'address', 'msgDict' )
+    colNamesDev = ('logIdx', 'timeStamp', 'deltaSec', 'timeCumSec',
+                   'radioOnCumSec', 'podOnTime', 'seqNum', 'pod_progress',
+                   'type', 'msgType', 'msgMeaning', 'insulinDelivered',
+                   'reqTB', 'reqBolus', 'autoBolus', 'Bolus', 'TB', 'SchBasal',
+                   'logAddr', 'address', 'msgDict')
 
-    # iterate through the DataFrame, should already be sorted into send-recv pairs
+    # iterate through the DataFrame
     for index, row in frame.iterrows():
         # reset each time
         timeStamp = row['time']
@@ -62,7 +63,7 @@ def getPodState(frame):
         timeCumSec += deltaSec
         msgDict = row['msgDict']
         seqNum = row['seqNum']
-        msgMeaning  = msgDict['msgMeaning']
+        msgMeaning = msgDict['msgMeaning']
         autoBolus = False
         if msgDict['msgType'] == 'ACK':
             ackMessageList.append(index)
@@ -89,7 +90,7 @@ def getPodState(frame):
             pod_progress = msgDict['pod_progress']
             insulinDelivered = msgDict['insulinDelivered']
             Bolus = msgDict['immediate_bolus_active']
-            TB    = msgDict['temp_basal_active']
+            TB = msgDict['temp_basal_active']
             schBa = msgDict['basal_active']
             podInfo['podOnTime'] = msgDict['podOnTime']
             podOnTime = msgDict['podOnTime']
@@ -97,36 +98,35 @@ def getPodState(frame):
         elif msgType == '0x0115':
             pod_progress = msgDict['pod_progress']
             podInfo['piVersion'] = msgDict['piVersion']
-            podInfo['lot']  = str(msgDict['lot'])
-            podInfo['tid']  = str(msgDict['tid'])
-            podInfo['address']  = msgDict['podAddr']
-            podInfo['recvGain']  = msgDict['recvGain']
-            podInfo['rssiValue']  = msgDict['rssiValue']
+            podInfo['lot'] = str(msgDict['lot'])
+            podInfo['tid'] = str(msgDict['tid'])
+            podInfo['address'] = msgDict['podAddr']
+            podInfo['recvGain'] = msgDict['recvGain']
+            podInfo['rssiValue'] = msgDict['rssiValue']
 
         elif msgType == '0x011b':
             pod_progress = msgDict['pod_progress']
             podInfo['piVersion'] = msgDict['piVersion']
-            podInfo['lot']  = str(msgDict['lot'])
-            podInfo['tid']  = str(msgDict['tid'])
-            podInfo['address']  = msgDict['podAddr']
+            podInfo['lot'] = str(msgDict['lot'])
+            podInfo['tid'] = str(msgDict['tid'])
+            podInfo['address'] = msgDict['podAddr']
 
         if row.get('logAddr'):
             colNames = colNamesDev
-            list_of_states.append((index, timeStamp, deltaSec, timeCumSec, \
-                                  radioOnCumSec, podOnTime, seqNum, pod_progress, \
-                                  row['type'], msgType, \
-                                  msgMeaning, insulinDelivered, reqTB, \
-                                  reqBolus, autoBolus, Bolus, TB, schBa, row['logAddr'], \
-                                  row['address'], msgDict))
+            list_of_states.append((index, timeStamp, deltaSec, timeCumSec,
+                                  radioOnCumSec, podOnTime, seqNum,
+                                  pod_progress, row['type'], msgType,
+                                  msgMeaning, insulinDelivered, reqTB,
+                                  reqBolus, autoBolus, Bolus, TB, schBa,
+                                  row['logAddr'], row['address'], msgDict))
         else:
             colNames = colNamesMsg
-            list_of_states.append((index, timeStamp, deltaSec, timeCumSec, \
-                                  radioOnCumSec, podOnTime, seqNum, pod_progress, \
-                                  row['type'], msgType, \
-                                  msgMeaning, insulinDelivered, reqTB, \
-                                  reqBolus, Bolus, TB, schBa, \
+            list_of_states.append((index, timeStamp, deltaSec, timeCumSec,
+                                  radioOnCumSec, podOnTime, seqNum,
+                                  pod_progress, row['type'], msgType,
+                                  msgMeaning, insulinDelivered, reqTB,
+                                  reqBolus, Bolus, TB, schBa,
                                   row['address'], msgDict))
-
 
     podStateFrame = pd.DataFrame(list_of_states, columns=colNames)
     return podStateFrame, ackMessageList, faultProcessedMsg, podInfo

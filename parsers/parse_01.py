@@ -1,9 +1,9 @@
-# file: parse_01 - is a response to either 07 (assign ID) or 03 (setup pod)
+from util.misc import combineByte
+from util.misc import versionString
 
-from utils import *
 
 def parse_01(byteList, msgDict):
-    # pod response - indicates a nonce resync is required
+    # pod response to 0x07 or 0x03
     """
     My example:
         # 0x07 response:
@@ -16,23 +16,24 @@ def parse_01(byteList, msgDict):
         OFF 1  2 3 4  5 6 7  8  9 10111213 14151617 18 19202122
         01 15 MXMYMZ IXIYIZ 02 0J LLLLLLLL TTTTTTTT GS IIIIIIII
 
-        01 (1 byte) [0]: mtype value of 01 specifies the Version Response command
+        01 (1 byte) [0]: mtype value of 01 specifies Version Response command
         15 (1 byte) [1]: mlen of $15 is this format (the 07 Command response)
         MXMYMZ (3 bytes) [2:4]: PM MX.MY.MZ
         IXIYIZ (3 bytes) [5:7]: PI IX.IY.IZ
         02 (1 byte) [8]: always 2 (at least for PM == PI == 2.7.0)
-        0J (1 byte) [9]: Pod Progress State, typically 02, but possibly 01, for this response
+        0J (1 byte) [9]: Pod Progress State, typically 02, but possibly 01
         LLLLLLLL (4 bytes) [$A:$D]: Pod Lot
         TTTTTTTT (4 bytes) [$E:$11]: Pod TID
-        GS (1 byte) [$12]: ggssssss where gg = two bits of receiver gain, ssssss = 6 bits of rssi value
-        IIIIIIII (4 bytes) [$13:$16]: ID (Pod address) as given in the 07 Command
+        GS (1 byte) [$12]: ggssssss where
+                 gg = two bits of receiver gain, ssssss = 6 bits of rssi value
+        IIIIIIII (4 bytes) [$13:$16]: ID (Pod address) as given by 07 Command
 
-    Response 01 message with an length of $1b is returned from 03 Command Setup Pod:
+    Response 01 message with mlen $1b is returned from 03 Command Setup Pod:
 
         OFF 1  2 3 4 5 6 7 8  91011 121314 15 16 17181920 21222324 25262728
         01 1b 13881008340A50 MXMYMZ IXIYIZ 02 0J LLLLLLLL TTTTTTTT IIIIIIII
 
-        01 (1 byte) [0]: mtype value of 01 specifies the Version Response command
+        01 (1 byte) [0]: mtype value of 01 specifies Version Response command
         1b (1 byte) [1]: mlen of $1b is this format (the 03 Command response)
         13881008340A50 (7 bytes) [2:8]: fixed byte sequence of unknown meaning
         MXMYMZ (3 bytes) [9:$B]: PM MX.MY.MZ
@@ -45,14 +46,13 @@ def parse_01(byteList, msgDict):
     """
 
     # put place holders for msgDict values I want near beginning
-    msgDict['pod_progress'] = -1 # will be overwritten
-    msgDict['podAddr'] = 'tbd' # will be overwritten
+    msgDict['pod_progress'] = -1  # will be overwritten
+    msgDict['podAddr'] = 'tbd'  # will be overwritten
 
     if byteList[1] == 0x15:
         msgDict['msgMeaning'] = 'IdAssigned'
         pmVer = byteList[2:5]
         piVer = byteList[5:8]
-        always2 = byteList[8]
         pprog = byteList[9]
         podLot = combineByte(byteList[10:14])
         podTid = combineByte(byteList[14:18])
@@ -69,7 +69,6 @@ def parse_01(byteList, msgDict):
         fixedWord = byteList[2:9]
         pmVer = byteList[9:12]
         piVer = byteList[12:15]
-        always2 = byteList[15]
         pprog = byteList[16]
         podLot = combineByte(byteList[17:21])
         podTid = combineByte(byteList[21:25])
@@ -80,9 +79,9 @@ def parse_01(byteList, msgDict):
     # fill in rest of common msgDict
     msgDict['pmVersion'] = versionString(pmVer)
     msgDict['piVersion'] = versionString(piVer)
-    msgDict['pod_progress']  = pprog
-    msgDict['lot']  = podLot
-    msgDict['tid']  = podTid
-    msgDict['podAddr']  = hex(podAddr)
+    msgDict['pod_progress'] = pprog
+    msgDict['lot'] = podLot
+    msgDict['tid'] = podTid
+    msgDict['podAddr'] = hex(podAddr)
 
     return msgDict

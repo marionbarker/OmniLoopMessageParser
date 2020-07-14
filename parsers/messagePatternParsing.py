@@ -1,21 +1,20 @@
 # file: messagePatternParsing
-import numpy as np
-from utils import *
+from util.misc import combineByte
 
-from parse_01 import *
-from parse_02 import *
-from parse_0202 import *
-from parse_03 import *
-from parse_06 import *
-from parse_08 import *
-from parse_0e import *
-from parse_1a13 import *
-from parse_1a16 import *
-from parse_1a17 import *
-from parse_19 import *
-from parse_1c import *
-from parse_1d import *
-from parse_1f import *
+from parsers.parse_01 import parse_01
+from parsers.parse_02 import parse_02
+from parsers.parse_03 import parse_03
+from parsers.parse_06 import parse_06
+from parsers.parse_08 import parse_08
+from parsers.parse_0e import parse_0e
+from parsers.parse_1a13 import parse_1a13
+from parsers.parse_1a16 import parse_1a16
+from parsers.parse_1a17 import parse_1a17
+from parsers.parse_19 import parse_19
+from parsers.parse_1c import parse_1c
+from parsers.parse_1d import parse_1d
+from parsers.parse_1f import parse_1f
+
 
 def unparsedMsg(byteList, msgDict):
     # 0x07 is so simple, just parse it here
@@ -26,6 +25,7 @@ def unparsedMsg(byteList, msgDict):
         msgDict['msgMeaning'] = 'checkWiki'
     return msgDict
 
+
 def ackMsg(byteList, msgDict):
     # byteList not used, but have it to match all other calls
     msgDict['msgType'] = 'ACK'
@@ -33,10 +33,11 @@ def ackMsg(byteList, msgDict):
     msgDict['msgMeaning'] = 'ACK'
     return msgDict
 
+
 def parse_1a(byteList, msgDict):
     # extract information the indicator for type of 1a command
-    xtype = byteList[2+byteList[1]]
-    xtypeStr = '{0:x}'.format(xtype,2)
+    xtype = byteList[2 + byteList[1]]
+    xtypeStr = '{0:x}'.format(xtype, 2)
     msgDict['msgType'] = msgDict['msgType']+xtypeStr
     if xtype == 0x16:
         msgDict = parse_1a16(byteList, msgDict)
@@ -46,6 +47,7 @@ def parse_1a(byteList, msgDict):
         msgDict = parse_1a13(byteList, msgDict)
 
     return msgDict
+
 
 chooseMsgType = {
     0x01: parse_01,
@@ -64,17 +66,20 @@ chooseMsgType = {
 # decide how to handle message based on msg string
 # this section contains msgDict elements for all messages
 #   special case for empty msg aka ACK
+
+
 def processMsg(msg):
     # want msgType and msgMeaning to show up first
     # will be overwritten later
-    msgDict = {'msgType':'', 'msgMeaning':''}
+    msgDict = {'msgType': '', 'msgMeaning': ''}
     byteList = list(bytearray.fromhex(msg))
-    if len(byteList)<3:
+    if len(byteList) < 3:
         thisMessage = ackMsg(byteList, msgDict)
         # print(thisMessage)
     else:
-        msgDict['msgType'] = '{0:#0{1}x}'.format(byteList[0],4)
-        thisMessage = chooseMsgType.get(byteList[0],unparsedMsg)(byteList, msgDict)
+        msgDict['msgType'] = '{0:#0{1}x}'.format(byteList[0], 4)
+        thisMessage = chooseMsgType.get(byteList[0],
+                                        unparsedMsg)(byteList, msgDict)
     # add msg_body last cause it's long
     if 'mlen' not in msgDict:
         msgDict['mlen'] = byteList[1]

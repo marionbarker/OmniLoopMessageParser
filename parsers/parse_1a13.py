@@ -1,6 +1,7 @@
 # file: parse_1a13 - does the parsing for basal commond to set scheduled rates
-from utils import *
+from util.misc import combineByte
 from decimal import Decimal
+
 
 def parse_1a13(byteList, msgDict):
     # extract information from the 1a13 basal command

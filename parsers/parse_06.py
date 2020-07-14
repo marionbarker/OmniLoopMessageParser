@@ -1,6 +1,7 @@
 # file: parse_06 - is a request of a nonce resync returned from the pod
 
-from utils import *
+from util.misc import combineByte
+
 
 def parse_06(byteList, msgDict):
     # pod response - indicates a nonce resync is required

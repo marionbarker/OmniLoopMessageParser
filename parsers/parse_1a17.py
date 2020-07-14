@@ -1,7 +1,8 @@
 # file: parse_1a17 - does the parsing for bolus commond
-from utils import *
-from utils_pod import *
+from util.misc import combineByte
+from util.pod import *
 from decimal import Decimal
+
 
 def parse_1a17(byteList, msgDict):
     # extract information from the 1a13 basal command << to be updated - this is a copy of 1a16
