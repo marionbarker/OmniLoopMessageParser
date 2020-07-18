@@ -1,9 +1,9 @@
-from util.misc import *
-from util.pd import *
-from util.pod import *
-from parsers.messagePatternParsing import *
+from util.pod import getPodProgressMeaning, getPodInitDict
+from util.pod import getPodInitRestartDict
+import pandas as pd
 
-## This file has higher level pod-specific functions
+# This file has higher level pod-specific functions
+
 
 # iterate through all msgDict to update the pod state
 # some messages are not parsed (they show up as 0x##)
@@ -31,10 +31,10 @@ def getInitState(frame):
     # currently, there is only one restartType
     restartType = 0
 
-    colNames = ('logIdx', 'timeStamp', 'deltaSec', 'timeCumSec', \
-                'seqNum', 'expectAction', 'expectMT', 'expectPP', \
-                'statusBool', 'actualMT', 'actualPP', \
-                'ppMeaning', 'msgDict', 'address' )
+    colNames = ('logIdx', 'timeStamp', 'deltaSec', 'timeCumSec',
+                'seqNum', 'expectAction', 'expectMT', 'expectPP',
+                'statusBool', 'actualMT', 'actualPP',
+                'ppMeaning', 'msgDict', 'address')
 
     # iterate through the DataFrame
     for index, row in frame.iterrows():
@@ -49,7 +49,7 @@ def getInitState(frame):
         ppRange = podInitDict[initIdx][2]
         msgDict = row['msgDict']
         # prevent excel from treating 1e as exponent
-        seqNum = row['seqNum']
+        seqNum = msgDict['seqNum']
         address = row['address']
 
         actualMT = msgDict['msgType']
@@ -60,8 +60,8 @@ def getInitState(frame):
 
         # check if message matches expected sequence
         if actualMT == expectMT and \
-            ((actualPP >= ppRange[0]) or \
-            (actualPP <= ppRange[-1]) ):
+            ((actualPP >= ppRange[0]) or
+             (actualPP <= ppRange[-1])):
             statusBool = True
             initIdx = initIdx + 1
         elif actualMT == '0x07' and initIdx >= 2:
@@ -70,7 +70,7 @@ def getInitState(frame):
             podInitDict = getPodInitRestartDict(restartType)
         elif expectMT == '0x1d':
             # did not get '0x1d' response from pod, back up one
-            initIdx = max(0,initIdx-1)
+            initIdx = max(0, initIdx-1)
         elif actualPP > ppRange[-1]:
             # pod moved on and message was not captured
             initIdx = 0
@@ -80,12 +80,14 @@ def getInitState(frame):
                 ppRange = podInitDict[initIdx][2]
                 initIdx = initIdx+1
 
-        list_of_states.append((index, timeStamp, deltaSec, timeCumSec, \
-                seqNum, expectAction, expectMT, ppRange, \
-                statusBool, actualMT, actualPP, ppMeaning, msgDict, address))
+        list_of_states.append((index, timeStamp, deltaSec, timeCumSec,
+                               seqNum, expectAction, expectMT, ppRange,
+                               statusBool, actualMT, actualPP, ppMeaning,
+                               msgDict, address))
 
     podInitFrame = pd.DataFrame(list_of_states, columns=colNames)
     return podInitFrame
+
 
 # iterate through all msgDict to extract gain and rssi from 0x0115 responses
 def getPod0x0115Response(frame):
@@ -107,9 +109,9 @@ def getPod0x0115Response(frame):
     num08 = 0
     num0115 = 0
 
-    colNames = ('timeStamp', 'timeCumSec', \
-                'recvGain', 'rssiValue', 'piVersion', 'pod_progress', \
-                'lot','tid','address', 'podAddr', 'msgDict')
+    colNames = ('timeStamp', 'timeCumSec',
+                'recvGain', 'rssiValue', 'piVersion', 'pod_progress',
+                'lot', 'tid', 'address', 'podAddr', 'msgDict')
 
     # iterate through the DataFrame
     for index, row in frame.iterrows():
@@ -131,10 +133,11 @@ def getPod0x0115Response(frame):
 
         elif msgDict['msgType'] == '0x0115':
             num0115 += 1
-            list_of_states.append((timeStamp, timeCumSec, \
-                msgDict['recvGain'], msgDict['rssiValue'], msgDict['piVersion'], \
-                msgDict['pod_progress'], msgDict['lot'], msgDict['tid'], \
-                address, msgDict['podAddr'], msgDict))
+            list_of_states.append((timeStamp, timeCumSec, msgDict['recvGain'],
+                                   msgDict['rssiValue'], msgDict['piVersion'],
+                                   msgDict['pod_progress'], msgDict['lot'],
+                                   msgDict['tid'], address, msgDict['podAddr'],
+                                   msgDict))
 
     pod0x0115Response = pd.DataFrame(list_of_states, columns=colNames)
     pod0x0115Response['num07'] = num07
