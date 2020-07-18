@@ -68,7 +68,8 @@ def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile,
         pod0x0115Response = getPod0x0115Response(thisFrame)
         if vFlag == REPORT_INIT_ONLY:
             print('  output info from 0x0115 response to ', outFile)
-            writePodox0115ToOutputFile(outFile, thisFile, pod0x0115Response)
+            writePodox0115ToOutputFile(outFile, thisFile, pod0x0115Response,
+                                       numInitSteps)
 
     # if pod initialization exists, put that into podID, otherwise use podDict
     podID, hasPodInit = returnPodID(podDict, podInfo)

@@ -272,28 +272,39 @@ def minStrFromSec(value):
     return minStr
 
 
-def writePodox0115ToOutputFile(outFile, thisFile, pod0x0115Response):
+def writePodox0115ToOutputFile(outFile, thisFile, pod0x0115Response,
+                               numInitSteps):
     # check if file exists
     isItThere = os.path.isfile(outFile)
     # now open the file
     stream_out = open(outFile, mode='at')
     if not isItThere:
         # set up a table format order
-        headerString = 'time, cumSec, #07toPod, #03toPod, #0115frmPod, ' + \
-            'address, gain, rssi, podProg, podAddr, piVer, ' + \
-            'lot, tid, filename'
+        headerString = 'time(115), deltaSec(115), gain, rssi, PP(115), ' + \
+                       'lastPP, #initSteps, #07, #03, #08, #19, #1a17, ' + \
+                       '#1a13, #0e, #ACK, #0115, #011b, #1d, podAddr, ' + \
+                       'piVer, lot, tid, filename'
         stream_out.write(headerString)
         stream_out.write('\n')
     for index, row in pod0x0115Response.iterrows():
         stream_out.write(f'{row.timeStamp},')
-        stream_out.write(f'{row.timeCumSec},')
-        stream_out.write(f'{row.num07},')
-        stream_out.write(f'{row.num03},')
-        stream_out.write(f'{row.num0115},')
-        stream_out.write(f'{row.address},')
+        stream_out.write(f'{row.deltaSec},')
         stream_out.write(f'{row.recvGain},')
         stream_out.write(f'{row.rssiValue},')
         stream_out.write(f'{row.pod_progress},')
+        stream_out.write(f'{row.lastPP},')
+        stream_out.write(f'{numInitSteps},')
+        stream_out.write(f'{row.num07},')
+        stream_out.write(f'{row.num03},')
+        stream_out.write(f'{row.num08},')
+        stream_out.write(f'{row.num19},')
+        stream_out.write(f'{row.num1a17},')
+        stream_out.write(f'{row.num1a13},')
+        stream_out.write(f'{row.num0e},')
+        stream_out.write(f'{row.numACK},')
+        stream_out.write(f'{row.num0115},')
+        stream_out.write(f'{row.num011b},')
+        stream_out.write(f'{row.num1d},')
         stream_out.write(f'{row.podAddr},')
         stream_out.write(f'{row.piVersion},')
         stream_out.write(f'{row.lot},')
