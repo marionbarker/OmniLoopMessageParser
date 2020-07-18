@@ -1,5 +1,3 @@
-import pandas as pd
-import numpy as np
 import os
 from util.pod import getDescriptiveStringFromPodStateRow, getNameFromMsgType
 from util.misc import printDict
@@ -54,9 +52,11 @@ def printInitFrame(podInitFrame):
     print('\n  CumSec: seqNum: expectAction  : expMT  :success: actMT  : '
           'actPP: ppMeaning')
     for index, row in podInitFrame.iterrows():
+        msgDict = row['msgDict']
+        seqNum = msgDict['seqNum']
         print('  {:5.0f}: {:7d}: {:14s}: {:7s}:    {:3s}: {:7s}: '
               '{:5d}: {:14s}'.format(
-               row['timeCumSec'], row['seqNum'], row['expectAction'],
+               row['timeCumSec'], seqNum, row['expectAction'],
                row['expectMT'], getStringFromLogic(row['statusBool']),
                row['actualMT'], row['actualPP'], row['ppMeaning']))
     return
@@ -305,7 +305,7 @@ def writePodox0115ToOutputFile(outFile, thisFile, pod0x0115Response):
 def writeCombinedLogToOutputFile(outFile, logDF):
     # print('\n *** Sending Report Dataframe to \n     {:s}'.format(outFile))
     # print('   input columns', logDF.columns)
-    columnList = ['time', 'deltaSec', 'address', 'seqNum',
+    columnList = ['time', 'deltaSec', 'address',
                   'type', 'msgDict']
     logDF = logDF[columnList]
     logDF.to_csv(outFile)
