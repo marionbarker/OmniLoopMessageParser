@@ -62,7 +62,7 @@ def getPodState(frame):
         deltaSec = row['deltaSec']
         timeCumSec += deltaSec
         msgDict = row['msgDict']
-        seqNum = row['seqNum']
+        seqNum = msgDict['seqNum']
         msgMeaning = msgDict['msgMeaning']
         autoBolus = False
         if msgDict['msgType'] == 'ACK':
