@@ -90,6 +90,7 @@ def getInitState(frame):
 
 
 # iterate through all msgDict to extract gain and rssi from 0x0115 responses
+# the frame passed in just has rows from initIdx
 def getPod0x0115Response(frame):
     """
     Purpose: Return gain and rssi from pod 0x0115 response(s)
@@ -103,45 +104,84 @@ def getPod0x0115Response(frame):
     """
     # initialize values for pod states that we will update
     list_of_states = []
-    timeCumSec = 0
+    # keep track of number of each type of message expected during pod init
+    # (ack is not desired, but does happen)
     num07 = 0
-    num03 = 0
-    num08 = 0
     num0115 = 0
+    num03 = 0
+    num011b = 0
+    numACK = 0
+    num08 = 0
+    num1d = 0
+    num19 = 0
+    num1a17 = 0
+    num1a13 = 0
+    num0e = 0
 
-    colNames = ('timeStamp', 'timeCumSec',
+    lastPP = 0
+
+    colNames = ('timeStamp', 'deltaSec',
                 'recvGain', 'rssiValue', 'piVersion', 'pod_progress',
-                'lot', 'tid', 'address', 'podAddr', 'msgDict')
+                'lot', 'tid', 'podAddr', 'msgDict')
 
     # iterate through the DataFrame
     for index, row in frame.iterrows():
         # reset each time
         timeStamp = row['time']
         deltaSec = row['deltaSec']
-        timeCumSec += deltaSec
         msgDict = row['msgDict']
-        address = row['address']
 
         if msgDict['msgType'] == '0x07':
             num07 += 1
 
+        elif msgDict['msgType'] == '0x0115':
+            num0115 += 1
+            lastPP = msgDict['pod_progress']
+            list_of_states.append((timeStamp, deltaSec, msgDict['recvGain'],
+                                   msgDict['rssiValue'], msgDict['piVersion'],
+                                   msgDict['pod_progress'], msgDict['lot'],
+                                   msgDict['tid'], msgDict['podAddr'],
+                                   msgDict))
+
         elif msgDict['msgType'] == '0x03':
             num03 += 1
+
+        elif msgDict['msgType'] == '0x011b':
+            num011b += 1
+
+        elif msgDict['msgType'] == 'ACK':
+            numACK += 1
 
         elif msgDict['msgType'] == '0x08':
             num08 += 1
 
-        elif msgDict['msgType'] == '0x0115':
-            num0115 += 1
-            list_of_states.append((timeStamp, timeCumSec, msgDict['recvGain'],
-                                   msgDict['rssiValue'], msgDict['piVersion'],
-                                   msgDict['pod_progress'], msgDict['lot'],
-                                   msgDict['tid'], address, msgDict['podAddr'],
-                                   msgDict))
+        elif msgDict['msgType'] == '0x1d':
+            num1d += 1
+            lastPP = msgDict['pod_progress']
+
+        elif msgDict['msgType'] == '0x19':
+            num19 += 1
+
+        elif msgDict['msgType'] == '0x1a17':
+            num1a17 += 1
+
+        elif msgDict['msgType'] == '0x1a13':
+            num1a13 += 1
+
+        elif msgDict['msgType'] == '0x0e':
+            num0e += 1
 
     pod0x0115Response = pd.DataFrame(list_of_states, columns=colNames)
     pod0x0115Response['num07'] = num07
-    pod0x0115Response['num03'] = num03
-    pod0x0115Response['num08'] = num08
     pod0x0115Response['num0115'] = num0115
+    pod0x0115Response['num03'] = num03
+    pod0x0115Response['num011b'] = num011b
+    pod0x0115Response['numACK'] = numACK
+    pod0x0115Response['num08'] = num08
+    pod0x0115Response['num1d'] = num1d
+    pod0x0115Response['num19'] = num19
+    pod0x0115Response['num1a17'] = num1a17
+    pod0x0115Response['num1a13'] = num1a13
+    pod0x0115Response['num0e'] = num0e
+    pod0x0115Response['lastPP'] = lastPP
     return pod0x0115Response
