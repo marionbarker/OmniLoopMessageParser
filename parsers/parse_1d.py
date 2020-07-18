@@ -44,7 +44,7 @@ def parse_1d(byteList, msgDict):
     msgDict['msgMeaning'] = 'PodStatus'
     # only fixed length message where byte_1 has a different meaning
     byte_1 = byteList[1]
-    msgDict['pod_progress']  = byte_1 & 0xF
+    msgDict['pod_progress'] = byte_1 & 0xF
 
     dword_3 = combineByte(byteList[2:6])
     dword_4 = combineByte(byteList[6:10])
