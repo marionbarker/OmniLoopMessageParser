@@ -118,7 +118,10 @@ def splitFullMsg(hexToParse):
         CRC = hexToParse[-4:]
     msgDict = processMsg(msg_body)
     CRC = '0x'+CRC
-    return address, seqNum, BLEN, msgDict, CRC
+    msgDict['rawHex'] = hexToParse
+    msgDict['seqNum'] = seqNum
+    msgDict['CRC'] = CRC
+    return address, BLEN, msgDict
 
 
 def message_dict(data):
@@ -127,11 +130,11 @@ def message_dict(data):
     stringToUnpack = data[26:]
 
     action, hexToParse = stringToUnpack.rsplit(' ', 1)
-    address, seqNum, BLEN, msgDict, CRC = splitFullMsg(hexToParse)
+    address, BLEN, msgDict = splitFullMsg(hexToParse)
     podMessagesDict = dict(
         time=timestamp,
-        address=address, type=action, seqNum=seqNum,
-        msgDict=msgDict, CRC=CRC)
+        address=address, type=action,
+        msgDict=msgDict)
     return podMessagesDict
 
 
@@ -141,9 +144,7 @@ def device_message_dict(data):
     address = 'unknown'
     logAddr = 'unknown'
     action = 'unknown'
-    seqNum = -1
     msgDict = {}
-    CRC = 'unknown'
     msg_body = 'unknown'
 
     noisy = 0    # ONLY set noisy to 1 when using short test.md file
@@ -165,7 +166,7 @@ def device_message_dict(data):
     device, logAddr, action, restOfLine = stringToUnpack.split(' ', 3)
     if device == "Omnipod":
         # address is what pod thinks address is
-        address, seqNum, BLEN, msgDict, CRC = splitFullMsg(restOfLine)
+        address, BLEN, msgDict = splitFullMsg(restOfLine)
         if (logAddr.lower() != address) and (address != 'ffffffff'):
             print('\nThe two message numbers do not agree \n',
                   logAddr, address)
@@ -176,8 +177,8 @@ def device_message_dict(data):
 
     deviceMessagesDict = dict(
           time=timestamp, device=device,
-          logAddr=logAddr, address=address, type=action, seqNum=seqNum,
-          msgDict=msgDict, CRC=CRC)
+          logAddr=logAddr, address=address, type=action,
+          msgDict=msgDict)
     if noisy:
         print('\n')
         printDict(deviceMessagesDict)
@@ -306,7 +307,10 @@ def loop_read_file(filename):
         fileType = "deviceLog"
     # now return dataframe from entire log, podDict, fault_report separately
     logDF = extract_messages(fileType, parsed_content)
-    podMgrDict = extract_pod_manager(parsed_content)
+    if 'PodState' in parsed_content:
+        podMgrDict = extract_pod_manager(parsed_content)
+    else:
+        podMgrDict = {}
     faultInfoDict = extract_fault_info(parsed_content)
     loopVersionDict = extract_loop_version(parsed_content, firstChars)
     return fileType, logDF, podMgrDict, faultInfoDict, loopVersionDict
