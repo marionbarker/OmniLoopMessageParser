@@ -1,5 +1,6 @@
 import os
 from util.pod import getDescriptiveStringFromPodStateRow, getNameFromMsgType
+from util.pod import getPodProgressMeaning
 from util.misc import printDict
 
 """
@@ -48,7 +49,7 @@ def printActionSummary(actionSummary, vFlag):
     return
 
 
-def printInitFrame(podInitFrame):
+def deprecated_printInitFrame(podInitFrame):
     print('\n  CumSec: seqNum: expectAction  : expMT  :success: actMT  : '
           'actPP: ppMeaning')
     for index, row in podInitFrame.iterrows():
@@ -62,6 +63,35 @@ def printInitFrame(podInitFrame):
     return
 
 
+def printInitFrame(podInitFrame):
+    print('\n  CumSec: seqNum: msgType :   msgName       : '
+          'lastPP: pod_progressMeaning : podTimeOn(min)')
+    last_pod_progress = 0
+    cumTime = -podInitFrame.loc[0]['deltaSec']
+    for index, row in podInitFrame.iterrows():
+        msgDict = row['msgDict']
+        cumTime = cumTime + row['deltaSec']
+        if 'pod_progress' in msgDict:
+            last_pod_progress = msgDict['pod_progress']
+        print('  {:5.0f}: {:7d}: {:8s}: {:16s}:  '
+              '{:5s}: {:20s}: {:7s}'.format(
+               cumTime, msgDict['seqNum'], msgDict['msgType'],
+               getNameFromMsgType(msgDict['msgType']),
+               getStringFromInt(last_pod_progress),
+               getPodProgressMeaning(last_pod_progress),
+               getStringFromInt(row['podOnTime'])))
+    return
+
+
+def getStringFromInt(thisValue):
+    if thisValue == 0:
+        thisString = ''
+    else:
+        thisString = f'{thisValue}'
+
+    return thisString
+
+
 def printPodInfo(podInfo, nomNumSteps):
     if 'rssiValue' in podInfo:
         # print('\n')
@@ -69,11 +99,12 @@ def printPodInfo(podInfo, nomNumSteps):
             if podInfo['numInitSteps'] > nomNumSteps:
                 print('    *** pod exceeded nominal init steps of {:d}'
                       ' ***'.format(nomNumSteps))
-            print('   Pod: Addr {:s}, Lot {:s}, PI: {:s}, gain {:d}, rssi {:d}'
-                  ', numInitSteps {:d}'.format(
-                    podInfo['address'], podInfo['lot'], podInfo['piVersion'],
-                    podInfo['recvGain'], podInfo['rssiValue'],
-                    podInfo['numInitSteps']))
+            print(f'   Pod: Addr {podInfo["podAddr"]}, '
+                  f'Lot {podInfo["lot"]}, '
+                  f'PI: {podInfo["piVersion"]}, '
+                  f'gain {podInfo["recvGain"]}, '
+                  f'rssi {podInfo["rssiValue"]}'
+                  f', numInitSteps {podInfo["numInitSteps"]}')
         else:
             printDict(podInfo)
     return
@@ -175,14 +206,7 @@ def printFrameDebug(frame):
 def writepodInitFrameToOutputFile(outFile, commentString, podInitFrame):
     print('\n *** Sending podInitFrame {:s}, to \n     {:s}'.format(
            commentString, outFile))
-    # select the desired columns and order for output
-    columnList = ['logIdx', 'timeStamp', 'deltaSec', 'timeCumSec',
-                  'seqNum', 'expectAction', 'expectMT', 'expectPP', 'success',
-                  'actualMT', 'actualPP', 'ppMeaning', 'address', 'msgDict']
-    podInitFrame['success'] = podInitFrame['statusBool'].apply(
-                              getStringFromLogic)
-    podInitFrame = podInitFrame[columnList]
-    podInitFrame.to_csv(outFile)
+    writeDescriptivePodStateToOutputFile(outFile, commentString, podInitFrame)
     return
 
 
@@ -289,8 +313,8 @@ def writePodInitCmdCountToOutputFile(outFile, thisFile, podInitCmdCount):
     # report values of podInitCmdCount dictionary
     stream_out.write(f'{podInitCmdCount["timeStamp"]},')
     stream_out.write(f'{podInitCmdCount["deltaSec"]},')
-    stream_out.write(f'{podInitCmdCount["gain"]},')
-    stream_out.write(f'{podInitCmdCount["rssi"]},')
+    stream_out.write(f'{podInitCmdCount["recvGain"]},')
+    stream_out.write(f'{podInitCmdCount["recvGain"]},')
     stream_out.write(f'{podInitCmdCount["PP115"]},')
     stream_out.write(f'{podInitCmdCount["lastPP"]},')
     stream_out.write(f'{podInitCmdCount["numInitSteps"]},')

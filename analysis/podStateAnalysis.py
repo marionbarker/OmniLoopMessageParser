@@ -18,7 +18,6 @@ def getPodState(frame):
        podStateFrame       dataframe with pod state extracted from messages
        ackMessageList    indices of any blank messages (ACK)
        faultProcessedMsg   dictionary for the fault message
-       podInfo             dictionary for pod
 
     """
     # initialize values for pod states that we will update
@@ -38,8 +37,6 @@ def getPodState(frame):
     ackMessageList = []
     radio_on_time = 30  # radio is on for 30 seconds every time pod wakes up
     radioOnCumSec = radio_on_time
-
-    podInfo = {}
 
     list_of_states = []
 
@@ -92,24 +89,13 @@ def getPodState(frame):
             Bolus = msgDict['immediate_bolus_active']
             TB = msgDict['temp_basal_active']
             schBa = msgDict['basal_active']
-            podInfo['podOnTime'] = msgDict['podOnTime']
             podOnTime = msgDict['podOnTime']
 
         elif msgType == '0x0115':
             pod_progress = msgDict['pod_progress']
-            podInfo['piVersion'] = msgDict['piVersion']
-            podInfo['lot'] = str(msgDict['lot'])
-            podInfo['tid'] = str(msgDict['tid'])
-            podInfo['address'] = msgDict['podAddr']
-            podInfo['recvGain'] = msgDict['recvGain']
-            podInfo['rssiValue'] = msgDict['rssiValue']
 
         elif msgType == '0x011b':
             pod_progress = msgDict['pod_progress']
-            podInfo['piVersion'] = msgDict['piVersion']
-            podInfo['lot'] = str(msgDict['lot'])
-            podInfo['tid'] = str(msgDict['tid'])
-            podInfo['address'] = msgDict['podAddr']
 
         if row.get('logAddr'):
             colNames = colNamesDev
@@ -129,4 +115,4 @@ def getPodState(frame):
                                   row['address'], msgDict))
 
     podStateFrame = pd.DataFrame(list_of_states, columns=colNames)
-    return podStateFrame, ackMessageList, faultProcessedMsg, podInfo
+    return podStateFrame, ackMessageList, faultProcessedMsg

@@ -121,6 +121,11 @@ def splitFullMsg(hexToParse):
     msgDict['rawHex'] = hexToParse
     msgDict['seqNum'] = seqNum
     msgDict['CRC'] = CRC
+    # for new style ACK, can extract packet number and put into seqNum
+    # location - request from Joe
+    if msgDict['msgType'] == 'ACK':
+        packetNumber = (B9_b & 0x0F)
+        msgDict['seqNum'] = packetNumber
     return address, BLEN, msgDict
 
 

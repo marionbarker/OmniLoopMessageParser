@@ -2,12 +2,12 @@ from parsers.messageLogs_functions import generate_table, getPersonFromFilename
 from util.misc import printDict
 from util.report import writePodInitCmdCountToOutputFile, printInitFrame
 from util.report import printPodInfo, printPodDict, printLogInfoSummary
-from util.report import writepodInitFrameToOutputFile, printActionSummary
+from util.report import printActionSummary
 from util.report import writeDescriptivePodStateToOutputFile
 from util.report import reportUncategorizedMessages
 from util.pod import getLogInfoFromState, returnPodID
 from analysis.podStateAnalysis import getPodState
-from analysis.podInitAnalysis import getPodInitCmdCount, getInitState
+from analysis.podInitAnalysis import getPodInitCmdCount
 from analysis.checkAction import checkAction, processActionFrame
 
 """
@@ -22,7 +22,7 @@ def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile,
     preprocess podFrame to be from a single pod
     new use of vFlag.
      : if 0: output analysis to terminal window
-     : if 1: output pod session analysis to outFile (older and not working)
+     : if 1: deprecated
      : if 2: like 0, but report init steps to terminal if exceeds nominal
        expected
      : if 3: output init summary to outFile, init steps if too many, skip rest
@@ -45,7 +45,7 @@ def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile,
     #     (the state for extended_bolus_active is NOT included (always False))
     #   Includes values for requested bolus and TB
     # Note that .iloc for df and podState are identical
-    podState, ackMessageList, faultProcessedMsg, podInfo = getPodState(df)
+    podState, ackMessageList, faultProcessedMsg = getPodState(df)
 
     # generate a number of useful facts from podState
     # a few values are added / modified later as analysis continues
@@ -64,26 +64,24 @@ def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile,
 
     numInitSteps = len(initIdx)
     if numInitSteps > 0:
-        thisFrame = df.iloc[initIdx]
-        podInitCmdCount = getPodInitCmdCount(thisFrame)
+        podInitFrame = podState.loc[initIdx]
+        [podInitCmdCount, podInitState] = getPodInitCmdCount(podInitFrame)
         if vFlag == REPORT_INIT_ONLY:
             print('  output info from podInitCmdCount to ', outFile)
             writePodInitCmdCountToOutputFile(outFile, thisFile,
                                              podInitCmdCount)
+    else:
+        # this means no podInitFrame in report
+        podInitState = -1
+        podInitCmdCount = {}
 
-    # if pod initialization exists, put that into podID, otherwise use podDict
-    podID, hasPodInit = returnPodID(podDict, podInfo)
-
-    # if pod initialization exists, get just the frames associated with it
-    if numInitSteps > 0:
-        podInfo['numInitSteps'] = numInitSteps
-        thisFrame = df.iloc[initIdx]
-        podInitFrame = getInitState(thisFrame)
+    # returns whatever we have from report file, various sources
+    podID = returnPodID(podDict, podInitCmdCount)
 
     # Special handling for vFlag = 3 (aka REPORT_INIT_ONLY)
     if vFlag == REPORT_INIT_ONLY:
         # If number of initializations steps not nominal, print initFrame
-        if numInitSteps > 0 and podInfo['numInitSteps'] != nomNumInitSteps:
+        if numInitSteps > 0 and numInitSteps != nomNumInitSteps:
             printInitFrame(podInitFrame)
         # output summary to outfile if provided
         # if hasPodInit and outFile:
@@ -93,24 +91,27 @@ def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile,
         return df, podState, actionFrame, actionSummary
 
     # continue if vFlag is not 3 (aka REPORT_INIT_ONLY)
-    if hasPodInit:
-        printPodInfo(podInfo, nomNumInitSteps)
+    if podInitState >= 0:
+        printPodInfo(podInitCmdCount, nomNumInitSteps)
     else:
         printPodDict(podDict)
 
     if vFlag == 2:
-        if hasPodInit and podInfo['numInitSteps'] != nomNumInitSteps:
+        if podInitState >= 0 and \
+           podInitCmdCount['numInitSteps'] != nomNumInitSteps:
             printInitFrame(podInitFrame)
 
     if vFlag == VERBOSE_OUT_FILE and numInitSteps > 0:
         # print to terminal if not nominal
         if numInitSteps != nomNumInitSteps:
             printInitFrame(podInitFrame)
+        printInitFrame(podInitFrame)
         # write to file
-        thisOutFile = outFile + 'initSteps_' + thisPerson + '_' + thisDate \
-            + '_' + str(chunkNum) + '.csv'
-        commentString = str(chunkNum)
-        writepodInitFrameToOutputFile(thisOutFile, commentString, podInitFrame)
+        # thisOutFile = outFile + 'initSteps_' + thisPerson + '_' + thisDate \
+        #     + '_' + str(chunkNum) + '.csv'
+        # commentString = str(chunkNum)
+        # writeDescriptivePodStateToOutputFile(thisOutFile, commentString,
+        #                                      podState[initIdx])
 
     if vFlag == VERBOSE_OUT_FILE:
         thisOutFile = outFile + 'podState_' + thisPerson + '_' + thisDate + \

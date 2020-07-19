@@ -133,28 +133,29 @@ def returnPodID(podDict, podInfo):
     Some files have the 0x011b message which has more details (podInfo)
     Determine what is available and return the information in podID
     """
-    # configure defaults:
-    podID = {
-        'lot': 'unknown',
-        'tid': 'unknown',
-        'piVersion': 'unknown',
-        'address': 'unknown'}
-    hasPodInit = False
-    # if captured initialization steps, update podInfo
+    # configure podID as an empty dictionary
+    podID = {}
+    # if captured initialization steps, use info in podInfo
     if podInfo.get('rssiValue'):
-        hasPodInit = True
         podID['lot'] = podInfo['lot']
         podID['tid'] = podInfo['tid']
         podID['piVersion'] = podInfo['piVersion']
-        podID['address'] = podInfo['address']
-    # otherwise use podDict if OmnipodManager was found in file
+        podID['address'] = podInfo['podAddr']
+    # otherwise use podDict assuming OmnipodManager was found in file
     elif podDict.get('lot'):
         podID['lot'] = podDict['lot']
         podID['tid'] = podDict['tid']
         podID['piVersion'] = podDict['piVersion']
         podID['address'] = podDict['address']
+    # sometimes we have nothing
+    else:
+        podID = {
+            'lot': 'unknown',
+            'tid': 'unknown',
+            'piVersion': 'unknown',
+            'address': 'unknown'}
 
-    return podID, hasPodInit
+    return podID
 
 
 def getLogInfoFromState(podState):
@@ -288,51 +289,30 @@ def getDescriptiveStringFromPodStateRow(md, reqTB, reqBolus, pod_progress):
 def getNameFromMsgType(msgType):
     """
     return english name for a given msgType
-    TO DO - this should be a dictionary
     """
-    msgName = 'unknown'
-    if msgType == '0x0115':
-        msgName = 'PodRespSetup'
-    elif msgType == '0x011b':
-        msgName = 'PodRespAssignID'
-    elif msgType == '0x02':
-        msgName = 'PodResp0x02Status'
-    elif msgType == '0x0202':
-        msgName = 'PodRespErrStatus'
-    elif msgType == '0x03':
-        msgName = 'SetupPod'
-    elif msgType == '0x06':
-        msgName = 'PodRespBadNonce'
-    elif msgType == '0x07':
-        msgName = 'AssignID'
-    elif msgType == '0x08':
-        msgName = 'CnfgDelivFlg'
-    elif msgType == '0x0e':
-        msgName = 'StatusRequest'
-    elif msgType == '0x11':
-        msgName = 'AcknwlAlerts'
-    elif msgType == '0x19':
-        msgName = 'CnfgAlerts'
-    elif msgType == '0x1a13':
-        msgName = 'PrgBasalSch'
-    elif msgType == '0x1a16':
-        msgName = 'TempBasal'
-    elif msgType == '0x1a17':
-        msgName = 'Bolus'
-    elif msgType == '0x1c':
-        msgName = 'DeactivatePod'
-    elif msgType == '0x1d':
-        msgName = 'PodRespStatus'
-    elif msgType == '0x1e':
-        msgName = 'SetBeeps'
-    elif msgType == '0x1f0':
-        msgName = 'CnxDelivery'
-    elif msgType == '0x1f1':
-        msgName = 'CnxBasal'
-    elif msgType == '0x1f2':
-        msgName = 'CnxTmpBasal'
-    elif msgType == '0x1f4':
-        msgName = 'CnxBolus'
-    elif msgType == '0x1f7':
-        msgName = 'CnxAll'
-    return msgName
+    msgName = {
+        'ACK': 'ACK',
+        '0x0115': 'PodRespSetup',
+        '0x011b': 'PodRespAssignID',
+        '0x02': 'PodResp0x02Status',
+        '0x0202': 'PodRespErrStatus',
+        '0x03': 'SetupPod',
+        '0x06': 'PodRespBadNonce',
+        '0x07': 'AssignID',
+        '0x08': 'CnfgDelivFlg',
+        '0x0e': 'StatusRequest',
+        '0x11': 'AcknwlAlerts',
+        '0x19': 'CnfgAlerts',
+        '0x1a13': 'PrgBasalSch',
+        '0x1a16': 'TempBasal',
+        '0x1a17': 'Bolus',
+        '0x1c': 'DeactivatePod',
+        '0x1d': 'PodRespStatus',
+        '0x1e': 'SetBeeps',
+        '0x1f0': 'CnxDelivery',
+        '0x1f1': 'CnxBasal',
+        '0x1f2': 'CnxTmpBasal',
+        '0x1f4': 'CnxBolus',
+        '0x1f7': 'CnxAll'}
+
+    return msgName[msgType]
