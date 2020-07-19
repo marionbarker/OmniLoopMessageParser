@@ -39,8 +39,8 @@ def parse_1f(byteList, msgDict):
     cancelBolus = (cancelByte & 0x04) != 0
     cancelTB = (cancelByte & 0x02) != 0
     suspend = (cancelByte & 0x01) != 0
-    cnxByteStr = '{0:x}'.format(cancelByte, 2)
-    msgDict['msgType'] = msgDict['msgType']+cnxByteStr
+    cnxByteStr = '{:x}'.format(cancelByte)
+    msgDict['msgType'] = msgDict['msgType'] + cnxByteStr
 
     if cancelByte == 7:
         msgDict['msgMeaning'] = 'CancelAll'

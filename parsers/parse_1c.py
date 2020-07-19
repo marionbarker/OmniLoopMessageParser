@@ -2,6 +2,7 @@
 
 from util.misc import combineByte
 
+
 def parse_1c(byteList, msgDict):
     """
     Example:

@@ -17,15 +17,18 @@ def parse_19(byteList, msgDict):
 
         19 (1 byte): Mtype of $19 specifies a Configure Alerts Command
         LL (1 byte): Length of command (typically $0a, $10 or $16)
-        NNNNNNNN (4 bytes): Nonce, the 32-bit validator (random looking numbers)
+        NNNNNNNN (4 bytes): Nonce, 32-bit validator (random looking numbers)
         IVXX (2 bytes): bit format 0iiiabcx xxxxxxxx as follows:
-            0iii is the 3-bit alert #. In the $1D Status Response aaaaaaaa bits and
+            0iii is the 3-bit alert #.
+                 In the $1D Status Response aaaaaaaa bits and
                  in the TT byte of the $02 Pod Information Response Type 2,
-                 active, unacknowledged alerts are returned as a bit mask (1 << alert #).
+                 active, unacknowledged alerts are returned as a bit mask
+                 (1 << alert #).
             The a ($0800) bit being set indicates that this alert is active.
-            The b ($0400) bit being set indicates that this alert is for setting
+            The b ($0400) bit being set indicates this alert is for setting
                 a low reservoir alert and a not time based alert.
-            The c ($0200) bit being set indicates that this alert is for the Auto-Off function.
+            The c ($0200) bit being set indicates that this alert is for
+                the Auto-Off function.
             x xxxxxxxx is a 9-bit value for the alert duration in minutes
         YYYY (2 bytes): 14-bit alert value
             If b bit is 0, YYYY is the number of minutes from now before
@@ -44,7 +47,8 @@ def parse_19(byteList, msgDict):
                 6 - Beep every 15 minutes
                 7 - Beep at 14, 29, 44 and 59 minutes
                 8 - Beep every 5 minutes
-            The K nibble is a beep type value from 0 (silent) to 8 as given in Beep types:
+            The K nibble is a beep type value from 0 (silent) to 8
+                as given in Beep types:
                 0 - No Sound
                 1 - BeepBeepBeepBeep
                 2 - BipBeep BipBeep BipBeep BipBeep

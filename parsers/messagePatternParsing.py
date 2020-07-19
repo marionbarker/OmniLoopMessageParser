@@ -31,13 +31,14 @@ def ackMsg(byteList, msgDict):
     msgDict['msgType'] = 'ACK'
     msgDict['mlen'] = 0
     msgDict['msgMeaning'] = 'ACK'
+    # TODO if this is suitable format for ACK, replace seqNum with packetNum
     return msgDict
 
 
 def parse_1a(byteList, msgDict):
     # extract information the indicator for type of 1a command
     xtype = byteList[2 + byteList[1]]
-    xtypeStr = '{0:x}'.format(xtype, 2)
+    xtypeStr = '{:x}'.format(xtype)
     msgDict['msgType'] = msgDict['msgType']+xtypeStr
     if xtype == 0x16:
         msgDict = parse_1a16(byteList, msgDict)

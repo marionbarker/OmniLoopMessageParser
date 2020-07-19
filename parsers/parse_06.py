@@ -19,13 +19,14 @@ def parse_06(byteList, msgDict):
     06 03 EE WWWW
     06 (1 byte): mtype of this response is 06
     03 (1 byte): mlen for this response is always 03
-    EE (1 byte): error code, typically $14 for bad nonce; other values indicate a fault event
+    EE (1 byte): error code, typically $14 for bad nonce;
+                 other values indicate a fault event
     WWWW (2 bytes): interpretation depends on EE value
-    if EE == $14: encoded value indicating offset for new nonce sequence (typical)
-    if EE != $14: logged event byte followed by a Pod progress byte (0..$F)
-    For the EE == $14 case, WWWW is a word value encoded with formula:
-       (LSB Word of FakeNonce + crc16_table[Message sequence number] + \
-           (LSB word)Lot + (LSB word)TID) ^ NewSeed
+        if EE == $14: encoded value indicating offset for new nonce sequence
+        if EE != $14: logged event byte followed by a Pod progress byte (0..$F)
+        For EE == $14 case, WWWW is a word value encoded with formula:
+            (LSB Word of FakeNonce + crc16_table[Message sequence number] +
+            (LSB word)Lot + (LSB word)TID) ^ NewSeed
 
     NewSeed can be extracted knowing the other parameters
       (Lot, TID, MessageSeq, FakeNonce)
@@ -34,7 +35,7 @@ def parse_06(byteList, msgDict):
     errorCode = byteList[2]
     wordCode = combineByte(byteList[3:5])
 
-    msgDict['is_nonce_resync'] = errorCode==0x14
+    msgDict['is_nonce_resync'] = errorCode == 0x14
     if msgDict['is_nonce_resync']:
         msgDict['nonce_reseed_word'] = wordCode
         msgDict['fault_code'] = 'nonceResync'

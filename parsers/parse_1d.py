@@ -32,13 +32,18 @@ def parse_1d(byteList, msgDict):
         0000 4 zero bits
         ppppppppppppp 13 bits, Total 0.05U insulin pulses
         ssss 4 bits, message sequence number (saved B9>>2)
-        nnn nnnn nnnn 11 bits, 0.05U Insulin pulses not delivered if cancelled by user
+        nnn nnnn nnnn 11 bits, 0.05U Insulin pulses not delivered
+                                     if cancelled by user
     # byte 6:9 = AATTTTRR
         AATTTTRR dword = faaa aaaa attt tttt tttt ttrr rrrr rrrr
         f 1 bit, 0 or 1 if the Pod has encountered fault event $14
-        aaaaaaaa 8 bits, bit mask of the active, unacknowledged alerts (1 << alert #) from the Command 19 Configure Alerts; this bit mask is the same as the TT byte in the 02 Error Response Type 2
+        aaaaaaaa 8 bits, bit mask of the active, unacknowledged
+                 alerts (1 << alert #) from the Command 19 Configure Alerts;
+                 this bit mask is the same as the TT byte in the
+                 02 Error Response Type 2
         ttttttttttttt 13 bits, Pod active time in minutes
-        rrrrrrrrrr 10 bits, Reservoir 0.05U pulses remaining (if <= 50U) or $3ff (if > 50U left)
+        rrrrrrrrrr 10 bits, Reservoir 0.05U pulses remaining (if <= 50U)
+                            or $3ff (if > 50U left)
     """
 
     msgDict['msgMeaning'] = 'PodStatus'
