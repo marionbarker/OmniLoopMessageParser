@@ -1,13 +1,13 @@
 from parsers.messageLogs_functions import generate_table, getPersonFromFilename
 from util.misc import printDict
-from util.report import writePodox0115ToOutputFile, printInitFrame
+from util.report import writePodInitCmdCountToOutputFile, printInitFrame
 from util.report import printPodInfo, printPodDict, printLogInfoSummary
-from util.report import writePodInitStateToOutputFile, printActionSummary
+from util.report import writepodInitFrameToOutputFile, printActionSummary
 from util.report import writeDescriptivePodStateToOutputFile
 from util.report import reportUncategorizedMessages
 from util.pod import getLogInfoFromState, returnPodID
 from analysis.podStateAnalysis import getPodState
-from analysis.podInitAnalysis import getPod0x0115Response, getInitState
+from analysis.podInitAnalysis import getPodInitCmdCount, getInitState
 from analysis.checkAction import checkAction, processActionFrame
 
 """
@@ -65,11 +65,11 @@ def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile,
     numInitSteps = len(initIdx)
     if numInitSteps > 0:
         thisFrame = df.iloc[initIdx]
-        pod0x0115Response = getPod0x0115Response(thisFrame)
+        podInitCmdCount = getPodInitCmdCount(thisFrame)
         if vFlag == REPORT_INIT_ONLY:
-            print('  output info from 0x0115 response to ', outFile)
-            writePodox0115ToOutputFile(outFile, thisFile, pod0x0115Response,
-                                       numInitSteps)
+            print('  output info from podInitCmdCount to ', outFile)
+            writePodInitCmdCountToOutputFile(outFile, thisFile,
+                                             podInitCmdCount)
 
     # if pod initialization exists, put that into podID, otherwise use podDict
     podID, hasPodInit = returnPodID(podDict, podInfo)
@@ -110,7 +110,7 @@ def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile,
         thisOutFile = outFile + 'initSteps_' + thisPerson + '_' + thisDate \
             + '_' + str(chunkNum) + '.csv'
         commentString = str(chunkNum)
-        writePodInitStateToOutputFile(thisOutFile, commentString, podInitFrame)
+        writepodInitFrameToOutputFile(thisOutFile, commentString, podInitFrame)
 
     if vFlag == VERBOSE_OUT_FILE:
         thisOutFile = outFile + 'podState_' + thisPerson + '_' + thisDate + \

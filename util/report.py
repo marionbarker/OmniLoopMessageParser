@@ -172,17 +172,17 @@ def printFrameDebug(frame):
     return
 
 
-def writePodInitStateToOutputFile(outFile, commentString, podInitState):
-    print('\n *** Sending podInitState {:s}, to \n     {:s}'.format(
+def writepodInitFrameToOutputFile(outFile, commentString, podInitFrame):
+    print('\n *** Sending podInitFrame {:s}, to \n     {:s}'.format(
            commentString, outFile))
     # select the desired columns and order for output
     columnList = ['logIdx', 'timeStamp', 'deltaSec', 'timeCumSec',
                   'seqNum', 'expectAction', 'expectMT', 'expectPP', 'success',
                   'actualMT', 'actualPP', 'ppMeaning', 'address', 'msgDict']
-    podInitState['success'] = podInitState['statusBool'].apply(
+    podInitFrame['success'] = podInitFrame['statusBool'].apply(
                               getStringFromLogic)
-    podInitState = podInitState[columnList]
-    podInitState.to_csv(outFile)
+    podInitFrame = podInitFrame[columnList]
+    podInitFrame.to_csv(outFile)
     return
 
 
@@ -272,44 +272,44 @@ def minStrFromSec(value):
     return minStr
 
 
-def writePodox0115ToOutputFile(outFile, thisFile, pod0x0115Response,
-                               numInitSteps):
+def writePodInitCmdCountToOutputFile(outFile, thisFile, podInitCmdCount):
     # check if file exists
     isItThere = os.path.isfile(outFile)
     # now open the file
     stream_out = open(outFile, mode='at')
     if not isItThere:
         # set up a table format order
-        headerString = 'time(115), deltaSec(115), gain, rssi, PP(115), ' + \
-                       'lastPP, #initSteps, #07, #03, #08, #19, #1a17, ' + \
-                       '#1a13, #0e, #ACK, #0115, #011b, #1d, podAddr, ' + \
-                       'piVer, lot, tid, filename'
+        headerString = 'time(first_or_115), deltaSec(first_or_115), ' + \
+                       'gain, rssi, PP(115), lastPP, #initSteps, ' + \
+                       '#ACK, #0115, #011b, #1d, ' + \
+                       '#07, #03, #08, #19, #1a17, #1a13, #0e, ' + \
+                       'podAddr, piVersion, lot, tid, filename'
         stream_out.write(headerString)
         stream_out.write('\n')
-    for index, row in pod0x0115Response.iterrows():
-        stream_out.write(f'{row.timeStamp},')
-        stream_out.write(f'{row.deltaSec},')
-        stream_out.write(f'{row.recvGain},')
-        stream_out.write(f'{row.rssiValue},')
-        stream_out.write(f'{row.pod_progress},')
-        stream_out.write(f'{row.lastPP},')
-        stream_out.write(f'{numInitSteps},')
-        stream_out.write(f'{row.num07},')
-        stream_out.write(f'{row.num03},')
-        stream_out.write(f'{row.num08},')
-        stream_out.write(f'{row.num19},')
-        stream_out.write(f'{row.num1a17},')
-        stream_out.write(f'{row.num1a13},')
-        stream_out.write(f'{row.num0e},')
-        stream_out.write(f'{row.numACK},')
-        stream_out.write(f'{row.num0115},')
-        stream_out.write(f'{row.num011b},')
-        stream_out.write(f'{row.num1d},')
-        stream_out.write(f'{row.podAddr},')
-        stream_out.write(f'{row.piVersion},')
-        stream_out.write(f'{row.lot},')
-        stream_out.write(f'{row.tid},')
-        stream_out.write(f'{thisFile}\n')
+    # report values of podInitCmdCount dictionary
+    stream_out.write(f'{podInitCmdCount["timeStamp"]},')
+    stream_out.write(f'{podInitCmdCount["deltaSec"]},')
+    stream_out.write(f'{podInitCmdCount["gain"]},')
+    stream_out.write(f'{podInitCmdCount["rssi"]},')
+    stream_out.write(f'{podInitCmdCount["PP115"]},')
+    stream_out.write(f'{podInitCmdCount["lastPP"]},')
+    stream_out.write(f'{podInitCmdCount["numInitSteps"]},')
+    stream_out.write(f'{podInitCmdCount["cntACK"]},')
+    stream_out.write(f'{podInitCmdCount["cnt0115"]},')
+    stream_out.write(f'{podInitCmdCount["cnt011b"]},')
+    stream_out.write(f'{podInitCmdCount["cnt1d"]},')
+    stream_out.write(f'{podInitCmdCount["cnt07"]},')
+    stream_out.write(f'{podInitCmdCount["cnt03"]},')
+    stream_out.write(f'{podInitCmdCount["cnt08"]},')
+    stream_out.write(f'{podInitCmdCount["cnt19"]},')
+    stream_out.write(f'{podInitCmdCount["cnt1a17"]},')
+    stream_out.write(f'{podInitCmdCount["cnt1a13"]},')
+    stream_out.write(f'{podInitCmdCount["cnt0e"]},')
+    stream_out.write(f'{podInitCmdCount["podAddr"]},')
+    stream_out.write(f'{podInitCmdCount["piVersion"]},')
+    stream_out.write(f'{podInitCmdCount["lot"]},')
+    stream_out.write(f'{podInitCmdCount["tid"]},')
+    stream_out.write(f'{thisFile}\n')
     stream_out.close()
 
 
