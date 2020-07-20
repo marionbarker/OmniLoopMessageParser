@@ -14,6 +14,8 @@ from analysis.checkAction import checkAction, processActionFrame
 analyzePodMessages
     This code analyzes a single Pod with available message dataframe
 """
+# loopReadDict has keys:
+#   fileType, logDF, podMgrDict, faultInfoDict, loopVersionDict
 
 
 def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile,
@@ -23,12 +25,9 @@ def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile,
     new use of vFlag.
      : if 0: output analysis to terminal window
      : if 1: deprecated
-     : if 2: like 0, but report init steps to terminal if exceeds nominal
-       expected
-     : if 3: output init summary to outFile, init steps if too many, skip rest
-       of pod analysis
-     : if 4: report init steps to terminal and outFile_init.csv, report
-       podState to outFile_podState.csv
+     : if 2: like 0, plus printPodInitFrame if exceeds nominal steps
+     : if 3: output podInitCmdCount to outFile, skip balance and return
+     : if 4: like 2, plus verboseOutput init.csv, pod.csv, logDfCmb.csv
     """
     REPORT_INIT_ONLY = 3
     VERBOSE_OUT_FILE = 4
@@ -45,7 +44,8 @@ def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile,
     #     (the state for extended_bolus_active is NOT included (always False))
     #   Includes values for requested bolus and TB
     # Note that .iloc for df and podState are identical
-    podState, ackMessageList, faultProcessedMsg = getPodState(df)
+    # Indexing within podState requires .loc
+    podState, faultProcessedMsg = getPodState(df)
 
     # generate a number of useful facts from podState
     # a few values are added / modified later as analysis continues
@@ -86,9 +86,8 @@ def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile,
         # output summary to outfile if provided
         # if hasPodInit and outFile:
         #    writePodInfoToOutputFile(outFile, lastDate, thisFile, podInfo)
-        # return now, so set returned args not yet defined to []
-        actionSummary = []
-        return df, podState, actionFrame, actionSummary
+        # return now
+        return
 
     # continue if vFlag is not 3 (aka REPORT_INIT_ONLY)
     if podInitState >= 0:
@@ -145,8 +144,8 @@ def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile,
     # returns a dictionary plus total completed message count)
     if len(actionFrame) == 0:
         print('\nPod did not initialize')
-        actionSummary = 0
-        return df, podState, actionFrame, actionSummary
+        return
+
     actionSummary, totalCompletedMessages = processActionFrame(actionFrame,
                                                                podState)
     percentCompleted = 100*totalCompletedMessages/logInfoDict['numMsgs']
@@ -155,41 +154,33 @@ def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile,
     logInfoDict['totalCompletedMessages'] = totalCompletedMessages
     logInfoDict['percentCompleted'] = percentCompleted
 
-    # print(f') doesn't work with {dict items}
-    # fix this eventually, for not - rename them
-
     if outFile == 2:
         # print a few things then returns
         # The string literal "thisAntenna" is replacing an undefined variable
-        print('{:s}, {:s}, {:s}, {:s}, {:s}, {:.2f}, {:s}, {:s}, {:s} '.format(
-            thisPerson, "thisAntenna", thisFault, logInfoDict['first_msg'],
-            logInfoDict['last_msg'], logInfoDict['msgLogHrs'],
-            podID['lot'], podID['tid'], podID['piVersion']))
-        actionSummary = []
-        return df, podState, actionFrame, actionSummary
+        print(f'{thisPerson}, "thisAntenna", {thisFault}, ' +
+              f'{logInfoDict["first_msg"]}, {logInfoDict["last_msg"]}, ' +
+              f'{logInfoDict["msgLogHrs"]}, {podID["lot"]}, {podID["tid"]}, ' +
+              f' {podID["piVersion"]} ')
+        return
 
     if True:
         printLogInfoSummary(logInfoDict)
         if hasFault:
-            if thisFault == '0x1C':
-                print('    An 0x0202 message of ' +
-                      '{:s} reported 80 hour time limit'.format(thisFault))
+            faultString = f'    An 0x0202 message of {thisFault} reported'
+            if thisFault == '0x1c':
+                print(f'     {faultString}:   80 hour pod time limit')
                 hasFault = 0
             elif thisFault == '0x18':
-                print('    An 0x0202 message of ' +
-                      '{:s} reported  out of insulin'.format(thisFault))
+                print(f'     {faultString}:   Pod out of insulin')
                 hasFault = 0
             elif thisFault == '0x34':
-                print('    An 0x0202 message of ' +
-                      '{:s} reported wipes out registers'.format(thisFault))
+                print(f'     {faultString}:   Fault wipes out pod registers')
             else:
-                print('    An 0x0202 message of ' +
-                      '{:s} reported details later'.format(thisFault))
+                print(f'     {faultString}:   Fault details found below')
 
-        if ackMessageList:
-            print('    ***  Detected {:d} ACK(s) during life of pod'.format(
-                  len(ackMessageList)))
-            print('    ***  indices :', ackMessageList)
+        numACK = len(podState[podState.msgType == 'ACK'])
+        if numACK > 0:
+            print(f'    ***  Detected {numACK} ACK(s) during life of pod')
 
         printActionSummary(actionSummary, vFlag)
 
@@ -197,14 +188,8 @@ def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile,
         if len(frameBalance) > 0:
             reportUncategorizedMessages(frameBalance, podState)
 
-        # add this printout to look for message types
-        #   other than 14 for 06 responses
-        #  added message logging to record this around Dec 2, 2019
-        # print('\n Search for non-type 14 in 06 messages\n',
-        #    podState[podState.msgType=='06'])
-
     if hasFault:
         print('\nFault Details')
         printDict(faultProcessedMsg)
 
-    return df, podState, actionFrame, actionSummary
+    return

@@ -3,10 +3,9 @@ import numpy as np
 import pandas as pd
 
 
-# This file has higher level pod-specific functions
-
-# iterate through all messages and apply parsers to update the pod state
-# some messages are not parsed (they show up as 0x##)
+# Iterate through all messages and apply parsers to update the podState.
+# If a state is not updated by a given message, the last value for that state
+# is carried forward
 def getPodState(frame):
     """
     Purpose: Evaluate state changes while the pod_progress is in range
@@ -16,12 +15,12 @@ def getPodState(frame):
 
     Output:
        podStateFrame       dataframe with pod state extracted from messages
-       ackMessageList    indices of any blank messages (ACK)
-       faultProcessedMsg   dictionary for the fault message
+       faultProcessedMsg   dictionary for the fault message, if present
 
     """
     # initialize values for pod states that we will update
-    timeCumSec = 0
+    # always first row to show timeCumSec of 0
+    timeCumSec = -frame.iloc[0]['deltaSec']
     podOnTime = 0
     pod_progress = 0
     faultProcessedMsg = {}
@@ -29,12 +28,9 @@ def getPodState(frame):
     reqTB = getUnitsFromPulses(0)
     reqBolus = getUnitsFromPulses(0)
     # extBo = False # extended bolus is always false, don't put into dataframe
-    # to make this print out nicely, use '' for FALSE, 'y' for TRUE
-    # NOPE - have to have logic for checkAction to be valid
     Bolus = False
     TB = False
     schBa = False
-    ackMessageList = []
     radio_on_time = 30  # radio is on for 30 seconds every time pod wakes up
     radioOnCumSec = radio_on_time
 
@@ -62,8 +58,6 @@ def getPodState(frame):
         seqNum = msgDict['seqNum']
         msgMeaning = msgDict['msgMeaning']
         autoBolus = False
-        if msgDict['msgType'] == 'ACK':
-            ackMessageList.append(index)
 
         msgType = msgDict['msgType']
         if msgType == '0x0202':
@@ -115,4 +109,4 @@ def getPodState(frame):
                                   row['address'], msgDict))
 
     podStateFrame = pd.DataFrame(list_of_states, columns=colNames)
-    return podStateFrame, ackMessageList, faultProcessedMsg
+    return podStateFrame, faultProcessedMsg

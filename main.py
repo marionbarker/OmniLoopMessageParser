@@ -11,15 +11,16 @@ from util.report import printLoopVersion, writeCombinedLogToOutputFile
 def main(thisPath, thisFile, outFile, vFlag):
     # determine type of Loop Report
     filename = thisPath + '/' + thisFile
-    fileType, logDF, podMgrDict, faultInfoDict, loopVersionDict = \
-        loop_read_file(filename)
+    loopReadDict = loop_read_file(filename)
+    # loopReadDict has keys:
+    #   fileType, logDF, podMgrDict, faultInfoDict, loopVersionDict
 
     print('\n------------------------------------------')
     print('  File: {:s}'.format(thisFile))
-    if len(loopVersionDict):
-        printLoopVersion(loopVersionDict)
+    if len(loopReadDict['loopVersionDict']):
+        printLoopVersion(loopReadDict['loopVersionDict'])
 
-    if fileType == "unknown":
+    if loopReadDict['fileType'] == "unknown":
         print('\n *** Did not recognize file type')
         print('  Parser did not find required section in file: \n',
               '     ', thisFile, '\n',
@@ -27,25 +28,25 @@ def main(thisPath, thisFile, outFile, vFlag):
               '     ## Device Communication Log')
         return
 
-    if fileType == "messageLog":
+    if loopReadDict['fileType'] == "messageLog":
         print('  ----------------------------------------')
         print('  This file uses MessageLog')
         print('  ----------------------------------------')
         numChunks = 1  # number of pods in log file is always 1
-        podFrame, podState, actionFrame, actionSummary = \
-            analyzePodMessages(thisFile, logDF, podMgrDict, faultInfoDict,
-                               outFile, vFlag, numChunks)
+        analyzePodMessages(thisFile, loopReadDict['logDF'],
+                           loopReadDict['podMgrDict'],
+                           loopReadDict['faultInfoDict'],
+                           outFile, vFlag, numChunks)
         if vFlag == 4:
             thisOutFile = 'm:/SharedFiles/LoopReportPythonAnalysis' + '/' \
                           + 'verboseOutput' + '/' + 'logDF_out.csv'
-            writeCombinedLogToOutputFile(thisOutFile, logDF)
+            writeCombinedLogToOutputFile(thisOutFile, loopReadDict['logDF'])
 
-    elif fileType == "deviceLog":
+    elif loopReadDict['fileType'] == "deviceLog":
         print('  ----------------------------------------')
         print('  This file uses Device Communication Log')
-        analyzeAllPodsInDeviceLog(thisFile, logDF, podMgrDict, faultInfoDict,
-                                  outFile, vFlag)
+        analyzeAllPodsInDeviceLog(thisFile, loopReadDict, outFile, vFlag)
         if vFlag == 4:
             thisOutFile = 'm:/SharedFiles/LoopReportPythonAnalysis' + '/' \
                 + 'verboseOutput' + '/' + 'logDFCmb_out.csv'
-            writeCombinedLogToOutputFile(thisOutFile, logDF)
+            writeCombinedLogToOutputFile(thisOutFile, loopReadDict['logDF'])

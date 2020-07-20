@@ -287,6 +287,7 @@ def loop_read_file(filename):
       Note - there were several version of having status being tacked
              on to the end of the MessageLog, handle these cases
       Break into more modular chunks
+      returns a dictionary of items
     """
     fileType = "unknown"
     file = open(filename, "r", encoding='UTF8')
@@ -318,7 +319,12 @@ def loop_read_file(filename):
         podMgrDict = {}
     faultInfoDict = extract_fault_info(parsed_content)
     loopVersionDict = extract_loop_version(parsed_content, firstChars)
-    return fileType, logDF, podMgrDict, faultInfoDict, loopVersionDict
+    loopReadDict = {'fileType': fileType,
+                    'logDF': logDF,
+                    'podMgrDict': podMgrDict,
+                    'faultInfoDict': faultInfoDict,
+                    'loopVersionDict': loopVersionDict}
+    return loopReadDict
 
 
 def omnipodP(message):

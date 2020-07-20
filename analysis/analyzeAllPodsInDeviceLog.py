@@ -12,12 +12,15 @@ analyzeAllPodsInDeviceLog
 """
 
 
-def analyzeAllPodsInDeviceLog(thisFile, logDF, podMgrDict, faultInfoDict,
-                              outFile, vFlag):
+def analyzeAllPodsInDeviceLog(thisFile, loopReadDict, outFile, vFlag):
     """
     break logDF into chunks and process each chunk
     unique address list, breakPoints in logDF
     """
+    logDF = loopReadDict['logDF']
+    podMgrDict = loopReadDict['podMgrDict']
+    faultInfoDict = loopReadDict['faultInfoDict']
+
     podAddresses, breakPoints = findBreakPoints(logDF)
 
     numChunks = len(breakPoints)-1
@@ -39,8 +42,7 @@ def analyzeAllPodsInDeviceLog(thisFile, logDF, podMgrDict, faultInfoDict,
         print('  Report on Omnipod from {:s}'.format(thisFile))
         print('     Block {:d} of {:d}\n'.format(idx, numChunks))
 
-        podFrame, podState, actionFrame, actionSummary = \
-            analyzePodMessages(thisFile, thisFrame, podMgrDict, faultInfoDict,
-                               outFile, vFlag, idx)
+        analyzePodMessages(thisFile, thisFrame, podMgrDict, faultInfoDict,
+                           outFile, vFlag, idx)
 
     return
