@@ -10,7 +10,7 @@ def parse_02(byteList, msgDict):
 
     typeInfo = byteList[2]
     msgDict['type_of_0x02_message'] = '{0:#0{1}x}'.format(typeInfo, 4)
-    print('typeInfo is ', msgDict['type_of_0x02_message'])
+    # print('typeInfo is ', msgDict['type_of_0x02_message'])
     if typeInfo == 0x01:
         msgDict = parse_0201(byteList, msgDict)
     elif typeInfo == 0x02:
@@ -31,7 +31,7 @@ def parse_02(byteList, msgDict):
 
 
 def parse_0201(byteList, msgDict):
-    print('Type, 0x01, is WIP for 0x02 response')
+    # print('Type, 0x01, is WIP for 0x02 response')
     msgDict['msgType'] = '0x0201'
     msgDict['msgMeaning'] = 'Response to ConfigAlerts Request'
 
@@ -156,7 +156,7 @@ def parse_0202(byteList, msgDict):
 
 
 def parse_0203(byteList, msgDict):
-    print('Type, 0x03, is WIP for 0x02 response')
+    # print('Type, 0x03, is WIP for 0x02 response')
     msgDict['msgType'] = '0x0203'
     msgDict['msgMeaning'] = 'Response to PulseEntryLog Request'
 
@@ -164,7 +164,7 @@ def parse_0203(byteList, msgDict):
 
 
 def parse_0205(byteList, msgDict):
-    print('Type, 0x05, is WIP for 0x02 response')
+    # print('Type, 0x05, is WIP for 0x02 response')
     msgDict['msgType'] = '0x0205'
     msgDict['msgMeaning'] = 'Fault Code & Time, Time since Pod Initialization'
 
@@ -172,7 +172,7 @@ def parse_0205(byteList, msgDict):
 
 
 def parse_0250(byteList, msgDict):
-    print('Type, 0x50, is WIP for 0x02 response')
+    # print('Type, 0x50, is WIP for 0x02 response')
     msgDict['msgType'] = '0x0250'
     msgDict['msgMeaning'] = 'Last 50 dwords in pulse log'
 
@@ -180,7 +180,7 @@ def parse_0250(byteList, msgDict):
 
 
 def parse_0251(byteList, msgDict):
-    print('Type, 0x51, is WIP for 0x02 response')
+    # print('Type, 0x51, is WIP for 0x02 response')
     msgDict['msgType'] = '0x0251'
     msgDict['msgMeaning'] = 'Earlier dwords in pulse log'
 
