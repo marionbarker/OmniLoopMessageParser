@@ -1,45 +1,47 @@
+import re
 import os
 from os import listdir
 
 
-def get_file_list(thisPath):
+def get_file_list(folderPath):
     """
     Returns a filenames with associated creation times in a list
 
     PARAMS:
-        thisPath: path folder where the files by person are stored
+        folderPath: path folder where the files by person are stored
                   if folder contains Loop Reports, then just return that list
 
     RETURNS:
-        returnList list of filename(relative to thisPath),
+        returnList list of filename(relative to folderPath),
                    creation time for file
                    returnList is sorted by creation time
     """
     list_of_reports = []
     list_of_dates = []
 
-    thisLevel = listdir(thisPath)
+    thisLevel = listdir(folderPath)
 
     if thisLevel[0][0:4] == 'Loop':
         for y in thisLevel:
             if y == '.DS_Store':
                 continue
-            thisFile = y
-            list_of_reports.append(thisFile)
-            list_of_dates.append(os.path.getmtime(thisPath + '/' + thisFile))
+            personFile = y
+            list_of_reports.append(personFile)
+            list_of_dates.append(os.path.getmtime(folderPath +
+                                                  '/' + personFile))
 
     else:
         for x in thisLevel:
             if x == '.DS_Store':
                 continue
             # print(x)
-            for y in listdir(thisPath + '/' + x):
+            for y in listdir(folderPath + '/' + x):
                 if y == '.DS_Store':
                     continue
-                thisFile = x + '/' + y
-                list_of_reports.append(thisFile)
-                list_of_dates.append(os.path.getmtime(thisPath +
-                                                      '/' + thisFile))
+                personFile = x + '/' + y
+                list_of_reports.append(personFile)
+                list_of_dates.append(os.path.getmtime(folderPath +
+                                                      '/' + personFile))
 
     zippedTuple = zip(list_of_reports, list_of_dates)
     zippedList = list(zippedTuple)
@@ -47,3 +49,32 @@ def get_file_list(thisPath):
 
     # return the list of files and dates sorted by date
     return returnList
+
+
+def getFileDict(folderPath, personFile):
+    fileDict = {'filename': folderPath + '/' + personFile,
+                'path': folderPath,
+                'personFile': personFile}
+    # parse the person and date from in personFile
+    #   (of form person/LoopReport_date.md)
+    val = '^.*/'
+    thisPerson = re.findall(val, personFile)
+    if not thisPerson:
+        thisPerson = 'Unknown'
+    else:
+        thisPerson = thisPerson[0][0:-1]
+
+    fileDict['person'] = thisPerson
+
+    val = '/.*$'
+    thisFullName = re.findall(val, personFile)
+    thisFullName = thisFullName[0]
+    thisFullName = thisFullName[1:]
+    thisFullName = thisFullName.replace(' ', '')  # remove spaces
+    thisFullName = thisFullName.replace('-', '')  # remove hypens
+    thisFullName = thisFullName.replace('_', '')  # remove underscores
+    # trim off some characters
+    thisDate = thisFullName[10:18] + '_' + thisFullName[18:22]
+    fileDict['date'] = thisDate
+
+    return fileDict

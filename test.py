@@ -2,15 +2,18 @@
 #  test/exampleOutput.txt file
 # usage:  python test.py
 from main import main
+from fileio.get_file_list import getFileDict
 
 outFile = 0
 vFlag = 0
-filePath = '.'
+folderPath = '.'
 
 # Persistent log version, multiple pod session:
-thisFile = 'test/DeviceCommunicationsLogExample_multiplePods.md'
-main(filePath, thisFile, outFile, vFlag)
+testFile = 'test/DeviceCommunicationsLogExample_multiplePods.md'
+fileDict = getFileDict(folderPath, testFile)
+main(fileDict, outFile, vFlag)
 
 # old-style log version, single pod session:
-thisFile = 'test/MessageLogExample_singlePod.md'
-main(filePath, thisFile, outFile, vFlag)
+testFile = 'test/MessageLogExample_singlePod.md'
+fileDict = getFileDict(folderPath, testFile)
+main(fileDict, outFile, vFlag)

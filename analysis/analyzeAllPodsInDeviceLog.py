@@ -12,10 +12,21 @@ analyzeAllPodsInDeviceLog
 """
 
 
-def analyzeAllPodsInDeviceLog(thisFile, loopReadDict, outFile, vFlag):
+def analyzeAllPodsInDeviceLog(fileDict, loopReadDict, outFile, vFlag):
     """
-    break logDF into chunks and process each chunk
-    unique address list, breakPoints in logDF
+        Purpose: break logDF into chunks for each pod in Report
+                and process each chunk using analyzedPodMessages
+
+        Input:
+            fileDict - pass through to next function
+            loopReadDict has keys:
+                fileType "deviceLog" uses this preparser
+                logDF complete set of hex pod messages read from report
+                podMgrDict parsed from ## OmnipodPumpManager
+                faultInfoDict parsed from ## PodInfoFaultEvent
+                loopVersionDict parsed from ## LoopVersion
+            outFile output file location (if needed)
+            vFlag pass through selection for verbosity
     """
     logDF = loopReadDict['logDF']
     podMgrDict = loopReadDict['podMgrDict']
@@ -39,10 +50,10 @@ def analyzeAllPodsInDeviceLog(thisFile, loopReadDict, outFile, vFlag):
         startRow = stopRow+1
 
         print('  ----------------------------------------\n')
-        print('  Report on Omnipod from {:s}'.format(thisFile))
+        print('  Report on Omnipod from {:s}'.format(fileDict['personFile']))
         print('     Block {:d} of {:d}\n'.format(idx, numChunks))
 
-        analyzePodMessages(thisFile, thisFrame, podMgrDict, faultInfoDict,
+        analyzePodMessages(fileDict, thisFrame, podMgrDict, faultInfoDict,
                            outFile, vFlag, idx)
 
     return

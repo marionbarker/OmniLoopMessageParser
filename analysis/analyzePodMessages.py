@@ -1,11 +1,11 @@
-from parsers.messageLogs_functions import generate_table, getPersonFromFilename
+from parsers.messageLogs_functions import generate_table
 from util.misc import printDict
 from util.report import writePodInitCmdCountToOutputFile, printInitFrame
 from util.report import printPodInfo, printPodDict, printLogInfoSummary
 from util.report import printActionSummary
 from util.report import writeDescriptivePodStateToOutputFile
-from util.report import reportUncategorizedMessages
-from util.pod import getLogInfoFromState, returnPodID
+from util.report import printUncategorizedMessages
+from util.pod import getLogInfoFromState
 from analysis.podStateAnalysis import getPodState
 from analysis.podInitAnalysis import getPodInitCmdCount
 from analysis.checkAction import checkAction, processActionFrame
@@ -14,20 +14,18 @@ from analysis.checkAction import checkAction, processActionFrame
 analyzePodMessages
     This code analyzes a single Pod with available message dataframe
 """
-# loopReadDict has keys:
-#   fileType, logDF, podMgrDict, faultInfoDict, loopVersionDict
 
 
-def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile,
+def analyzePodMessages(fileDict, podFrame, podDict, faultInfoDict, outFile,
                        vFlag, chunkNum):
     """
     preprocess podFrame to be from a single pod
-    new use of vFlag.
-     : if 0: output analysis to terminal window
-     : if 1: deprecated
-     : if 2: like 0, plus printPodInitFrame if exceeds nominal steps
-     : if 3: output podInitCmdCount to outFile, skip balance and return
-     : if 4: like 2, plus verboseOutput init.csv, pod.csv, logDfCmb.csv
+    vFlag
+     : 0: output analysis to terminal window
+     : 1: deprecated
+     : 2: like 0, + printPodInitFrame if exceeds nominal steps
+     : 3: output podInitCmdCount to outFile, skip balance and return
+     : 4: like 2, + verboseOutput (init, podState, full df) to csv
     """
     REPORT_INIT_ONLY = 3
     VERBOSE_OUT_FILE = 4
@@ -51,10 +49,6 @@ def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile,
     # a few values are added / modified later as analysis continues
     logInfoDict = getLogInfoFromState(podState)
 
-    # get some strings used for later reporting
-    thisPerson, thisDate = getPersonFromFilename(thisFile,
-                                                 logInfoDict['last_msg'])
-
     # checkAction returns actionFrame with indices and times for every action
     #     completed actions and incomplete requests are separate columns
     #     see also function getActionDict
@@ -68,7 +62,7 @@ def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile,
         [podInitCmdCount, podInitState] = getPodInitCmdCount(podInitFrame)
         if vFlag == REPORT_INIT_ONLY:
             print('  output info from podInitCmdCount to ', outFile)
-            writePodInitCmdCountToOutputFile(outFile, thisFile,
+            writePodInitCmdCountToOutputFile(outFile, fileDict,
                                              podInitCmdCount)
     else:
         # this means no podInitFrame in report
@@ -76,7 +70,7 @@ def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile,
         podInitCmdCount = {}
 
     # returns whatever we have from report file, various sources
-    podID = returnPodID(podDict, podInitCmdCount)
+    # podID = returnPodID(podDict, podInitCmdCount)
 
     # Special handling for vFlag = 3 (aka REPORT_INIT_ONLY)
     if vFlag == REPORT_INIT_ONLY:
@@ -85,7 +79,7 @@ def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile,
             printInitFrame(podInitFrame)
         # output summary to outfile if provided
         # if hasPodInit and outFile:
-        #    writePodInfoToOutputFile(outFile, lastDate, thisFile, podInfo)
+        #    writePodInfoToOutputFile(outFile, lastDate, fileDict, podInfo)
         # return now
         return
 
@@ -106,15 +100,16 @@ def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile,
             printInitFrame(podInitFrame)
         printInitFrame(podInitFrame)
         # write to file
-        # thisOutFile = outFile + 'initSteps_' + thisPerson + '_' + thisDate \
+        # thisOutFile = outFile + 'initSteps_' + fileDict['person'] + \
+        #    '_' + fileDict['date'] \
         #     + '_' + str(chunkNum) + '.csv'
         # commentString = str(chunkNum)
         # writeDescriptivePodStateToOutputFile(thisOutFile, commentString,
         #                                      podState[initIdx])
 
     if vFlag == VERBOSE_OUT_FILE:
-        thisOutFile = outFile + 'podState_' + thisPerson + '_' + thisDate + \
-            '_' + str(chunkNum) + '.csv'
+        thisOutFile = outFile + 'podState_' + fileDict['person'] + '_' \
+                      + fileDict['date'] + '_' + str(chunkNum) + '.csv'
         commentString = str(chunkNum)
         writeDescriptivePodStateToOutputFile(thisOutFile, commentString,
                                              podState)
@@ -154,15 +149,6 @@ def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile,
     logInfoDict['totalCompletedMessages'] = totalCompletedMessages
     logInfoDict['percentCompleted'] = percentCompleted
 
-    if outFile == 2:
-        # print a few things then returns
-        # The string literal "thisAntenna" is replacing an undefined variable
-        print(f'{thisPerson}, "thisAntenna", {thisFault}, ' +
-              f'{logInfoDict["first_msg"]}, {logInfoDict["last_msg"]}, ' +
-              f'{logInfoDict["msgLogHrs"]}, {podID["lot"]}, {podID["tid"]}, ' +
-              f' {podID["piVersion"]} ')
-        return
-
     if True:
         printLogInfoSummary(logInfoDict)
         if hasFault:
@@ -182,11 +168,11 @@ def analyzePodMessages(thisFile, podFrame, podDict, faultInfoDict, outFile,
         if numACK > 0:
             print(f'    ***  Detected {numACK} ACK(s) during life of pod')
 
-        printActionSummary(actionSummary, vFlag)
+        printActionSummary(actionSummary)
 
         # report for uncategorized commands
         if len(frameBalance) > 0:
-            reportUncategorizedMessages(frameBalance, podState)
+            printUncategorizedMessages(frameBalance, podState)
 
     if hasFault:
         print('\nFault Details')

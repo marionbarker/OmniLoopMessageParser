@@ -8,22 +8,22 @@ from util.report import printLoopVersion, writeCombinedLogToOutputFile
 # more modular until done
 
 
-def main(thisPath, thisFile, outFile, vFlag):
+def main(fileDict, outFile, vFlag):
     # determine type of Loop Report
-    filename = thisPath + '/' + thisFile
+    filename = fileDict['filename']
     loopReadDict = loop_read_file(filename)
     # loopReadDict has keys:
     #   fileType, logDF, podMgrDict, faultInfoDict, loopVersionDict
 
     print('\n------------------------------------------')
-    print('  File: {:s}'.format(thisFile))
+    print('  File: {:s}'.format(fileDict["personFile"]))
     if len(loopReadDict['loopVersionDict']):
         printLoopVersion(loopReadDict['loopVersionDict'])
 
     if loopReadDict['fileType'] == "unknown":
         print('\n *** Did not recognize file type')
         print('  Parser did not find required section in file: \n',
-              '     ', thisFile, '\n',
+              '     ', fileDict["personFile"], '\n',
               '     ## MessageLog or\n',
               '     ## Device Communication Log')
         return
@@ -33,7 +33,7 @@ def main(thisPath, thisFile, outFile, vFlag):
         print('  This file uses MessageLog')
         print('  ----------------------------------------')
         numChunks = 1  # number of pods in log file is always 1
-        analyzePodMessages(thisFile, loopReadDict['logDF'],
+        analyzePodMessages(fileDict, loopReadDict['logDF'],
                            loopReadDict['podMgrDict'],
                            loopReadDict['faultInfoDict'],
                            outFile, vFlag, numChunks)
@@ -45,7 +45,7 @@ def main(thisPath, thisFile, outFile, vFlag):
     elif loopReadDict['fileType'] == "deviceLog":
         print('  ----------------------------------------')
         print('  This file uses Device Communication Log')
-        analyzeAllPodsInDeviceLog(thisFile, loopReadDict, outFile, vFlag)
+        analyzeAllPodsInDeviceLog(fileDict, loopReadDict, outFile, vFlag)
         if vFlag == 4:
             thisOutFile = 'm:/SharedFiles/LoopReportPythonAnalysis' + '/' \
                 + 'verboseOutput' + '/' + 'logDFCmb_out.csv'

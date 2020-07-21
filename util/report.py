@@ -5,20 +5,16 @@ from util.misc import printDict
 
 """
 This code has functions to handle reporting to stdout or files
+    printXXX: goes to stdout
+    reportXXX: written to a file
 """
 
 
-def printActionSummary(actionSummary, vFlag):
-    # initialize values just in case
-    # numShortTB = np.nan
-    # numSchBasalbeforeTB = np.nan
-    # numRepeatedTB = np.nan
+def printActionSummary(actionSummary):
     print('\n  Action Summary with sequential 4 or 2 message sequences with'
           ' action response times in sec')
     print('      Action        : #Success,  mean, [  min,  max  ] : '
           '#Incomplete')
-    # actionSummary
-    # printDict(actionSummary)
 
     for keys, values in actionSummary.items():
         subDict = values
@@ -27,25 +23,7 @@ def printActionSummary(actionSummary, vFlag):
                keys, subDict['countCompleted'], subDict['meanResponseTime'],
                subDict['minResponseTime'], subDict['maxResponseTime'],
                subDict['countIncomplete']))
-        # deprecated (Pete fixed code)
-        # if keys=='CnxSetTmpBasal':
-        #    numShortTB          = subDict['numShortTB']
-        #    numSchBasalbeforeTB = subDict['numSchBasalbeforeTB']
-        #    numRepeatedTB       = subDict['numRepeatedTB']
-        #    numRepeatedShortTB  = subDict['numRepeatedShortTB']
-        #    numrepeated19MinTB  = subDict['numrepeated19MinTB']
 
-    # deprecated (Pete fixed code)
-    # if vFlag==1:
-    #    print('\n    #TB with SchBasal before     : {:5d}'.format(
-    #           numSchBasalbeforeTB))
-    #    print('    #TB sent at <30s interval    : {:5d}'.format(numShortTB))
-    #    print('    #TB repeated value           : {:5.0f}'.format(
-    #           numRepeatedTB))
-    #    print('    #TB repeated value <30s      : {:5.0f}'.format(
-    #           numRepeatedShortTB))
-    #    print('    #TB rep value >=30s & <19min : {:5.0f}'.format(
-    #           numrepeated19MinTB))
     return
 
 
@@ -165,21 +143,21 @@ def printLoopVersion(loopVersionDict):
     return
 
 
-def writePodInfoToOutputFile(outFile, lastDate, thisFile, podInfo):
+def writePodInfoToOutputFile(outFile, lastDate, fileDict, podInfo):
     # check if file exists
     isItThere = os.path.isfile(outFile)
     # now open the file
     stream_out = open(outFile, mode='at')
     if not isItThere:
         # set up a table format order
-        headerString = 'date, filename, lot, rssi, numInitSteps'
+        headerString = 'date, personFile, lot, rssi, numInitSteps'
         stream_out.write(headerString)
         stream_out.write('\n')
     stream_out.write(f'{lastDate},')
-    stream_out.write('{:s},'.format(thisFile))
-    stream_out.write('{:s},'.format(podInfo['lot']))
-    stream_out.write('{:d},'.format(podInfo['rssiValue']))
-    stream_out.write('{:d},'.format(podInfo['numInitSteps']))
+    stream_out.write(f'{fileDict["personFile"]},')
+    stream_out.write(f'{podInfo["lot"]},')
+    stream_out.write(f'{podInfo["rssiValue"]},')
+    stream_out.write(f'{podInfo["numInitSteps"]},')
     stream_out.write('\n')
     stream_out.close()
 
@@ -210,7 +188,7 @@ def writepodInitFrameToOutputFile(outFile, commentString, podInitFrame):
     return
 
 
-def reportUncategorizedMessages(frameBalance, podState):
+def printUncategorizedMessages(frameBalance, podState):
     # used to report uncategorized messages
     if len(frameBalance) == 0:
         return

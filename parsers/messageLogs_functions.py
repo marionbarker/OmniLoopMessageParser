@@ -109,6 +109,7 @@ def splitFullMsg(hexToParse):
         # an empty msg_body is treated as an ACK
         msg_body = ''
         seqNum = -1
+        B9_b = 0
     else:
         # new-style ACK is handled properly here (msg_body is empty)
         B9_b = combineByte(list(bytearray.fromhex(hexToParse[8:10])))
@@ -254,31 +255,6 @@ def generate_table(podFrame, radio_on_time):
                                                       radio_on_time] - \
                                                       radio_on_time
     return podFrame
-
-
-def getPersonFromFilename(filename, last_timestamp):
-    # parse the person in the filename
-    val = '^.*/'
-    thisPerson = re.findall(val, filename)
-    if not thisPerson:
-        thisPerson = 'Unknown'
-    else:
-        thisPerson = thisPerson[0][0:-1]
-
-    val = '/.*$'
-    thisFullName = re.findall(val, filename)
-    # print(thisFullName)
-    thisFullName = thisFullName[0]
-    # print(thisFullName)
-    thisFullName = thisFullName[1:]
-    # print(thisFullName)
-    thisFullName = thisFullName.replace(' ', '')  # remove spaces
-    thisFullName = thisFullName.replace('-', '')  # remove hypens
-    thisFullName = thisFullName.replace('_', '')  # remove underscores
-    # trim off some characters
-    thisDate = thisFullName[10:18] + '_' + thisFullName[18:22]
-
-    return thisPerson, thisDate
 
 
 def loop_read_file(filename):
