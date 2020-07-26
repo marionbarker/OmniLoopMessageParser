@@ -23,6 +23,8 @@ def flatten(lol):
 
 
 def printDict(thisDict):
+    if len(thisDict) == 0:
+        return
     for keys, values in thisDict.items():
         print('  {} =   {}'.format(keys, values))
     print('\n')

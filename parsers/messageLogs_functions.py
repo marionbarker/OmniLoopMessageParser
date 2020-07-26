@@ -251,9 +251,9 @@ def extract_loop_version(data, firstChars):
 def generate_table(podFrame, radio_on_time):
     # add columns to the DataFrame - valid only when a single pod is included
     # radio_on_time seconds the pod radio stays awake (higher power mode)
-    podFrame['timeAsleep'] = podFrame['deltaSec'].loc[podFrame['deltaSec'] >
-                                                      radio_on_time] - \
-                                                      radio_on_time
+    rot = radio_on_time
+    podFrame['timeAsleep'] = podFrame['deltaSec'].loc[
+                                podFrame['deltaSec'] > rot] - rot
     return podFrame
 
 

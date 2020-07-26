@@ -6,7 +6,7 @@ from util.misc import printDict
 """
 This code has functions to handle reporting to stdout or files
     printXXX: goes to stdout
-    reportXXX: written to a file
+    writeXXX: written to a file
 """
 
 
@@ -133,13 +133,14 @@ def printLogInfoSummary(logInfoDict):
     return
 
 
-def printLoopVersion(loopVersionDict):
+def printLoopDict(commentString, maxItems, loopDict):
     print('  ----------------------------------------')
-    print('        Version : {:s}'.format(loopVersionDict['Version']))
-    print('      gitBranch : {:s}'.format(loopVersionDict['gitBranch']))
-    print('      gitRev    : {:s}'.format(loopVersionDict['gitRevision'][0:8]))
-    print('      buildDate : {:s}'.format(loopVersionDict['buildDateString']))
-    print('     sourceRoot : {:s}'.format(loopVersionDict['sourceRoot']))
+    print(f'  ** {commentString} **')
+    cnt = 0
+    for key, value in loopDict.items():
+        cnt += 1
+        if cnt <= maxItems:
+            print(f'       {key:20} =   {value}')
     return
 
 
@@ -270,7 +271,7 @@ def getStringFromLogic(bool):
 
 
 def minStrFromSec(value):
-    minStr = '{:.1f}'.format(value / 60)
+    minStr = '{:.2f}'.format(value / 60)
     return minStr
 
 
@@ -292,7 +293,7 @@ def writePodInitCmdCountToOutputFile(outFile, thisFile, podInitCmdCount):
     stream_out.write(f'{podInitCmdCount["timeStamp"]},')
     stream_out.write(f'{podInitCmdCount["deltaSec"]},')
     stream_out.write(f'{podInitCmdCount["recvGain"]},')
-    stream_out.write(f'{podInitCmdCount["recvGain"]},')
+    stream_out.write(f'{podInitCmdCount["rssiValue"]},')
     stream_out.write(f'{podInitCmdCount["PP115"]},')
     stream_out.write(f'{podInitCmdCount["lastPP"]},')
     stream_out.write(f'{podInitCmdCount["numInitSteps"]},')

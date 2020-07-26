@@ -292,13 +292,12 @@ def getNameFromMsgType(msgType):
     """
     msgName = {
         'ACK': 'ACK',
-        '0x0115': 'PodRespSetup',
-        '0x011b': 'PodRespAssignID',
+        '0x0115': 'PodRespAssignID',
+        '0x011b': 'PodRespSetup',
         '0x02': 'PodResp02Status',
         '0x0201': 'PodResp0201',
         '0x0202': 'PodRespErrStatus',
         '0x0203': 'PodResp0203',
-        '0x0204': 'PodResp0204',
         '0x0205': 'PodResp0205',
         '0x0250': 'PodResp0250',
         '0x0251': 'PodResp0251',
@@ -319,6 +318,7 @@ def getNameFromMsgType(msgType):
         '0x1f1': 'CnxBasal',
         '0x1f2': 'CnxTmpBasal',
         '0x1f4': 'CnxBolus',
+        '0x1f64': 'CnxBolus',
         '0x1f7': 'CnxAll'}
 
     return msgName[msgType]

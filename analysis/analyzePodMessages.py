@@ -12,11 +12,11 @@ from analysis.checkAction import checkAction, processActionFrame
 
 """
 analyzePodMessages
-    This code analyzes a single Pod with available message dataframe
+    This code analyzes a single Pod with messages in podFrame
 """
 
 
-def analyzePodMessages(fileDict, podFrame, podDict, faultInfoDict, outFile,
+def analyzePodMessages(fileDict, podFrame, podDict, outFlag,
                        vFlag, chunkNum):
     """
     preprocess podFrame to be from a single pod
@@ -24,7 +24,7 @@ def analyzePodMessages(fileDict, podFrame, podDict, faultInfoDict, outFile,
      : 0: output analysis to terminal window
      : 1: deprecated
      : 2: like 0, + printPodInitFrame if exceeds nominal steps
-     : 3: output podInitCmdCount to outFile, skip balance and return
+     : 3: output podInitCmdCount to outFlag, skip balance and return
      : 4: like 2, + verboseOutput (init, podState, full df) to csv
     """
     REPORT_INIT_ONLY = 3
@@ -60,27 +60,20 @@ def analyzePodMessages(fileDict, podFrame, podDict, faultInfoDict, outFile,
     if numInitSteps > 0:
         podInitFrame = podState.loc[initIdx]
         [podInitCmdCount, podInitState] = getPodInitCmdCount(podInitFrame)
-        if vFlag == REPORT_INIT_ONLY:
-            print('  output info from podInitCmdCount to ', outFile)
-            writePodInitCmdCountToOutputFile(outFile, fileDict,
-                                             podInitCmdCount)
     else:
         # this means no podInitFrame in report
         podInitState = -1
         podInitCmdCount = {}
 
-    # returns whatever we have from report file, various sources
-    # podID = returnPodID(podDict, podInitCmdCount)
-
-    # Special handling for vFlag = 3 (aka REPORT_INIT_ONLY)
     if vFlag == REPORT_INIT_ONLY:
-        # If number of initializations steps not nominal, print initFrame
-        if numInitSteps > 0 and numInitSteps != nomNumInitSteps:
-            printInitFrame(podInitFrame)
-        # output summary to outfile if provided
-        # if hasPodInit and outFile:
-        #    writePodInfoToOutputFile(outFile, lastDate, fileDict, podInfo)
-        # return now
+        if podInitState >= 0:
+            print('  output info from podInitCmdCount to ', outFlag)
+            writePodInitCmdCountToOutputFile(outFlag, fileDict['personFile'],
+                                             podInitCmdCount)
+            # typically used for survey including older reports,
+            #   use > 22 instead of nomNumSteps
+            if numInitSteps > 0 and numInitSteps > 22:
+                printInitFrame(podInitFrame)
         return
 
     # continue if vFlag is not 3 (aka REPORT_INIT_ONLY)
@@ -89,26 +82,13 @@ def analyzePodMessages(fileDict, podFrame, podDict, faultInfoDict, outFile,
     else:
         printPodDict(podDict)
 
-    if vFlag == 2:
-        if podInitState >= 0 and \
-           podInitCmdCount['numInitSteps'] != nomNumInitSteps:
+    if podInitState >= 0:
+        if vFlag == VERBOSE_OUT_FILE or \
+           vFlag == 2 and numInitSteps != nomNumInitSteps:
             printInitFrame(podInitFrame)
-
-    if vFlag == VERBOSE_OUT_FILE and numInitSteps > 0:
-        # print to terminal if not nominal
-        if numInitSteps != nomNumInitSteps:
-            printInitFrame(podInitFrame)
-        printInitFrame(podInitFrame)
-        # write to file
-        # thisOutFile = outFile + 'initSteps_' + fileDict['person'] + \
-        #    '_' + fileDict['date'] \
-        #     + '_' + str(chunkNum) + '.csv'
-        # commentString = str(chunkNum)
-        # writeDescriptivePodStateToOutputFile(thisOutFile, commentString,
-        #                                      podState[initIdx])
 
     if vFlag == VERBOSE_OUT_FILE:
-        thisOutFile = outFile + 'podState_' + fileDict['person'] + '_' \
+        thisOutFile = outFlag + 'podState_' + fileDict['person'] + '_' \
                       + fileDict['date'] + '_' + str(chunkNum) + '.csv'
         commentString = str(chunkNum)
         writeDescriptivePodStateToOutputFile(thisOutFile, commentString,
@@ -128,12 +108,9 @@ def analyzePodMessages(fileDict, podFrame, podDict, faultInfoDict, outFile,
         if checkInsulin >= logInfoDict['insulinDelivered']:
             logInfoDict['insulinDelivered'] = checkInsulin
             logInfoDict['sourceString'] = 'from 0x02 msg'
-    elif faultInfoDict == {}:
+    else:
         hasFault = False
         thisFault = 'Nominal'
-    else:
-        hasFault = True
-        thisFault = 'PodInfoFaultEvent'
 
     # process the action frame
     # returns a dictionary plus total completed message count)

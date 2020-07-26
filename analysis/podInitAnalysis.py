@@ -18,8 +18,8 @@ def getPodInitCmdCount(initFrame):
     podInitCmdCount = {
         'timeStamp': initFrame.loc[0]['timeStamp'],
         'deltaSec': initFrame.loc[0]['deltaSec'],
-        'recvGain': 0,
-        'rssiValue': 0,
+        'recvGain': -1,
+        'rssiValue': -1,
         'podAddr': 'n/a',
         'piVersion': 0,
         'lot': 0,
@@ -81,7 +81,7 @@ def getPodInitCmdCount(initFrame):
             podInitCmdCount['cntACK'] += 1
 
         elif msgDict['msgType'] == '0x08':
-            podInitCmdCount['cntACK'] += 1
+            podInitCmdCount['cnt08'] += 1
 
         elif msgDict['msgType'] == '0x1d':
             podInitCmdCount['cnt1d'] += 1

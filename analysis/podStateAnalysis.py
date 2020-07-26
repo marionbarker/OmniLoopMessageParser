@@ -19,7 +19,6 @@ def getPodState(frame):
 
     """
     # initialize values for pod states that we will update
-    # always first row to show timeCumSec of 0
     timeCumSec = -frame.iloc[0]['deltaSec']
     podOnTime = 0
     pod_progress = 0
