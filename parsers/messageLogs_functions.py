@@ -93,41 +93,40 @@ def splitFullMsg(hexToParse):
         See:
           https://github.com/openaps/openomni/wiki/Message-Structure
 
-        An ACK packet has a different format
-            different for MessageLog, which had empty msg_body
-            and Device Communication Log, which has CRC at msg_body loc
+        An ACK hexToParse has 2 historical formats, both with empty message
+            ## MessageLog <= 10 bytes with no CRC
+            ## Device Communication  has address, packetNumber and CRC
+
+        Because all messages (except ACK) have seqNum,
+             reuse seqNum key for the ACK packet number in msgDict
 
     """
-    # print(len(hexToParse), hexToParse)
     address = hexToParse[:8]
     thisLen = len(hexToParse)
+    # Handle older ## message log format for ACK
     if thisLen <= 10:
-        # "old-style" ACK
-        # print( '\n *** ', len(hexToParse), hexToParse, '\n')
-        BLEN = 0
-        CRC = '0000'  # indicates no CRC provided
-        # an empty msg_body is treated as an ACK
+        byte89 = 0
+        # processMsg below returns ACK from an empty msg_body
         msg_body = ''
-        seqNum = -1
-        B9_b = 0
+        CRC = '0000'  # indicates no CRC provided
     else:
-        # new-style ACK is handled properly here (msg_body is empty)
-        B9_b = combineByte(list(bytearray.fromhex(hexToParse[8:10])))
-        seqNum = (B9_b & 0x3C) >> 2
-        BLEN = hexToParse[10:12]
+        byte89 = combineByte(list(bytearray.fromhex(hexToParse[8:10])))
         msg_body = hexToParse[12:-4]
         CRC = hexToParse[-4:]
     msgDict = processMsg(msg_body)
-    CRC = '0x'+CRC
-    msgDict['rawHex'] = hexToParse
-    msgDict['seqNum'] = seqNum
-    msgDict['CRC'] = CRC
-    # for new style ACK, can extract packet number and put into seqNum
-    # location - request from Joe
+    # for ACK, extract packet number (if available) - request from Joe
+    #    use seqNum key for storage
     if msgDict['msgType'] == 'ACK':
-        packetNumber = (B9_b & 0x0F)
+        packetNumber = (byte89 & 0x1F)
         msgDict['seqNum'] = packetNumber
-    return address, BLEN, msgDict
+    else:
+        msgDict['seqNum'] = (byte89 & 0x3C) >> 2
+    msgDict['rawHex'] = hexToParse
+    msgDict['CRC'] = '0x' + CRC
+    if msgDict['msgType'] == '0x0202':
+        print(f' ** {msgDict["msgMeaning"]}, gain: {msgDict["recvGain"]}, \
+                rssi: {msgDict["rssiValue"]}')
+    return address, msgDict
 
 
 def message_dict(data):
@@ -136,7 +135,7 @@ def message_dict(data):
     stringToUnpack = data[26:]
 
     action, hexToParse = stringToUnpack.rsplit(' ', 1)
-    address, BLEN, msgDict = splitFullMsg(hexToParse)
+    address, msgDict = splitFullMsg(hexToParse)
     podMessagesDict = dict(
         time=timestamp,
         address=address, type=action,
@@ -172,7 +171,7 @@ def device_message_dict(data):
     device, logAddr, action, restOfLine = stringToUnpack.split(' ', 3)
     if device == "Omnipod":
         # address is what pod thinks address is
-        address, BLEN, msgDict = splitFullMsg(restOfLine)
+        address, msgDict = splitFullMsg(restOfLine)
         if (logAddr.lower() != address) and (address != 'ffffffff'):
             print('\nThe two message numbers do not agree \n',
                   logAddr, address)

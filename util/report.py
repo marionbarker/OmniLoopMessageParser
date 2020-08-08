@@ -42,6 +42,10 @@ def deprecated_printInitFrame(podInitFrame):
 
 
 def printInitFrame(podInitFrame):
+    idx = podInitFrame[podInitFrame.msgType == 'ACK']
+    if len(idx):
+        print(f'    There were {len(idx)} ACK recorded')
+        print('    Note: ACK packet number reported under seqNum column')
     print('\n  CumSec: seqNum: msgType :   msgName       : '
           'lastPP: pod_progressMeaning : podTimeOn(min)')
     last_pod_progress = 0
@@ -75,7 +79,7 @@ def printPodInfo(podInfo, nomNumSteps):
         # print('\n')
         if 'numInitSteps' in podInfo:
             if podInfo['numInitSteps'] > nomNumSteps:
-                print('    *** pod exceeded nominal init steps of {:d}'
+                print('    *** Pod exceeded nominal init steps of {:d}'
                       ' ***'.format(nomNumSteps))
             print(f'   Pod: Addr {podInfo["podAddr"]}, '
                   f'Lot {podInfo["lot"]}, '

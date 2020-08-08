@@ -1,4 +1,3 @@
-# file: parse_1f - does the parsing for cancel commond
 from util.misc import combineByte
 
 
@@ -34,26 +33,34 @@ def parse_1f(byteList, msgDict):
     The Pod responds to the $1F command with a $1D status message.
     """
 
-    cancelByte = byteList[6]
-    alertValue = (cancelByte >> 4) & 0xF
-    cancelBolus = (cancelByte & 0x04) != 0
-    cancelTB = (cancelByte & 0x02) != 0
-    suspend = (cancelByte & 0x01) != 0
-    cnxByteStr = '{:x}'.format(cancelByte)
+    commandByte = byteList[6]
+    alertValue = (commandByte >> 4) & 0xF
+    cancelCode = commandByte & 0x07
+
+    cancelBolus = (cancelCode & 0x04) != 0
+    cancelTB = (cancelCode & 0x02) != 0
+    suspend = (cancelCode & 0x01) != 0
+    cnxByteStr = '{:x}'.format(cancelCode)
     msgDict['msgType'] = msgDict['msgType'] + cnxByteStr
 
-    if cancelByte == 7:
+    if cancelCode == 0x07:
+        # msgDict['msgType'] = '0x1f7'
         msgDict['msgMeaning'] = 'CancelAll'
-    elif cancelByte == 4:
+    elif cancelBolus:
+        # msgDict['msgType'] = '0x1f4'
         msgDict['msgMeaning'] = 'CancelBolus'
-    elif cancelByte == 2:
+    elif cancelTB:
+        # msgDict['msgType'] = '0x1f2'
         msgDict['msgMeaning'] = 'CancelTB'
-    elif cancelByte == 1:
+    elif suspend:
+        # msgDict['msgType'] = '0x1f1'
         msgDict['msgMeaning'] = 'SuspendPod'
     else:
-        msgDict['msgMeaning'] = 'Canx'
-    msgDict['cancelByte'] = cancelByte
+        msgDict['msgMeaning'] = 'CancelNone'
+
+    msgDict['commandByte'] = commandByte
     msgDict['alertValue'] = alertValue
+    msgDict['cancelCode'] = cancelCode
     msgDict['cancelBolus'] = cancelBolus
     msgDict['cancelTB'] = cancelTB
     msgDict['suspend'] = suspend

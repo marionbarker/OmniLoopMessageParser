@@ -171,7 +171,7 @@ def getLogInfoFromState(podState):
     logInfoDict['numberOfAssignID'] = len(podState[podState.msgType == '0x07'])
     logInfoDict['numberOfSetUpPod'] = len(podState[podState.msgType == '0x03'])
     logInfoDict['numberOfNonceResync'] = \
-        len(podState[podState.msgType == '0x06'])
+        len(podState[podState.msgType == '0x0614'])
     logInfoDict['insulinDelivered'] = podState.iloc[-1]['insulinDelivered']
     logInfoDict['sourceString'] = 'from last 0x1d'
     logInfoDict['numMsgs'] = len(podState)
@@ -236,7 +236,7 @@ def getDescriptiveStringFromPodStateRow(md, reqTB, reqBolus, pod_progress):
         else:
             dStr = loopPrefix + \
                 'SetBolus of {:.2f} u'.format(md['prompt_bolus_u'])
-    elif md['msgType'] == '0x06':
+    elif md['msgType'] == '0x0614':
         dStr = loopPrefix + '{:s}, fault_code {:s}, reseed_word {:x} '.format(
             md['msgMeaning'], md['fault_code'], md['nonce_reseed_word'])
     elif md['msgType'] == '0x0e':
@@ -295,14 +295,15 @@ def getNameFromMsgType(msgType):
         '0x0115': 'PodRespAssignID',
         '0x011b': 'PodRespSetup',
         '0x02': 'PodResp02Status',
-        '0x0201': 'PodResp0201',
+        '0x0201': 'PodRespAlerts',
         '0x0202': 'PodRespErrStatus',
-        '0x0203': 'PodResp0203',
-        '0x0205': 'PodResp0205',
-        '0x0250': 'PodResp0250',
-        '0x0251': 'PodResp0251',
+        '0x0203': 'PodRespPulses ',
+        '0x0205': 'PodRespTimes',
+        '0x0250': 'PodRespPulse0',
+        '0x0251': 'PodRespPulse1',
         '0x03': 'SetupPod',
-        '0x06': 'PodRespBadNonce',
+        '0x06': 'PodRespError',
+        '0x0614': 'PodRespBadNonce',
         '0x07': 'AssignID',
         '0x08': 'CnfgDelivFlg',
         '0x0e': 'StatusRequest',
@@ -314,11 +315,10 @@ def getNameFromMsgType(msgType):
         '0x1c': 'DeactivatePod',
         '0x1d': 'PodRespStatus',
         '0x1e': 'SetBeeps',
-        '0x1f0': 'CnxDelivery',
+        '0x1f0': 'CnxNone',
         '0x1f1': 'CnxBasal',
         '0x1f2': 'CnxTmpBasal',
         '0x1f4': 'CnxBolus',
-        '0x1f64': 'CnxBolus',
         '0x1f7': 'CnxAll'}
 
     return msgName[msgType]

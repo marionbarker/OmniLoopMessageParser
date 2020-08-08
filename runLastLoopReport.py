@@ -14,6 +14,6 @@ fileDict = getFileDict(folderPath, fileDateList[-1][0])
 main(fileDict, outFlag, vFlag)
 
 # append to init_survey.csv
-vFlag = 3
-folderPath, outFlag = getAnalysisIO(1, vFlag)
-main(fileDict, outFlag, vFlag)
+# vFlag = 3
+# folderPath, outFlag = getAnalysisIO(1, vFlag)
+# main(fileDict, outFlag, vFlag)

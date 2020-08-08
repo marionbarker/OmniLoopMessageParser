@@ -105,7 +105,19 @@ def parse_0202(byteList, msgDict):
     word_Y = combineByte(byteList[22:24])
     cksm = combineByte(byteList[24:26])
 
-    msgDict['msgMeaning'] = 'Fault Event or Special Status Request Response'
+    #  can extract gain and rssi from the byte_W
+    #  WW (1 byte): [$14] bits aabbbbbb
+    #    aa: receiver low gain
+    #    bbbbbb: radio RSSI
+    gg = byte_W & 0xC0 >> 6
+    ss = byte_W & 0x3F
+    msgDict['recvGain'] = gg
+    msgDict['rssiValue'] = ss
+
+    if pod_progress <= 9:
+        msgDict['msgMeaning'] = 'Special Status Request Response'
+    else:
+        msgDict['msgMeaning'] = 'FaultEvent'
 
     # Since byte_2 was 2, update msgType
     msgDict['msgType'] = '0x0202'

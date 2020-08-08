@@ -71,7 +71,7 @@ def checkAction(frame):
             initIdx = np.append(initIdx, checkIdx)
 
     if len(initIdx) > len(frame):
-        print('Pod never reached pod_progress of 8')
+        print('    *** Pod never reached pod_progress of 8')
         initIdx = initIdx[0:len(frame)]
         actionFrame = pd.DataFrame([], columns=actionColumnNames)
         return actionFrame, initIdx, frameBalance

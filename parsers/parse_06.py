@@ -37,6 +37,7 @@ def parse_06(byteList, msgDict):
 
     msgDict['is_nonce_resync'] = errorCode == 0x14
     if msgDict['is_nonce_resync']:
+        msgDict['msgType'] = '0x0614'
         msgDict['nonce_reseed_word'] = wordCode
         msgDict['fault_code'] = 'nonceResync'
         msgDict['msgMeaning'] = 'ResyncNonceOK'
