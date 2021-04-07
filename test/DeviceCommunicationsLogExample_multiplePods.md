@@ -7223,7 +7223,3 @@ DoseEntry(type: LoopKit.DoseType.bolus, startDate: 2020-04-15 12:49:45 +0000, en
 DoseEntry(type: LoopKit.DoseType.bolus, startDate: 2020-04-15 12:54:43 +0000, endDate: 2020-04-15 12:54:45 +0000, value: 0.05, unit: LoopKit.DoseUnit.units, deliveredUnits: nil, description: nil, syncIdentifier: Optional("626f6c757320302e303520323032302d30342d31355431323a35343a34335a"), scheduledBasalRate: nil)
 DoseEntry(type: LoopKit.DoseType.bolus, startDate: 2020-04-15 12:59:43 +0000, endDate: 2020-04-15 12:59:45 +0000, value: 0.05, unit: LoopKit.DoseUnit.units, deliveredUnits: nil, description: nil, syncIdentifier: Optional("626f6c757320302e303520323032302d30342d31355431323a35393a34335a"), scheduledBasalRate: nil)
 DoseEntry(type: LoopKit.DoseType.bolus, startDate: 2020-04-15 13:04:45 +0000, endDate: 2020-04-15 13:04:47 +0000, value: 0.05, unit: LoopKit.DoseUnit.units, deliveredUnits: nil, description: nil, syncIdentifier: Optional("626f6c757320302e303520323032302d30342d31355431333a30343a34355a"), scheduledBasalRate: nil)
-
-
-
-

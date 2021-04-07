@@ -43,7 +43,7 @@ def analyzeAllPodsInDeviceLog(fileDict, loopReadDict, outFlag, vFlag):
         idx = idx + 1
         stopRow = breakPoints[idx] - 1
         podFrame = logDF.loc[startRow:stopRow][:]
-        podFrame.set_value(startRow, 'deltaSec', 0)
+        podFrame[startRow, 'deltaSec'] = 0
 
         startRow = stopRow + 1
 
