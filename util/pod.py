@@ -319,6 +319,7 @@ def getNameFromMsgType(msgType):
         '0x1f1': 'CnxBasal',
         '0x1f2': 'CnxTmpBasal',
         '0x1f4': 'CnxBolus',
+        '0x1f6': '0x1f6-look-up',
         '0x1f7': 'CnxAll'}
 
     return msgName[msgType]

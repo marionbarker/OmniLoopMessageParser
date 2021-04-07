@@ -115,7 +115,7 @@ def parse_0202(byteList, msgDict):
     msgDict['rssiValue'] = ss
 
     if pod_progress <= 9:
-        msgDict['msgMeaning'] = 'Special Status Request Response'
+        msgDict['msgMeaning'] = 'DetailedStatus'
     else:
         msgDict['msgMeaning'] = 'FaultEvent'
 
@@ -169,8 +169,9 @@ def parse_0202(byteList, msgDict):
 
 def parse_0203(byteList, msgDict):
     # print('Type, 0x03, is WIP for 0x02 response')
+    # Note - this has 60 pulse log entries "Plus" some other sturr
     msgDict['msgType'] = '0x0203'
-    msgDict['msgMeaning'] = 'Response to PulseEntryLog Request'
+    msgDict['msgMeaning'] = 'PodInfoPulseLogPlus'
 
     return msgDict
 
@@ -178,7 +179,7 @@ def parse_0203(byteList, msgDict):
 def parse_0205(byteList, msgDict):
     # print('Type, 0x05, is WIP for 0x02 response')
     msgDict['msgType'] = '0x0205'
-    msgDict['msgMeaning'] = 'Fault Code & Time, Time since Pod Initialization'
+    msgDict['msgMeaning'] = 'PodInfoActivationTime'
 
     return msgDict
 
@@ -186,7 +187,7 @@ def parse_0205(byteList, msgDict):
 def parse_0250(byteList, msgDict):
     # print('Type, 0x50, is WIP for 0x02 response')
     msgDict['msgType'] = '0x0250'
-    msgDict['msgMeaning'] = 'Last 50 dwords in pulse log'
+    msgDict['msgMeaning'] = 'PodInfoPulseLog'
 
     return msgDict
 
@@ -194,6 +195,6 @@ def parse_0250(byteList, msgDict):
 def parse_0251(byteList, msgDict):
     # print('Type, 0x51, is WIP for 0x02 response')
     msgDict['msgType'] = '0x0251'
-    msgDict['msgMeaning'] = 'Earlier dwords in pulse log'
+    msgDict['msgMeaning'] = 'PodInfoPulseLogPrevious'
 
     return msgDict
