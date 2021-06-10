@@ -10,6 +10,7 @@ def main(fileDict, outFlag, vFlag):
     loopReadDict = loop_read_file(filename)
     # loopReadDict has keys:
     #   fileType, logDF, podMgrDict, faultInfoDict, loopVersionDict
+    print(loopReadDict)
 
     print('\n------------------------------------------')
     print('  File: {:s}'.format(fileDict["personFile"]))
@@ -50,3 +51,10 @@ def main(fileDict, outFlag, vFlag):
         if vFlag == 4:
             thisOutFile = outFlag + '/' + 'logDFCmb_out.csv'
             writeCombinedLogToOutputFile(thisOutFile, loopReadDict['logDF'])
+
+    elif loopReadDict['fileType'] == 'FAPSX':
+        print('  ----------------------------------------')
+        print('  This file a FASPX log.txt or log_prev.txt')
+        analyzeAllPodsInDeviceLog(fileDict, loopReadDict, outFlag, vFlag)
+        thisOutFile = outFlag + '/' + 'logDFCmb_out.csv'
+        writeCombinedLogToOutputFile(thisOutFile, loopReadDict['logDF'])

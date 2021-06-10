@@ -116,9 +116,11 @@ def printLogInfoSummary(logInfoDict):
     print('                Radio on estimate : {:6.1f}, {:5.1f}%'.format(
            logInfoDict['radioOnHrs'],
            100*logInfoDict['radioOnHrs']/logInfoDict['msgLogHrs']))
-    print('   Number of messages (sent/recv) :{:5d} ({:4d} / {:4d})'.format(
-           logInfoDict['numMsgs'], logInfoDict['send_receive_messages'][1],
-           logInfoDict['send_receive_messages'][0]))
+    #if ('send_receive_messages' in logInfoDict):
+    if (0):
+        print('   Number of messages (sent/recv) :{:5d} ({:4d} / {:4d})'.format(
+               logInfoDict['numMsgs'], logInfoDict['send_receive_messages'][1],
+               logInfoDict['send_receive_messages'][0]))
     print('    Messages in completed actions :{:5d} : {:.1f}%'.format(
            logInfoDict['totalCompletedMessages'],
            logInfoDict['percentCompleted']))

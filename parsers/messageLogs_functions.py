@@ -1,7 +1,9 @@
 """
 messageLogs_functions.py
 
-Parse either old messageLog format or new deviceCommunication format
+Parse either old messageLog format or new deviceCommunication format (*.md)
+Add capability to extract messages from FASPX log file (*.txt)
+    new function for dealing with strings for the .txt files
 
 Updates: changed name to message instead of command, in some places
 
@@ -28,6 +30,12 @@ from bs4 import BeautifulSoup, NavigableString, Tag
 from util.misc import combineByte
 from util.misc import printDict, printList
 from parsers.messagePatternParsing import processMsg
+# add for FASPX files
+import time
+import os
+from collections import Counter
+import numpy as np
+
 
 # Some markdown headings don't start on their own line. This regular expression
 # finds them so we can insert a newline. (Needed for some MessageLog files)
@@ -43,6 +51,7 @@ MARKDOWN_HEADINGS_TO_EXTRACT = ['OmnipodPumpManager', 'MessageLog',
                                 'Device Communication Log', 'LoopVersion']
 
 
+# this is only called for files that end in ".md"
 def parse_filehandle(filehandle):
     """Given a filehandle, extract the content from below markdown headings.
 
@@ -53,6 +62,7 @@ def parse_filehandle(filehandle):
     """
     # read content from file
     content = filehandle.read()
+
     # saved first lines in case LoopVersion not found
     maxChars = 1000
     firstChars = content[0:maxChars]
@@ -135,6 +145,20 @@ def message_dict(data):
     stringToUnpack = data[26:]
 
     action, hexToParse = stringToUnpack.rsplit(' ', 1)
+    address, msgDict = splitFullMsg(hexToParse)
+    podMessagesDict = dict(
+        time=timestamp,
+        address=address, type=action,
+        msgDict=msgDict)
+    return podMessagesDict
+
+def faspx_message_dict(data):
+    # extract dateTtime from beginning of line
+    timestamp = data[0:10] + ' ' + data[11:19]
+    # skip the verbose stuff before the raw hex message
+    hexToParse = data[166:]
+    # the send/receive is not supplied for FASPX_Files
+    action = "unknown"
     address, msgDict = splitFullMsg(hexToParse)
     podMessagesDict = dict(
         time=timestamp,
@@ -256,17 +280,25 @@ def generate_table(podFrame, radio_on_time):
     return podFrame
 
 
+# add check of filename ending string to split between Loop and FASPX
 def loop_read_file(filename):
     """
-      Handles either MessageLog or Device Communication Log
+      Handles either MessageLog or Device Communication Log or FASPX log
       Note - there were several version of having status being tacked
              on to the end of the MessageLog, handle these cases
       Break into more modular chunks
       returns a dictionary of items
     """
     fileType = "unknown"
+    parsed_content = {}
+    # decide if this is an md file or a txt file.
+    last3 = filename[-3:]
+    print(last3)
     file = open(filename, "r", encoding='UTF8')
-    parsed_content, firstChars = parse_filehandle(file)
+    if (last3==".md"):
+        parsed_content, firstChars = parse_filehandle(file)
+    else:
+        raw_content = file.read()
     if parsed_content.get('MessageLog'):
         fileType = "messageLog"
         # handle various versions of status: being tacked onto end
@@ -286,19 +318,36 @@ def loop_read_file(filename):
             # print('  ',parsed_content['MessageLog'][-1], '\n ***\n')
     if parsed_content.get('Device Communication Log'):
         fileType = "deviceLog"
-    # now return dataframe from entire log, podDict, fault_report separately
-    logDF = extract_messages(fileType, parsed_content)
+    # For FASPX, use extract_raw to parse
+    # For Loop return dataframe from entire log, podDict, fault_report separately
+    if fileType == 'unknown':
+        logDF = extract_raw(raw_content)
+        print('check logDF')
+        if logDF.empty:
+            fileType = "not FASPX"
+            print(logDF)
+        else:
+            fileType = "FAPSX"
+            print(logDF)
+        faultInfoDict = {}
+        loopVersionDict = {}
+    else:
+        logDF = extract_messages(fileType, parsed_content)
+        faultInfoDict = extract_fault_info(parsed_content)
+        loopVersionDict = extract_loop_version(parsed_content, firstChars)
     if 'PodState' in parsed_content:
         podMgrDict = extract_pod_manager(parsed_content)
     else:
         podMgrDict = {}
-    faultInfoDict = extract_fault_info(parsed_content)
-    loopVersionDict = extract_loop_version(parsed_content, firstChars)
+
     loopReadDict = {'fileType': fileType,
                     'logDF': logDF,
                     'podMgrDict': podMgrDict,
                     'faultInfoDict': faultInfoDict,
                     'loopVersionDict': loopVersionDict}
+
+    # ensure file is closed
+    file.close()
     return loopReadDict
 
 
@@ -310,10 +359,53 @@ def otherP(message):
     # later can add other devices, for now, just not Omnipod
     return message['device'] != "Omnipod"
 
+def extract_raw(raw_content):
+    logDF = pd.DataFrame({})
+    verbose_flag = 0
+    if verbose_flag:
+        print(">>>   call to extract_raw placeholder")
+        print("first 256 characters")
+        print(raw_content[:256])
+        print("last 256 characters")
+        print(raw_content[-256:])
+
+    # extract content (between /n) with this string:
+    #    "318 - DEV: Device message:"
+    lines_raw = raw_content.splitlines()
+    if verbose_flag:
+        print('first line\n', lines_raw[0])
+        print('last line\n', lines_raw[-1])
+
+    pod_patt = "318 - DEV: Device message:"
+    pod_messages = [x for x in lines_raw if x.find(pod_patt)>-1]
+    verbose_flag = 1
+    if verbose_flag:
+        print('first pod line\n', pod_messages[0][0:19], ' ', pod_messages[0][166:])
+        print('last pod line\n', pod_messages[-1][0:19], ' ', pod_messages[-1][166:])
+        num_lines = len(pod_messages)
+        print('Found ', num_lines)
+    # brute force for now - get time and hex code
+#   012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
+#   2021-06-06T00:03:53-0700 [DeviceManager] DeviceDataManager.swift - deviceManager(_:logEventForDeviceIdentifier:type:message:completion:) - 318 - DEV: Device message: 1f091a4634030e010003e8
+    messages = [faspx_message_dict(m) for m in pod_messages]
+
+    verbose_flag = 0
+    if verbose_flag:
+        print('first messages line\n', messages[0])
+        print('last messages line\n', messages[-1])
+        print('number of messages is ', len(messages))
+    logDF = pd.DataFrame(messages)
+    logDF['time'] = pd.to_datetime(logDF['time'])
+    #logDF['time_delta'] = (logDF['time'] - \
+    #        logDF['time'].shift()).dt.seconds.fillna(0).astype(float)
+    logDF['deltaSec'] = (logDF['time'] - \
+            logDF['time'].shift()).dt.seconds.fillna(0).astype(float)
+
+    return logDF
 
 def extract_messages(fileType, parsed_content):
     # set up default
-    noisy = 0
+    noisy = 1
     pod_messages = ['nil']
     if fileType == "messageLog":
         # only pod messages are found in this section of the Loop Report
@@ -334,6 +426,10 @@ def extract_messages(fileType, parsed_content):
             cgm_messages = list(filter(otherP, messages))
             printList(cgm_messages[1:5])
             printList(cgm_messages[-2:-1])
+    else:
+        print('Filetype is not messageLog or DeviceLog')
+        print('Will parse the raw_content')
+        print(raw_content[0:80])
     # logDF all pod messages in Report (can be across multiple pods)
     logDF = pd.DataFrame(pod_messages)
     logDF['time'] = pd.to_datetime(logDF['time'])
