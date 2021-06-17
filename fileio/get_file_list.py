@@ -56,7 +56,8 @@ def getFileDict(folderPath, personFile):
                 'path': folderPath,
                 'personFile': personFile}
     # parse the person and date from in personFile
-    #   (of form person/LoopReport_date.md)
+    #   older form person/LoopReport_date.md)
+    #   add new form: yyyymmdd_log.txt or yyyymmdd_log_prev.txt
     val = '^.*/'
     thisPerson = re.findall(val, personFile)
     if not thisPerson:
@@ -76,5 +77,16 @@ def getFileDict(folderPath, personFile):
     # trim off some characters
     thisDate = thisFullName[10:18] + '_' + thisFullName[18:22]
     fileDict['date'] = thisDate
+
+    # decide if this is a txt file, correct the date
+    checkString = thisFullName[-3:]
+    if (checkString=="txt"):
+        fileDict['date'] = thisFullName[0:9];
+        # if this is not log.txt, add _prev
+        checkString = thisFullName[-7:]
+        print(checkString)
+        if (checkString!="log.txt"):
+            fileDict['date'] = fileDict['date'] + "_prev"
+
 
     return fileDict

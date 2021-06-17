@@ -2,7 +2,7 @@
 messageLogs_functions.py
 
 Parse either old messageLog format or new deviceCommunication format (*.md)
-Add capability to extract messages from FASPX log file (*.txt)
+Add capability to extract messages from FAPSX log file (*.txt)
     new function for dealing with strings for the .txt files
 
 Updates: changed name to message instead of command, in some places
@@ -30,7 +30,7 @@ from bs4 import BeautifulSoup, NavigableString, Tag
 from util.misc import combineByte
 from util.misc import printDict, printList
 from parsers.messagePatternParsing import processMsg
-# add for FASPX files
+# add for FAPSX files
 import time
 import os
 from collections import Counter
@@ -152,12 +152,12 @@ def message_dict(data):
         msgDict=msgDict)
     return podMessagesDict
 
-def faspx_message_dict(data):
+def fapsx_message_dict(data):
     # extract dateTtime from beginning of line
     timestamp = data[0:10] + ' ' + data[11:19]
     # skip the verbose stuff before the raw hex message
     hexToParse = data[166:]
-    # the send/receive is not supplied for FASPX_Files
+    # the send/receive is not supplied for FAPSX_Files
     action = "unknown"
     address, msgDict = splitFullMsg(hexToParse)
     podMessagesDict = dict(
@@ -280,10 +280,10 @@ def generate_table(podFrame, radio_on_time):
     return podFrame
 
 
-# add check of filename ending string to split between Loop and FASPX
+# add check of filename ending string to split between Loop and FAPSX
 def loop_read_file(filename):
     """
-      Handles either MessageLog or Device Communication Log or FASPX log
+      Handles either MessageLog or Device Communication Log or FAPSX log
       Note - there were several version of having status being tacked
              on to the end of the MessageLog, handle these cases
       Break into more modular chunks
@@ -291,9 +291,10 @@ def loop_read_file(filename):
     """
     fileType = "unknown"
     parsed_content = {}
+    # define empty dataframe, if fapsx, fill with determine basal info from log
+    determBasalDF = pd.DataFrame({})
     # decide if this is an md file or a txt file.
     last3 = filename[-3:]
-    print(last3)
     file = open(filename, "r", encoding='UTF8')
     if (last3==".md"):
         parsed_content, firstChars = parse_filehandle(file)
@@ -318,17 +319,18 @@ def loop_read_file(filename):
             # print('  ',parsed_content['MessageLog'][-1], '\n ***\n')
     if parsed_content.get('Device Communication Log'):
         fileType = "deviceLog"
-    # For FASPX, use extract_raw to parse
+    # For FAPSX, use extract_raw to parse, create new dataframe from FAPSX
+    #   enable tracking of IOB, COB and BG
     # For Loop return dataframe from entire log, podDict, fault_report separately
     if fileType == 'unknown':
-        logDF = extract_raw(raw_content)
-        print('check logDF')
+        logDF, determBasalDF = extract_raw(raw_content)
+        # print('check logDF')
         if logDF.empty:
-            fileType = "not FASPX"
-            print(logDF)
+            fileType = "not FAPSX"
+            # print(logDF)
         else:
             fileType = "FAPSX"
-            print(logDF)
+            # print(logDF)
         faultInfoDict = {}
         loopVersionDict = {}
     else:
@@ -344,7 +346,8 @@ def loop_read_file(filename):
                     'logDF': logDF,
                     'podMgrDict': podMgrDict,
                     'faultInfoDict': faultInfoDict,
-                    'loopVersionDict': loopVersionDict}
+                    'loopVersionDict': loopVersionDict,
+                    'determBasalDF': determBasalDF}
 
     # ensure file is closed
     file.close()
@@ -361,6 +364,7 @@ def otherP(message):
 
 def extract_raw(raw_content):
     logDF = pd.DataFrame({})
+    determBasalDF = pd.DataFrame({})
     verbose_flag = 0
     if verbose_flag:
         print(">>>   call to extract_raw placeholder")
@@ -378,7 +382,6 @@ def extract_raw(raw_content):
 
     pod_patt = "318 - DEV: Device message:"
     pod_messages = [x for x in lines_raw if x.find(pod_patt)>-1]
-    verbose_flag = 1
     if verbose_flag:
         print('first pod line\n', pod_messages[0][0:19], ' ', pod_messages[0][166:])
         print('last pod line\n', pod_messages[-1][0:19], ' ', pod_messages[-1][166:])
@@ -387,7 +390,7 @@ def extract_raw(raw_content):
     # brute force for now - get time and hex code
 #   012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
 #   2021-06-06T00:03:53-0700 [DeviceManager] DeviceDataManager.swift - deviceManager(_:logEventForDeviceIdentifier:type:message:completion:) - 318 - DEV: Device message: 1f091a4634030e010003e8
-    messages = [faspx_message_dict(m) for m in pod_messages]
+    messages = [fapsx_message_dict(m) for m in pod_messages]
 
     verbose_flag = 0
     if verbose_flag:
@@ -401,7 +404,42 @@ def extract_raw(raw_content):
     logDF['deltaSec'] = (logDF['time'] - \
             logDF['time'].shift()).dt.seconds.fillna(0).astype(float)
 
-    return logDF
+    # now extract the determine basal message
+    db_patt = "68 - DEV: SUGGESTED:"
+    #db_messages = [x for x in lines_raw if x.find(db_patt)>-1]
+    idx = 0
+    numLines = len(lines_raw)
+    line_array = []
+    timestamp_array = []
+    cob_array = []
+    iob_array = []
+    print("numLines = ", numLines)
+    while idx<numLines-1:
+        thisLine = lines_raw[idx]
+        if thisLine.find(db_patt)>-1:
+            # extract dateTime from beginning of line
+            timestamp = thisLine[0:10] + ' ' + thisLine[11:19]
+            line_in_file = idx
+            # find "reason" then back up
+            while thisLine.find("reason")==-1 and idx<numLines-1:
+                idx = idx+1
+                thisLine = lines_raw[idx]
+            # back up 2 lines
+            cob = lines_raw[idx-2][10:]
+            iob = lines_raw[idx-1][10:]
+            # print(idx, timestamp, cob, iob)
+            line_array.append(line_in_file)
+            timestamp_array.append(timestamp)
+            cob_array.append(cob)
+            iob_array.append(iob)
+        else:
+            idx = idx+1
+            thisLine = lines_raw[idx]
+
+        d = {'line#': line_array, 'time': timestamp_array, 'cob': cob_array, 'iob': iob_array}
+        determBasalDF = pd.DataFrame(d)
+
+    return logDF, determBasalDF
 
 def extract_messages(fileType, parsed_content):
     # set up default

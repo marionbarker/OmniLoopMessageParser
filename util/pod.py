@@ -74,6 +74,7 @@ def getActionDict():
       'CnxBolus': (0, ('0x1f4', '0x1d')),
       'CnxAll': (0, ('0x1f7', '0x1d')),
       'BolusAlone': (0, ('0x1a17', '0x1d')),
+      'TBAlone': (0, ('0x1a16', '0x1d')),
       'DeactivatePod': (0, ('0x1c', '0x1d')),
       'PrgBasalSch': (0, ('0x1a13', '0x1d'))
        }
