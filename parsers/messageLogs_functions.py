@@ -411,6 +411,7 @@ def extract_raw(raw_content):
     numLines = len(lines_raw)
     line_array = []
     timestamp_array = []
+    bg_array = []
     cob_array = []
     iob_array = []
     print("numLines = ", numLines)
@@ -420,7 +421,14 @@ def extract_raw(raw_content):
             # extract dateTime from beginning of line
             timestamp = thisLine[0:10] + ' ' + thisLine[11:19]
             line_in_file = idx
-            # find "reason" then back up
+            # find first "IOB" (predBGIOB) and extract first BG value
+            while thisLine.find("IOB")==-1 and idx<numLines-1:
+                idx = idx+1
+                thisLine = lines_raw[idx]
+            idx = idx+1
+            thisLine = lines_raw[idx]
+            bg_current = thisLine[-6:]
+            # find first "reason"
             while thisLine.find("reason")==-1 and idx<numLines-1:
                 idx = idx+1
                 thisLine = lines_raw[idx]
@@ -430,13 +438,15 @@ def extract_raw(raw_content):
             # print(idx, timestamp, cob, iob)
             line_array.append(line_in_file)
             timestamp_array.append(timestamp)
+            bg_array.append(bg_current)
             cob_array.append(cob)
             iob_array.append(iob)
         else:
             idx = idx+1
             thisLine = lines_raw[idx]
 
-        d = {'line#': line_array, 'time': timestamp_array, 'cob': cob_array, 'iob': iob_array}
+        d = {'line#': line_array, 'time': timestamp_array,
+             'bg': bg_array, 'cob': cob_array, 'iob': iob_array}
         determBasalDF = pd.DataFrame(d)
 
     return logDF, determBasalDF
