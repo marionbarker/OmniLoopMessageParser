@@ -1,7 +1,9 @@
 from parsers.messageLogs_functions import loop_read_file
 from analysis.analyzePodMessages import analyzePodMessages
 from analysis.analyzeAllPodsInDeviceLog import analyzeAllPodsInDeviceLog
-from util.report import printLoopDict, writeCombinedLogToOutputFile
+from util.report import printLoopDict
+from util.report import writeCombinedLogToOutputFile
+from util.report import generatePlot
 # add ability to plot directly from the DataFrame
 import matplotlib.pyplot as plt
 
@@ -27,6 +29,11 @@ def main(fileDict, outFlag, vFlag):
         commentString = 'PodInfoFaultEvent reported in file'
         maxItems = 10
         printLoopDict(commentString, maxItems, loopReadDict['faultInfoDict'])
+
+    if len(loopReadDict['podMgrDict']) and vFlag == 4:
+        commentString = 'podMgrDict reported in file'
+        maxItems = 10
+        printLoopDict(commentString, maxItems, loopReadDict['podMgrDict'])
 
     if loopReadDict['fileType'] == "unknown":
         print('\n *** Did not recognize file type')
@@ -67,5 +74,5 @@ def main(fileDict, outFlag, vFlag):
         fapsxDF.to_csv(thisOutFile)
 
         # add plotting to the pandas dataframe containing detemine basal data
-        ax = fapsxDF.plot.scatter(x='time',y='iob',c='red')
-        plt.show()
+        thisOutFile = generatePlot(outFlag, fileDict['person'], fapsxDF)
+        print('saved output figure as ', thisOutFile)

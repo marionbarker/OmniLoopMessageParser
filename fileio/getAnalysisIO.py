@@ -7,6 +7,7 @@ def getAnalysisIO(pathOption, vFlag):
     """
     return filePath, outFlag
        When doing "real" analysis, use (1, 4)
+       Update to handle mac using same disk as pc when vFlag is 4
 
        pathOption:
           0 use folder for partial / special purpose / older LoopReportFiles
@@ -24,7 +25,10 @@ def getAnalysisIO(pathOption, vFlag):
     thisPlatform = platform.system()
 
     if thisPlatform == 'Darwin':
-        topPath = os.path.expanduser('~/dev/LoopReportRepository')
+        if vFlag == 4:
+            topPath = os.path.expanduser('/Volumes/MarionPC/SharedFiles')
+        else:
+            topPath = os.path.expanduser('~/dev/LoopReportRepository')
     elif thisPlatform == 'Windows':
         topPath = 'm:/SharedFiles'
     else:

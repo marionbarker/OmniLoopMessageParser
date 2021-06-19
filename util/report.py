@@ -2,6 +2,9 @@ import os
 from util.pod import getDescriptiveStringFromPodStateRow, getNameFromMsgType
 from util.pod import getPodProgressMeaning
 from util.misc import printDict
+import matplotlib.pyplot as plt
+import numpy as np
+
 
 """
 This code has functions to handle reporting to stdout or files
@@ -330,3 +333,37 @@ def writeCombinedLogToOutputFile(outFile, logDF):
     logDF = logDF[columnList]
     logDF.to_csv(outFile)
     return
+
+def generatePlot(outFlag, person, df):
+    datestring = df.loc[0,'date_time']
+    datestring = datestring[:10]
+    thisOutFile = outFlag + '/' + person + '_' + \
+                    datestring + '_' + 'plot.png'
+    print(thisOutFile)
+
+    nrow=3
+    ncol=1
+    day_in_sec = 24*60*60
+    two_hr_in_sec = day_in_sec/12
+    bottom_ticks = np.arange(0, day_in_sec, step=two_hr_in_sec)
+    fig, axes = plt.subplots(nrow,ncol, figsize=(15, 5))
+    axes[0].set_title(person + ' ' + datestring)
+    df.plot.line(x='time', y='BG', c='green', ax=axes[0],
+            xlim= [0, day_in_sec], xticks=bottom_ticks)
+    df.plot.line(x='time', y='IOB', c='blue', ax=axes[1],
+            xlim= [0, day_in_sec], xticks=bottom_ticks)
+    df.plot.line(x='time', y='COB', c='green', ax=axes[2],
+            xlim= [0, day_in_sec], xticks=bottom_ticks)
+    dfNegIOB = df[df.IOB<0.1]
+    dfNegIOB.plot.scatter(x='time', y='BG', c='red',
+            ax=axes[0], label="<0.1 IOB")
+    dfNegIOB.plot.scatter(x='time', y='IOB', c='red',
+            ax=axes[1], label="<0.1 IOB")
+    dfNegIOB.plot.scatter(x='time', y='COB', c='red',
+            ax=axes[2], label="<0.1 IOB")
+    for x in axes:
+        x.grid('on')
+
+    plt.savefig(thisOutFile)
+    print('saved output figure as ', thisOutFile)
+    return thisOutFile

@@ -339,6 +339,8 @@ def loop_read_file(filename):
         loopVersionDict = extract_loop_version(parsed_content, firstChars)
     if 'PodState' in parsed_content:
         podMgrDict = extract_pod_manager(parsed_content)
+        print('HERE ---')
+        printDict(podMgrDict)
     else:
         podMgrDict = {}
 
@@ -427,14 +429,14 @@ def extract_raw(raw_content):
                 thisLine = lines_raw[idx]
             idx = idx+1
             thisLine = lines_raw[idx]
-            bg_current = thisLine[-6:]
+            bg_current = float(thisLine[-6:-1])
             # find first "reason"
             while thisLine.find("reason")==-1 and idx<numLines-1:
                 idx = idx+1
                 thisLine = lines_raw[idx]
             # back up 2 lines
-            cob = lines_raw[idx-2][10:]
-            iob = lines_raw[idx-1][10:]
+            cob = float(lines_raw[idx-2][10:-1])
+            iob = float(lines_raw[idx-1][10:-1])
             # print(idx, timestamp, cob, iob)
             line_array.append(line_in_file)
             timestamp_array.append(timestamp)
@@ -445,15 +447,18 @@ def extract_raw(raw_content):
             idx = idx+1
             thisLine = lines_raw[idx]
 
-        d = {'line#': line_array, 'time': timestamp_array,
-             'bg': bg_array, 'cob': cob_array, 'iob': iob_array}
+        d = {'line#': line_array, 'date_time': timestamp_array,
+             'BG': bg_array, 'COB': cob_array, 'IOB': iob_array}
         determBasalDF = pd.DataFrame(d)
+        # split the time into a new column
+        time_array = pd.to_datetime(determBasalDF['date_time']).dt.time
+        determBasalDF['time']=time_array
 
     return logDF, determBasalDF
 
 def extract_messages(fileType, parsed_content):
     # set up default
-    noisy = 1
+    noisy = 0
     pod_messages = ['nil']
     if fileType == "messageLog":
         # only pod messages are found in this section of the Loop Report
