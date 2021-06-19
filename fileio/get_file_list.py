@@ -81,7 +81,7 @@ def getFileDict(folderPath, personFile):
     # decide if this is a txt file, correct the date
     checkString = thisFullName[-3:]
     if (checkString=="txt"):
-        fileDict['date'] = thisFullName[:8];
+        fileDict['date'] = thisFullName[:8]
         # if this is not log.txt, add _prev
         checkString = thisFullName[-7:]
         if (checkString!="log.txt"):

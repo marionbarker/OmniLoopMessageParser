@@ -4,7 +4,6 @@ from util.pod import getPodProgressMeaning
 from util.misc import printDict
 import matplotlib.pyplot as plt
 import numpy as np
-import time
 
 
 """
@@ -335,50 +334,75 @@ def writeCombinedLogToOutputFile(outFile, logDF):
     logDF.to_csv(outFile)
     return
 
+
 def generatePlot(outFlag, person, df):
-    datestring = df.loc[0,'date_time']
+    datestring = df.loc[0, 'date_time']
     datestring = datestring[:10]
     thisOutFile = outFlag + '/' + person + '_' + \
-                    datestring + '_' + 'plot.png'
-    print(thisOutFile)
+        datestring + '_' + 'plot.png'
+    thisOutFile
 
-    nrow=3
-    ncol=1
+    # Defin near 0 IOB
+    nearZeroVal = 0.2
+
+    nrow = 3
+    ncol = 1
     day_in_sec = 24*60*60
     two_hr_in_sec = day_in_sec/12
     bottom_ticks = np.arange(0, day_in_sec, step=two_hr_in_sec)
-    fig, axes = plt.subplots(nrow,ncol, figsize=(15, 5))
-    axes[0].set_title(person + ' ' + datestring)
+    fig, axes = plt.subplots(nrow, ncol, figsize=(15, 5))
+    axes[0].set_title(person + ' ' + datestring +
+                      '; Neg IOB < {:4.1f}'.format(-nearZeroVal))
     df.plot.line(x='time', y='BG', c='green', ax=axes[0],
-            xlim= [0, day_in_sec], xticks=bottom_ticks)
+                 xlim=[0, day_in_sec], xticks=bottom_ticks)
     df.plot.line(x='time', y='IOB', c='blue', ax=axes[1],
-            xlim= [0, day_in_sec], xticks=bottom_ticks)
+                 xlim=[0, day_in_sec], xticks=bottom_ticks)
     df.plot.line(x='time', y='COB', c='green', ax=axes[2],
-            xlim= [0, day_in_sec], xticks=bottom_ticks)
-    # near 0 IOB
-    nearZeroVal = 0.1
-    zeroIOB = df[(df.IOB>-nearZeroVal)&(df.IOB<nearZeroVal)]
+                 xlim=[0, day_in_sec], xticks=bottom_ticks)
+
+    zeroIOB = df[(df.IOB > -nearZeroVal) & (df.IOB < nearZeroVal)]
     zeroIOB.plot.scatter(x='time', y='BG', c='blue',
-            ax=axes[0], label="~0 IOB")
+                         ax=axes[0], label="~0 IOB")
     zeroIOB.plot.scatter(x='time', y='IOB', c='blue',
-            ax=axes[1], label="~0 IOB")
+                         ax=axes[1], label="~0 IOB")
     zeroIOB.plot.scatter(x='time', y='COB', c='blue',
-            ax=axes[2], label="~0 IOB")
+                         ax=axes[2], label="~0 IOB")
     # negative IOB
-    dfNegIOB = df[df.IOB<-nearZeroVal]
+    dfNegIOB = df[df.IOB < -nearZeroVal]
     dfNegIOB.plot.scatter(x='time', y='BG', c='red',
-            ax=axes[0], label="<-0.1 IOB")
+                          ax=axes[0], label="Neg IOB")
     dfNegIOB.plot.scatter(x='time', y='IOB', c='red',
-            ax=axes[1], label="<-0.1 IOB")
+                          ax=axes[1], label="Neg IOB")
     dfNegIOB.plot.scatter(x='time', y='COB', c='red',
-            ax=axes[2], label="<-0.1 IOB")
+                          ax=axes[2], label="Neg IOB")
     for x in axes:
         x.grid('on')
-        x.legend(bbox_to_anchor=(1.0, 1.0))
+        x.legend(bbox_to_anchor=(1.11, 1.0), framealpha=1.0)
 
-    plt.show(block=False)
+    # set limits for BG (always in mg/dl)
+    bg_ylim = axes[0].get_ylim()
+    a = min(bg_ylim[0], 0)
+    b = max(1.1*bg_ylim[1], 200)
+    axes[0].set_ylim([a, b])
+
+    # handle case where IOB is never zero for entire plot
+    iob_ylim = axes[1].get_ylim()
+    a = min(1.1*iob_ylim[0], -1)
+    b = max(1.1*iob_ylim[1], 10)
+    axes[1].set_ylim([a, b])
+
+    # handle case where COB is 0 for entire plot
+    cob_ylim = axes[2].get_ylim()
+    a = max(cob_ylim[0], 0)
+    b = max(cob_ylim[1], 100)
+    axes[2].set_ylim([a, b])
+
+    plt.draw()
+    plt.pause(0.001)
+    # for use in interactive screen: plt.draw();plt.pause(0.001)
+    plt.pause(5)
+
     plt.savefig(thisOutFile)
-    time.sleep(1) # make sure figure is saved then close it.
-    plt.close("all")
+    plt.close(fig)
 
     return thisOutFile
