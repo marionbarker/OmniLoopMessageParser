@@ -12,7 +12,8 @@ def getAnalysisIO(pathOption, vFlag):
        pathOption:
           0 use folder for partial / special purpose / older LoopReportFiles
           1 use folder with complete Loop Reports
-          2 specify a specific users' folder by their name
+          string to specify a specific users' folder by their name
+          3 use this when parsing FAPSX log files
 
        vFlag:
          0: output analysis to terminal window, outFlag = 0
@@ -39,6 +40,8 @@ def getAnalysisIO(pathOption, vFlag):
         filePath = topPath + '/' + 'Other_LoopReportFiles'
     elif pathOption == 1:
         filePath = topPath + '/' + 'LoopReportFiles'
+    elif pathOption == 3:
+        filePath = topPath + '/' + 'FAPSX_Files' + '/' + 'Input'
     elif type(pathOption) == str:
         filePath = topPath + '/' + 'LoopReportFiles' + '/' + pathOption
     else:
@@ -60,5 +63,9 @@ def getAnalysisIO(pathOption, vFlag):
     else:
         print('  vFlag not recognized for getAnalysisIO')
         outFlag = 0
+
+    # modify outFlag when pathOption is 3
+    outFlag = topPath + '/' + 'FAPSX_Files' + '/' + 'Output'
+
 
     return filePath, outFlag

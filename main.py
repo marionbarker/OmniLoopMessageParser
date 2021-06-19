@@ -65,10 +65,7 @@ def main(fileDict, outFlag, vFlag):
 
     elif loopReadDict['fileType'] == 'FAPSX':
         print('  ----------------------------------------')
-        print('  This file a FAPSX log.txt or log_prev.txt')
-        analyzeAllPodsInDeviceLog(fileDict, loopReadDict, outFlag, vFlag)
-        thisOutFile = outFlag + '/' + 'logDFCmb_out.csv'
-        writeCombinedLogToOutputFile(thisOutFile, loopReadDict['logDF'])
+        print('  This file a FAPSX log file')
         fapsxDF = loopReadDict['determBasalDF']
         thisOutFile = outFlag + '/' + 'fapsxDF_out.csv'
         fapsxDF.to_csv(thisOutFile)
@@ -76,3 +73,7 @@ def main(fileDict, outFlag, vFlag):
         # add plotting to the pandas dataframe containing detemine basal data
         thisOutFile = generatePlot(outFlag, fileDict['person'], fapsxDF)
         print('saved output figure as ', thisOutFile)
+
+        analyzeAllPodsInDeviceLog(fileDict, loopReadDict, outFlag, vFlag)
+        thisOutFile = outFlag + '/' + 'logDFCmb_out.csv'
+        writeCombinedLogToOutputFile(thisOutFile, loopReadDict['logDF'])
