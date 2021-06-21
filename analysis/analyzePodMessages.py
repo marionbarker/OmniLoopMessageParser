@@ -88,8 +88,9 @@ def analyzePodMessages(fileDict, podFrame, podDict, outFlag,
             printInitFrame(podInitFrame)
 
     if vFlag == VERBOSE_OUT_FILE:
-        thisOutFile = outFlag + 'podState_' + fileDict['person'] + '_' \
-                      + fileDict['date'] + '_' + str(chunkNum) + '.csv'
+        thisOutFile = outFlag + '/' + 'podState_' + fileDict['person'] \
+                      + '_' + fileDict['date'] + '_' + str(chunkNum) + \
+                      '.csv'
         commentString = str(chunkNum)
         writeDescriptivePodStateToOutputFile(thisOutFile, commentString,
                                              podState)
