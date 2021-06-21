@@ -137,6 +137,9 @@ def analyzePodMessages(fileDict, podFrame, podDict, outFlag,
             elif thisFault == '0x18':
                 print(f'     {faultString}:   Pod out of insulin')
                 hasFault = 0
+            elif thisFault == '0x00':
+                print(f'     {faultString}:   Read Pod Status')
+                hasFault = 0
             elif thisFault == '0x34':
                 print(f'     {faultString}:   Fault wipes out pod registers')
             else:

@@ -86,10 +86,14 @@ def checkAction(frame):
     #    responseTime calculated by taking
     #        timeCumSec at end - timeCumSec at end
     #    SchBasal is the scheduled basal state at the beginning of the action
-    # if all the expected messages are found in the correct order, then the
-    #     indices for all the messages are removed from frameBalance before
-    #     searching for the next actionDict item
+    #    if all the expected messages are found in the correct order,
+    #     then the indices for all the messages are removed from frameBalance
+    #     before searching for the next actionDict item
     #     for 4-step sequences, deltaTime for 3rd time in list <= maxDeltaInSeq
+    #  Now that some of these 4-step sequences can be performed as 2-step
+    #     sequences because upper-level logic can decide if it already knows
+    #     knows the pod state. Must add a check for 0 as first value for any
+    #     sequence where it's going to back up in array.
 
     actionList = []
 
@@ -111,6 +115,12 @@ def checkAction(frame):
         if len(thisFrame) == 0:
             continue
         thisIdx = np.array(thisFrame.index.to_list())
+        # extract the 4-msg sequences first,
+        #   but some have same index command as 2-msg sequences
+        #   protect against 0 index in matching command for those cases
+        if ((thisIdx[0] < 2) and (thisID == 2)):
+            thisIdx = np.delete(thisIdx, 0)
+            badIdx = np.append(badIdx, 0)
         # go thru adjacent messages to ensure they match the matchList
         for ii in range(-thisID, msgPerAction-thisID):
             if ii == thisID:

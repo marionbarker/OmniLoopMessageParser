@@ -4,7 +4,7 @@ from fileio.get_file_list import get_file_list, getFileDict
 from fileio.getAnalysisIO import getAnalysisIO
 
 vFlag = 4
-pathOption = 3 # for FAPSX
+pathOption = 3  # for FAPSX
 folderPath, outFlag = getAnalysisIO(pathOption, vFlag)
 fileDateList = get_file_list(folderPath)
 
