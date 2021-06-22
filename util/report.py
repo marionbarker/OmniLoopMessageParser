@@ -86,6 +86,7 @@ def printPodInfo(podInfo, nomNumSteps):
                       ' ***'.format(nomNumSteps))
             print(f'   Pod: Addr {podInfo["podAddr"]}, '
                   f'Lot {podInfo["lot"]}, '
+                  f'Tid {podInfo["tid"]}, '
                   f'PI: {podInfo["piVersion"]}, '
                   f'gain {podInfo["recvGain"]}, '
                   f'rssi {podInfo["rssiValue"]}'
@@ -400,8 +401,6 @@ def generatePlot(outFlag, person, df):
     plt.draw()
     plt.pause(0.001)
     # for use in interactive screen: plt.draw();plt.pause(0.001)
-    plt.pause(5)
-
     plt.savefig(thisOutFile)
     plt.close(fig)
 

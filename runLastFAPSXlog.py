@@ -3,9 +3,11 @@ from main import main
 from fileio.get_file_list import get_file_list, getFileDict
 from fileio.getAnalysisIO import getAnalysisIO
 
-vFlag = 4
-pathOption = 3  # for FAPSX
-folderPath, outFlag = getAnalysisIO(pathOption, vFlag)
+pathOption = 3  # use standard FreeAPS X file location
+vFlag = 4  # Verbose output - all files to Output location
+macFlag = 1  # use Drobo rather than Mac hard drive
+
+folderPath, outFlag = getAnalysisIO(pathOption, vFlag, macFlag)
 fileDateList = get_file_list(folderPath)
 
 # create fileDict

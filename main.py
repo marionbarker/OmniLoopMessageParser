@@ -4,8 +4,7 @@ from analysis.analyzeAllPodsInDeviceLog import analyzeAllPodsInDeviceLog
 from util.report import printLoopDict
 from util.report import writeCombinedLogToOutputFile
 from util.report import generatePlot
-# add ability to plot directly from the DataFrame
-import matplotlib.pyplot as plt
+import platform
 
 
 def main(fileDict, outFlag, vFlag):
@@ -66,14 +65,23 @@ def main(fileDict, outFlag, vFlag):
     elif loopReadDict['fileType'] == 'FAPSX':
         print('  ----------------------------------------')
         print('  This file a FAPSX log file')
-        fapsxDF = loopReadDict['determBasalDF']
-        thisOutFile = outFlag + '/' + 'fapsxDF_out.csv'
-        fapsxDF.to_csv(thisOutFile)
-
-        # add plotting to the pandas dataframe containing detemine basal data
-        thisOutFile = generatePlot(outFlag, fileDict['person'], fapsxDF)
-        print('saved output figure as ', thisOutFile)
-
         analyzeAllPodsInDeviceLog(fileDict, loopReadDict, outFlag, vFlag)
         thisOutFile = outFlag + '/' + 'logDFCmb_out.csv'
         writeCombinedLogToOutputFile(thisOutFile, loopReadDict['logDF'])
+
+        # Prepare the output from parsing the Determine Basal record FreeAPS X
+        fapsxDF = loopReadDict['determBasalDF']
+        # create a csv file but don't add unique user name/dates to it
+        thisOutFile = outFlag + '/' + 'fapsxDF_out.csv'
+        print("Determine Basal csv file created: ", thisOutFile)
+        fapsxDF.to_csv(thisOutFile)
+
+        # until we get it updated, PC does not yet do plots
+        thisPlatform = platform.system()
+
+        if thisPlatform == 'Windows':
+            print("PC plots do not work yet, skip plots")
+        else:
+            # plot pandas dataframe containing detemine basal data
+            thisOutFile = generatePlot(outFlag, fileDict['person'], fapsxDF)
+            print('Determine Basal plot created:     ', thisOutFile)

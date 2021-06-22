@@ -3,8 +3,11 @@ from main import main
 from fileio.get_file_list import get_file_list, getFileDict
 from fileio.getAnalysisIO import getAnalysisIO
 
-vFlag = 4
-folderPath, outFlag = getAnalysisIO(1, vFlag)
+pathOption = 1  # standard Loop Report file location
+vFlag = 4  # Verbose output - all files to Output location
+macFlag = 0  # use Drobo rather than Mac hard drive
+
+folderPath, outFlag = getAnalysisIO(pathOption, vFlag, macFlag)
 fileDateList = get_file_list(folderPath)
 
 # create fileDict

@@ -3,17 +3,18 @@ import os
 import platform
 
 
-def getAnalysisIO(pathOption, vFlag):
+def getAnalysisIO(pathOption, vFlag, macFlag):
     """
     return filePath, outFlag
-       When doing "real" analysis, use (1, 4)
-       Update to handle mac using same disk as pc when vFlag is 4
+       When doing "real" analysis, use (1, 4, 0) or (1, 4, 1)
+       Add macFlag to handle Mac to use shared drive (Drobo) - default
+       Update pathOption to handle Loop vs FreeAPS X log files
 
        pathOption:
           0 use folder for partial / special purpose / older LoopReportFiles
-          1 use folder with complete Loop Reports
-          string to specify a specific users' folder by their name
-          3 use this when parsing FAPSX log files
+          1 use folder with complete Loop Reports (shared remote drive Mac/PC)
+          string for specific users' folder by name (Loop Reports)
+          3 parse FreeAPS X log files
 
        vFlag:
          0: output analysis to terminal window, outFlag = 0
@@ -21,15 +22,19 @@ def getAnalysisIO(pathOption, vFlag):
          2: output analysis to terminal window, outFlag = 0
          3: output podInitCmdCount to survey file, outFlag is filename
          4: (init, podState, full df) to csv, outFlag verboseOutput folder
+
+       macFlag:
+         0: use Drobo folder for Mac
+         1: use local disk for Mac
     """
 
     thisPlatform = platform.system()
 
     if thisPlatform == 'Darwin':
-        if vFlag == 4:
-            topPath = os.path.expanduser('/Volumes/MarionPC/SharedFiles')
-        else:
+        if macFlag == 1:  # use local hard drive
             topPath = os.path.expanduser('~/dev/LoopReportRepository')
+        else:
+            topPath = os.path.expanduser('/Volumes/MarionPC/SharedFiles')
     elif thisPlatform == 'Windows':
         topPath = 'm:/SharedFiles'
     else:
@@ -66,6 +71,5 @@ def getAnalysisIO(pathOption, vFlag):
 
     # modify outFlag when pathOption is 3
     outFlag = topPath + '/' + 'FAPSX_Files' + '/' + 'Output'
-
 
     return filePath, outFlag
