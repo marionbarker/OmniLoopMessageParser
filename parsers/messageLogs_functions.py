@@ -133,7 +133,8 @@ def splitFullMsg(hexToParse):
         msgDict['seqNum'] = (byte89 & 0x3C) >> 2
     msgDict['rawHex'] = hexToParse
     msgDict['CRC'] = '0x' + CRC
-    if msgDict['msgType'] == '0x0202':
+    noisy = 0
+    if noisy and msgDict['msgType'] == '0x0202':
         print(f' ** {msgDict["msgMeaning"]}, gain: {msgDict["recvGain"]}, \
                 rssi: {msgDict["rssiValue"]}')
     return address, msgDict
@@ -339,8 +340,6 @@ def loop_read_file(filename):
         loopVersionDict = extract_loop_version(parsed_content, firstChars)
     if 'PodState' in parsed_content:
         podMgrDict = extract_pod_manager(parsed_content)
-        print('HERE ---')
-        printDict(podMgrDict)
     else:
         podMgrDict = {}
 
