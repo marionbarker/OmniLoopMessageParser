@@ -31,7 +31,7 @@ def main(fileDict, outFlag, vFlag):
 
     if len(loopReadDict['podMgrDict']) and vFlag == 4:
         commentString = 'podMgrDict reported in file'
-        maxItems = 10
+        maxItems = 3  # address, activated at, expired at
         printLoopDict(commentString, maxItems, loopReadDict['podMgrDict'])
 
     if loopReadDict['fileType'] == "unknown":
