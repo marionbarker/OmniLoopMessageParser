@@ -5,7 +5,7 @@ from fileio.getAnalysisIO import getAnalysisIO
 
 pathOption = 1  # standard Loop Report file location
 vFlag = 4  # Verbose output - all files to Output location
-macFlag = 0  # use Drobo rather than Mac hard drive
+macFlag = 0  # 0 = use Drobo; 1 use Mac hard drive
 
 folderPath, outFlag = getAnalysisIO(pathOption, vFlag, macFlag)
 fileDateList = get_file_list(folderPath)

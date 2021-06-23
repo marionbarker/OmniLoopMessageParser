@@ -31,8 +31,9 @@ def getAnalysisIO(pathOption, vFlag, macFlag):
     thisPlatform = platform.system()
 
     if thisPlatform == 'Darwin':
-        if macFlag == 1:  # use local hard drive
+        if macFlag == 1:  # use local hard drive (not typical, remind user)
             topPath = os.path.expanduser('~/dev/LoopReportRepository')
+            print(' *** Top Path for Mac: ', topPath)
         else:
             topPath = os.path.expanduser('/Volumes/MarionPC/SharedFiles')
     elif thisPlatform == 'Windows':
