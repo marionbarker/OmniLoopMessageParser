@@ -119,8 +119,15 @@ def checkAction(frame):
         #   but some have same index command as 2-msg sequences
         #   protect against 0 index in matching command for those cases
         if ((thisIdx[0] < 2) and (thisID == 2)):
+            badIdx = np.append(badIdx, thisIdx[0])
             thisIdx = np.delete(thisIdx, 0)
-            badIdx = np.append(badIdx, 0)
+        if (thisIdx[-1] > len(thisFrame)-1):
+            print("keys, values, thisIdx[-1] is ", keys, values)
+            print("thisIdx[-1], badIdx is ", thisIdx[-1], badIdx)
+            badIdx = np.append(badIdx, thisIdx[-1])
+            thisIdx = np.delete(thisIdx, -1)
+            print("thisIdx[-1], badIdx is ", thisIdx[-1], badIdx)
+
         # go thru adjacent messages to ensure they match the matchList
         for ii in range(-thisID, msgPerAction-thisID):
             if ii == thisID:
