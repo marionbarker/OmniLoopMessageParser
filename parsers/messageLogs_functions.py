@@ -363,6 +363,7 @@ def otherP(message):
     # later can add other devices, for now, just not Omnipod
     return message['device'] != "Omnipod"
 
+
 def extract_raw(raw_content):
     logDF = pd.DataFrame({})
     determBasalDF = pd.DataFrame({})
@@ -382,10 +383,12 @@ def extract_raw(raw_content):
         print('last line\n', lines_raw[-1])
 
     pod_patt = "318 - DEV: Device message:"
-    pod_messages = [x for x in lines_raw if x.find(pod_patt)>-1]
+    pod_messages = [x for x in lines_raw if x.find(pod_patt) > -1]
     if verbose_flag:
-        print('first pod line\n', pod_messages[0][0:19], ' ', pod_messages[0][166:])
-        print('last pod line\n', pod_messages[-1][0:19], ' ', pod_messages[-1][166:])
+        print('first pod line\n', pod_messages[0][0:19], ' ',
+              pod_messages[0][166:])
+        print('last pod line\n', pod_messages[-1][0:19], ' ',
+              pod_messages[-1][166:])
         num_lines = len(pod_messages)
         print('Found ', num_lines)
     # brute force for now - get time and hex code
@@ -400,14 +403,15 @@ def extract_raw(raw_content):
         print('number of messages is ', len(messages))
     logDF = pd.DataFrame(messages)
     logDF['time'] = pd.to_datetime(logDF['time'])
-    #logDF['time_delta'] = (logDF['time'] - \
+    # logDF['time_delta'] = (logDF['time'] - \
     #        logDF['time'].shift()).dt.seconds.fillna(0).astype(float)
-    logDF['deltaSec'] = (logDF['time'] - \
-            logDF['time'].shift()).dt.seconds.fillna(0).astype(float)
+    logDF['deltaSec'] = (
+        logDF['time'] -
+        logDF['time'].shift()).dt.seconds.fillna(0).astype(float)
 
     # now extract the determine basal message
     db_patt = "68 - DEV: SUGGESTED:"
-    #db_messages = [x for x in lines_raw if x.find(db_patt)>-1]
+    # db_messages = [x for x in lines_raw if x.find(db_patt)>-1]
     idx = 0
     numLines = len(lines_raw)
     line_array = []
@@ -416,14 +420,14 @@ def extract_raw(raw_content):
     cob_array = []
     iob_array = []
     print("numLines = ", numLines)
-    while idx<numLines-1:
+    while idx < numLines-1:
         thisLine = lines_raw[idx]
-        if thisLine.find(db_patt)>-1:
+        if thisLine.find(db_patt) > -1:
             # extract dateTime from beginning of line
             timestamp = thisLine[0:10] + ' ' + thisLine[11:19]
             line_in_file = idx
             # find first "IOB" (predBGIOB) and extract first BG value
-            while thisLine.find("IOB")==-1 and idx<numLines-1:
+            while thisLine.find("IOB") == -1 and idx < numLines-1:
                 idx = idx+1
                 thisLine = lines_raw[idx]
             idx = idx+1
