@@ -12,7 +12,7 @@ folderPath, outFlag = getAnalysisIO(pathOption, loopType, vFlag, macFlag)
 fileDateList = get_file_list(folderPath)
 
 # create fileDict
-fileDict = getFileDict(folderPath, fileDateList[-1][0])
+fileDict = getFileDict(folderPath, fileDateList[-1][0], loopType)
 
 # nominal verbose output
 main(fileDict, outFlag, vFlag)
