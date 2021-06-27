@@ -503,6 +503,120 @@ def extract_raw(raw_content):
     return logDF, determBasalDF
 
 
+def extract_raw_pod(raw_content):
+    logDF = pd.DataFrame({})
+    verbose_flag = 1
+    if verbose_flag:
+        print(">>>   call to extract_raw_pod")
+        print("first 256 characters : ", raw_content[:256])
+        print("last  256 characters : ", raw_content[-256:])
+
+    # split by newline:
+    lines_raw = raw_content.splitlines()
+    if verbose_flag:
+        print('first line\n', lines_raw[0])
+        print('last line\n', lines_raw[-1])
+
+    # pod_patt = "318 - DEV: Device message:"
+    # using the grep, this should no longer be necessary
+    pod_patt = "318 - DEV:"
+    pod_messages = [x for x in lines_raw if x.find(pod_patt) > -1]
+    if verbose_flag:
+        print('first pod line\n', pod_messages[0][0:19], ' ',
+              pod_messages[0][166:])
+        print('last pod line\n', pod_messages[-1][0:19], ' ',
+              pod_messages[-1][166:])
+        num_lines = len(pod_messages)
+        print('Found ', num_lines)
+    messages = [fapsx_message_dict(m) for m in pod_messages]
+
+    verbose_flag = 0
+    if verbose_flag:
+        print('first messages line\n', messages[0])
+        print('last messages line\n', messages[-1])
+        print('number of messages is ', len(messages))
+    logDF = pd.DataFrame(messages)
+    logDF['time'] = pd.to_datetime(logDF['time'])
+    logDF['deltaSec'] = (
+        logDF['time'] -
+        logDF['time'].shift()).dt.seconds.fillna(0).astype(float)
+
+    return logDF
+
+
+def extract_raw_determBasal(raw_content):
+
+    determBasalDF = pd.DataFrame({})
+    date_patt = raw_content[:8]
+    verbose_flag = 1
+    if verbose_flag:
+        print(">>>   call to extract_raw_determBasal")
+        print("first 256 characters : ", raw_content[:256])
+        print("last  256 characters : ", raw_content[-256:])
+        print("date_patt is ", date_patt)
+
+    # put a hack here for cases where there are no determine basal record
+    # this enables code to run and parse pod logs.  Fix better later
+    quit_here = 0
+    if quit_here:
+        return determBasalDF
+
+    # split by newline:
+    lines_raw = raw_content.splitlines()
+
+    # now extract the determine basal message
+    # use the time pattern from messages to id end of json strings
+    determBasal_patt = "68 - DEV: SUGGESTED:"
+    idx = 0
+    numLines = len(lines_raw)
+    line_array = []
+    timestamp_array = []
+    json_length_array = []
+    bg_array = []
+    cob_array = []
+    iob_array = []
+    print("numLines = ", numLines)
+    while idx < numLines-1:
+        thisLine = lines_raw[idx]
+        if determBasal_patt in thisLine:
+            # extract dateTime from beginning of line
+            timestamp = thisLine[0:10] + ' ' + thisLine[11:19]
+            # json string begins at the { at end of this line and ends before
+            #   beginning of the next line which start with date_patt,
+            #   white space is ignored outside of quotes
+            jdx = idx
+            json_message = "{"
+            while jdx < numLines-1:
+                jdx += 1
+                if lines_raw[jdx][:8] == date_patt:
+                    break
+                json_message += lines_raw[jdx]
+
+            json_dict = json.loads(json_message)
+
+            # print(idx, timestamp, cob, iob)
+            line_array.append(idx)
+            timestamp_array.append(timestamp)
+            bg_array.append(json_dict['bg'])
+            cob_array.append(float(json_dict['COB']))
+            iob_array.append(float(json_dict['IOB']))
+            json_length_array.append(jdx - idx)
+            idx = jdx
+        else:
+            idx = idx+1
+            thisLine = lines_raw[idx]
+
+        d = {'date_time': timestamp_array, 'line#': line_array,
+             'BG': bg_array, 'COB': cob_array, 'IOB': iob_array,
+             'num_json_lines': json_length_array}
+        determBasalDF = pd.DataFrame(d)
+        # split the time into a new column
+        time_array = pd.to_datetime(determBasalDF['date_time']).dt.time
+        determBasalDF['time'] = time_array
+
+    return determBasalDF
+
+
 def extract_messages(recordType, parsed_content):
     # set up default
     noisy = 0
