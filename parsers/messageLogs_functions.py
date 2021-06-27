@@ -36,6 +36,7 @@ import os
 from collections import Counter
 import numpy as np
 import json
+from datetime import datetime
 
 
 # Some markdown headings don't start on their own line. This regular expression
@@ -282,8 +283,8 @@ def generate_table(podFrame, radio_on_time):
     return podFrame
 
 
-# add check of filename ending string to split between Loop and FAPSX
-def loop_read_file(filename):
+# pass in fileDict instead of filename
+def loop_read_file(fileDict):
     """
       Handles either MessageLog or Device Communication Log or FAPSX log
       Note - there were several version of having status being tacked
@@ -291,68 +292,99 @@ def loop_read_file(filename):
       Break into more modular chunks
       returns a dictionary of items
     """
-    fileType = "unknown"
+    fileDict['recordType'] = "unknown"
     parsed_content = {}
-    # define empty dataframe, if fapsx, fill with determine basal info from log
+    # define empty dataframes
+    logDF = pd.DataFrame({})
     determBasalDF = pd.DataFrame({})
-    # decide if this is an md file or a txt file.
-    last3 = filename[-3:]
-    file = open(filename, "r", encoding='UTF8')
-    if (last3==".md"):
-        parsed_content, firstChars = parse_filehandle(file)
-    else:
-        raw_content = file.read()
-    if parsed_content.get('MessageLog'):
-        fileType = "messageLog"
-        # handle various versions of status: being tacked onto end
-        tmp = parsed_content['MessageLog'][-1]
-        tmpEnd = tmp[len(tmp)-7:]
-        # Handle case where last line of messageLog is 'status: ##'
-        if tmpEnd == 'status:':
-            # print(' *** Last Message:\n', parsed_content['MessageLog'][-1])
-            if len(tmp) == 7:
-                # print('  length of last message was {:d}'.format(len(tmp)))
-                parsed_content['MessageLog'] = \
-                                   parsed_content['MessageLog'][:-1]
-            else:
-                # print('  length of last message was {:d}
-                #        (not 7)'.format(len(tmp)))
-                parsed_content['MessageLog'][-1] = tmp[:len(tmp)-8]
-            # print('  ',parsed_content['MessageLog'][-1], '\n ***\n')
-    if parsed_content.get('Device Communication Log'):
-        fileType = "deviceLog"
-    # For FAPSX, use extract_raw to parse, create new dataframe from FAPSX
-    #   enable tracking of IOB, COB and BG
-    # For Loop return dataframe from entire log, podDict, fault_report separately
-    if fileType == 'unknown':
-        logDF, determBasalDF = extract_raw(raw_content)
-        # print('check logDF')
-        if logDF.empty:
-            fileType = "not FAPSX"
-            # print(logDF)
-        else:
-            fileType = "FAPSX"
-            # print(logDF)
-        faultInfoDict = {}
-        loopVersionDict = {}
-    else:
-        logDF = extract_messages(fileType, parsed_content)
-        faultInfoDict = extract_fault_info(parsed_content)
-        loopVersionDict = extract_loop_version(parsed_content, firstChars)
-    if 'PodState' in parsed_content:
-        podMgrDict = extract_pod_manager(parsed_content)
-    else:
-        podMgrDict = {}
+    podMgrDict = {}
+    loopVersionDict = {}
+    faultInfoDict = {}
+    noisy = 0
 
-    loopReadDict = {'fileType': fileType,
+    # prepare default return dictonary, note that fileDict might be modified
+    loopReadDict = {'fileDict': fileDict,
                     'logDF': logDF,
                     'podMgrDict': podMgrDict,
                     'faultInfoDict': faultInfoDict,
                     'loopVersionDict': loopVersionDict,
                     'determBasalDF': determBasalDF}
 
-    # ensure file is closed
-    file.close()
+    # check loopType and act accordingly
+    filename = fileDict['filename']
+    if fileDict['loopType'].lower() == "loop":
+        file = open(filename, "r", encoding='UTF8')
+        parsed_content, firstChars = parse_filehandle(file)
+        # ensure file is closed
+        file.close()
+        if parsed_content.get('MessageLog'):
+            fileDict['recordType'] = "messageLog"
+            # handle various versions of status: being tacked onto end
+            tmp = parsed_content['MessageLog'][-1]
+            tmpEnd = tmp[len(tmp)-7:]
+            # Handle case where last line of messageLog is 'status: ##'
+            if tmpEnd == 'status:':
+                if noisy:
+                    print(' *** Last Message:\n',
+                          parsed_content['MessageLog'][-1])
+                if len(tmp) == 7:
+                    if noisy:
+                        print('  length of last message was {:d}'.
+                              format(len(tmp)))
+                    parsed_content['MessageLog'] = \
+                        parsed_content['MessageLog'][:-1]
+                else:
+                    if noisy:
+                        print('  length of last message was {:d} (not 7)'.
+                              format(len(tmp)))
+                    parsed_content['MessageLog'][-1] = tmp[:len(tmp)-8]
+                    if noisy:
+                        print('  ',
+                              parsed_content['MessageLog'][-1], '\n ***\n')
+        if parsed_content.get('Device Communication Log'):
+            fileDict['recordType'] = "deviceLog"
+
+        logDF = extract_messages(fileDict['recordType'], parsed_content)
+        faultInfoDict = extract_fault_info(parsed_content)
+        loopVersionDict = extract_loop_version(parsed_content, firstChars)
+        if 'PodState' in parsed_content:
+            podMgrDict = extract_pod_manager(parsed_content)
+        else:
+            podMgrDict = {}
+
+    elif fileDict['loopType'].lower() == "fx":
+        file = open(filename, "r", encoding='UTF8')
+        raw_content = file.read()
+        # ensure file is closed
+        file.close()
+        # For FAPSX, use extract_raw to parse, create new dataframe from FAPSX
+        #   enable tracking of IOB, COB and BG
+        if noisy:
+            printDict(fileDict)
+        logDF, determBasalDF = extract_raw(raw_content)
+        if noisy:
+            print('check logDF', logDF)
+        if logDF.empty:
+            fileDict['recordType'] = "not_FAPSX"
+            fileDict['date'] = fileDict['recordType']
+            # print(logDF)
+        else:
+            fileDict['recordType'] = "FAPSX"
+            thisDate = logDF.loc[0, 'time']
+            fileDict['date'] = thisDate.strftime('%Y%m%d')
+        faultInfoDict = {}
+        loopVersionDict = {}
+    else:
+        print('loopType is not recognized')
+        return loopReadDict
+
+    loopReadDict = {'fileDict': fileDict,
+                    'logDF': logDF,
+                    'podMgrDict': podMgrDict,
+                    'faultInfoDict': faultInfoDict,
+                    'loopVersionDict': loopVersionDict,
+                    'determBasalDF': determBasalDF}
+
     return loopReadDict
 
 
@@ -410,6 +442,12 @@ def extract_raw(raw_content):
         logDF['time'] -
         logDF['time'].shift()).dt.seconds.fillna(0).astype(float)
 
+    # put a hack here for cases where there are no determine basal record
+    # this enables code to run and parse pod logs.  Fix better later
+    quit_here = 0
+    if quit_here:
+        return logDF, determBasalDF
+
     # now extract the determine basal message
     # use the time pattern from messages to id end of json strings
     date_patt = pod_messages[0][:8]
@@ -465,14 +503,14 @@ def extract_raw(raw_content):
     return logDF, determBasalDF
 
 
-def extract_messages(fileType, parsed_content):
+def extract_messages(recordType, parsed_content):
     # set up default
     noisy = 0
     pod_messages = ['nil']
-    if fileType == "messageLog":
+    if recordType == "messageLog":
         # only pod messages are found in this section of the Loop Report
         pod_messages = [message_dict(m) for m in parsed_content['MessageLog']]
-    elif fileType == "deviceLog":
+    elif recordType == "deviceLog":
         # pod messages interleaved with CGM messages in this Loop Report
         messages = [device_message_dict(m)
                     for m in parsed_content['Device Communication Log']]
