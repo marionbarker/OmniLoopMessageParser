@@ -336,9 +336,9 @@ def writeCombinedLogToOutputFile(outFile, logDF):
     return
 
 
-def generatePlot(outFlag, person, df):
-    datestring = df.loc[0, 'date_time']
-    datestring = datestring[:10]
+def generatePlot(outFlag, fileDict, df):
+    person = fileDict['person']
+    datestring = fileDict['date']
     thisOutFile = outFlag + '/' + person + '_' + \
         datestring + '_' + 'plot.png'
     thisOutFile
