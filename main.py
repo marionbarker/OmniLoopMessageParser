@@ -8,13 +8,12 @@ import platform
 
 
 def main(fileDict, outFlag, vFlag):
-    # determine type of Loop Report
-    filename = fileDict['filename']
-    loopReadDict = loop_read_file(filename)
+    # read file, create dictionaries and DataFrames
+    loopReadDict = loop_read_file(fileDict)
     # loopReadDict has keys:
     #   fileType, logDF, podMgrDict, faultInfoDict,
     #   loopVersionDict, determBasalDF
-    # print("fileType = ", loopReadDict['fileType'])
+    print("fileType = ", loopReadDict['fileType'])
     fapsxDF = loopReadDict['determBasalDF']
     if len(fapsxDF) > 0:
         print("Max # json lines ", fapsxDF['num_json_lines'].max())
