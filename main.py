@@ -15,7 +15,9 @@ def main(fileDict, outFlag, vFlag):
     #   fileType, logDF, podMgrDict, faultInfoDict,
     #   loopVersionDict, determBasalDF
     # print("fileType = ", loopReadDict['fileType'])
-    # print(loopReadDict['determBasalDF'])
+    fapsxDF = loopReadDict['determBasalDF']
+    if len(fapsxDF) > 0:
+        print("Max # json lines ", fapsxDF['num_json_lines'].max())
 
     print('\n------------------------------------------')
     print('  File: {:s}'.format(fileDict["personFile"]))

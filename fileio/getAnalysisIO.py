@@ -3,7 +3,7 @@ import os
 import platform
 
 
-def getAnalysisIO(pathOption, vFlag, macFlag):
+def getAnalysisIO(pathOption, loopType, vFlag, macFlag):
     """
     return filePath, outFlag
        When doing "real" analysis, use (1, 4, 0) or (1, 4, 1)
@@ -11,10 +11,15 @@ def getAnalysisIO(pathOption, vFlag, macFlag):
        Update pathOption to handle Loop vs FreeAPS X log files
 
        pathOption:
-          0 use folder for partial / special purpose / older LoopReportFiles
-          1 use folder with complete Loop Reports (shared remote drive Mac/PC)
-          string for specific users' folder by name (Loop Reports)
-          3 parse FreeAPS X log files
+          # now common for Loop or FAPSX files
+          0 use folder for partial / special purpose / older Files (Loop only)
+          1 use standard folder for loopType of file
+          string for specific users' folder by name
+
+       loopType:
+          # identify if Loop or FAPSX files
+          "Loop" for Loop Report markdown file
+          "FX"   for FreeAPS X files
 
        vFlag:
          0: output analysis to terminal window, outFlag = 0
@@ -44,12 +49,15 @@ def getAnalysisIO(pathOption, vFlag, macFlag):
 
     if pathOption == 0:
         filePath = topPath + '/' + 'Other_LoopReportFiles'
-    elif pathOption == 1:
+    elif pathOption == 1 and loopType == "Loop":
         filePath = topPath + '/' + 'LoopReportFiles'
-    elif pathOption == 3:
+    elif pathOption == 1 and loopType == "FX":
         filePath = topPath + '/' + 'FAPSX_Files' + '/' + 'Input'
-    elif type(pathOption) == str:
+    elif type(pathOption) == str and loopType == "Loop":
         filePath = topPath + '/' + 'LoopReportFiles' + '/' + pathOption
+    elif type(pathOption) == str and loopType == "FX":
+        filePath = topPath + '/' + 'FAPSX_Files' + '/' + 'Input' + \
+                   '/' + pathOption
     else:
         print(' pathOption not recognized for getAnalysisIO')
         filePath = ''

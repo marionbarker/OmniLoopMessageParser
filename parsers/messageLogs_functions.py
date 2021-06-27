@@ -419,13 +419,14 @@ def extract_raw(raw_content):
     numLines = len(lines_raw)
     line_array = []
     timestamp_array = []
+    json_length_array = []
     bg_array = []
     cob_array = []
     iob_array = []
     print("numLines = ", numLines)
     while idx < numLines-1:
         thisLine = lines_raw[idx]
-        if thisLine.find(determBasal_patt) > -1:
+        if determBasal_patt in thisLine:
             # extract dateTime from beginning of line
             timestamp = thisLine[0:10] + ' ' + thisLine[11:19]
             # json string begins at the { at end of this line and ends before
@@ -447,13 +448,15 @@ def extract_raw(raw_content):
             bg_array.append(json_dict['bg'])
             cob_array.append(float(json_dict['COB']))
             iob_array.append(float(json_dict['IOB']))
+            json_length_array.append(jdx - idx)
             idx = jdx
         else:
             idx = idx+1
             thisLine = lines_raw[idx]
 
-        d = {'line#': line_array, 'date_time': timestamp_array,
-             'BG': bg_array, 'COB': cob_array, 'IOB': iob_array}
+        d = {'date_time': timestamp_array, 'line#': line_array,
+             'BG': bg_array, 'COB': cob_array, 'IOB': iob_array,
+             'num_json_lines': json_length_array}
         determBasalDF = pd.DataFrame(d)
         # split the time into a new column
         time_array = pd.to_datetime(determBasalDF['date_time']).dt.time
