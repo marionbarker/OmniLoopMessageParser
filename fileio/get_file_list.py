@@ -48,16 +48,23 @@ def get_file_list(folderPath):
     returnList = sorted(zippedList, key=lambda x: x[1])
 
     # return the list of files and dates sorted by date
+    # note - can touch a file to make it most recent to rerun
+    # date of data in file internal to the file
     return returnList
 
 
-def getFileDict(folderPath, personFile):
+def getFileDict(folderPath, personFile, loopType):
+    thisDate = "unknown"
     fileDict = {'filename': folderPath + '/' + personFile,
                 'path': folderPath,
-                'personFile': personFile}
+                'personFile': personFile,
+                'loopType': loopType,
+                'recordType': "unknown",
+                'date': thisDate}
     # parse the person and date from in personFile
-    #   older form person/LoopReport_date.md)
-    #   add new form: yyyymmdd_log.txt or yyyymmdd_log_prev.txt
+    #   For loopType = "Loop", get date from person/LoopReport_date.md)
+    #   For loopType = "FX", the first 8 characters in the file are the date.
+    # The recordType and date may be updated in parsers/loop_read_file
     val = '^.*/'
     thisPerson = re.findall(val, personFile)
     if not thisPerson:
@@ -67,24 +74,22 @@ def getFileDict(folderPath, personFile):
 
     fileDict['person'] = thisPerson
 
-    val = '/.*$'
-    thisFullName = re.findall(val, personFile)
-    thisFullName = thisFullName[0]
-    thisFullName = thisFullName[1:]
-    thisFullName = thisFullName.replace(' ', '')  # remove spaces
-    thisFullName = thisFullName.replace('-', '')  # remove hypens
-    thisFullName = thisFullName.replace('_', '')  # remove underscores
-    # trim off some characters
-    thisDate = thisFullName[10:18] + '_' + thisFullName[18:22]
-    fileDict['date'] = thisDate
+    if loopType.lower() == "loop":
+        val = '/.*$'
+        thisFullName = re.findall(val, personFile)
+        thisFullName = thisFullName[0]
+        thisFullName = thisFullName[1:]
+        thisFullName = thisFullName.replace(' ', '')  # remove spaces
+        thisFullName = thisFullName.replace('-', '')  # remove hypens
+        thisFullName = thisFullName.replace('_', '')  # remove underscores
+        # trim off some characters
+        thisDate = thisFullName[10:18] + '_' + thisFullName[18:22]
+        fileDict['date'] = thisDate
 
-    # decide if this is a txt file, correct the date
-    checkString = thisFullName[-3:]
-    if (checkString == "txt"):
-        fileDict['date'] = thisFullName[:8]
-        # if this is not log.txt, add _prev
-        checkString = thisFullName[-7:]
-        if (checkString != "log.txt"):
-            fileDict['date'] = fileDict['date'] + "_prev"
+    elif loopType.lower() == "fx":
+        fileDict['date'] = "WillReadFromFileAndUpdate"
+
+    else:
+        print("loopType is not recognized: ", loopType)
 
     return fileDict
