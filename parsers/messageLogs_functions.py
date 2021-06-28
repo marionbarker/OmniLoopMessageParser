@@ -353,15 +353,31 @@ def loop_read_file(fileDict):
             podMgrDict = {}
 
     elif fileDict['loopType'].lower() == "fx":
-        file = open(filename, "r", encoding='UTF8')
-        raw_content = file.read()
-        # ensure file is closed
+        # file = open(filename, "r", encoding='UTF8')
+        ofile = "/Users/marion/tmpdir/tmpfile1.txt"
+        grep_str = '"318 - DEV"'
+        sys_str = "grep " + grep_str + " " + filename + " > " + ofile
+        # print("sys_str ", sys_str)
+        os.system(sys_str)
+        file = open(ofile, "r", encoding='UTF8')
+        raw_content_pod = file.read()
+        file.close()
+        ofile = "/Users/marion/tmpdir/tmpfile2.txt"
+        grep_str = '"68 - DEV"'
+        sys_str = "grep -A 250 " + grep_str + " " + filename + " > " + ofile
+        # print("sys_str ", sys_str)
+        os.system(sys_str)
+        file = open(ofile, "r", encoding='UTF8')
+        raw_content_determBasal = file.read()
         file.close()
         # For FAPSX, use extract_raw to parse, create new dataframe from FAPSX
         #   enable tracking of IOB, COB and BG
+        # call the 2 new functions using the content split with grep
         if noisy:
             printDict(fileDict)
-        logDF, determBasalDF = extract_raw(raw_content)
+        # logDF, determBasalDF = extract_raw(raw_content)
+        logDF = extract_raw_pod(raw_content_pod)
+        determBasalDF = extract_raw_determBasal(raw_content_determBasal)
         if noisy:
             print('check logDF', logDF)
         if logDF.empty:
@@ -400,8 +416,8 @@ def otherP(message):
 def extract_raw(raw_content):
     logDF = pd.DataFrame({})
     determBasalDF = pd.DataFrame({})
-    verbose_flag = 0
-    if verbose_flag:
+    noisy = 0
+    if noisy:
         print(">>>   call to extract_raw placeholder")
         print("first 256 characters")
         print(raw_content[:256])
@@ -411,13 +427,13 @@ def extract_raw(raw_content):
     # extract content (between /n) with this string:
     #    "318 - DEV: Device message:"
     lines_raw = raw_content.splitlines()
-    if verbose_flag:
+    if noisy:
         print('first line\n', lines_raw[0])
         print('last line\n', lines_raw[-1])
 
     pod_patt = "318 - DEV: Device message:"
     pod_messages = [x for x in lines_raw if x.find(pod_patt) > -1]
-    if verbose_flag:
+    if noisy:
         print('first pod line\n', pod_messages[0][0:19], ' ',
               pod_messages[0][166:])
         print('last pod line\n', pod_messages[-1][0:19], ' ',
@@ -429,8 +445,8 @@ def extract_raw(raw_content):
 #   2021-06-06T00:03:53-0700 [DeviceManager] DeviceDataManager.swift - deviceManager(_:logEventForDeviceIdentifier:type:message:completion:) - 318 - DEV: Device message: 1f091a4634030e010003e8
     messages = [fapsx_message_dict(m) for m in pod_messages]
 
-    verbose_flag = 0
-    if verbose_flag:
+    noisy = 0
+    if noisy:
         print('first messages line\n', messages[0])
         print('last messages line\n', messages[-1])
         print('number of messages is ', len(messages))
@@ -480,13 +496,19 @@ def extract_raw(raw_content):
 
             json_dict = json.loads(json_message)
 
-            # print(idx, timestamp, cob, iob)
-            line_array.append(idx)
-            timestamp_array.append(timestamp)
-            bg_array.append(json_dict['bg'])
-            cob_array.append(float(json_dict['COB']))
-            iob_array.append(float(json_dict['IOB']))
-            json_length_array.append(jdx - idx)
+            # check configuration of json_dict
+            if "bg" in json_dict:
+
+                # print(idx, timestamp, cob, iob)
+                line_array.append(idx)
+                timestamp_array.append(timestamp)
+                bg_array.append(json_dict['bg'])
+                cob_array.append(float(json_dict['COB']))
+                iob_array.append(float(json_dict['IOB']))
+                json_length_array.append(jdx - idx)
+            else:
+                print("json_dict missing bg, skipping")
+                printDict(json_dict)
             idx = jdx
         else:
             idx = idx+1
@@ -505,15 +527,15 @@ def extract_raw(raw_content):
 
 def extract_raw_pod(raw_content):
     logDF = pd.DataFrame({})
-    verbose_flag = 1
-    if verbose_flag:
+    noisy = 0
+    if noisy:
         print(">>>   call to extract_raw_pod")
         print("first 256 characters : ", raw_content[:256])
         print("last  256 characters : ", raw_content[-256:])
 
     # split by newline:
     lines_raw = raw_content.splitlines()
-    if verbose_flag:
+    if noisy:
         print('first line\n', lines_raw[0])
         print('last line\n', lines_raw[-1])
 
@@ -521,7 +543,7 @@ def extract_raw_pod(raw_content):
     # using the grep, this should no longer be necessary
     pod_patt = "318 - DEV:"
     pod_messages = [x for x in lines_raw if x.find(pod_patt) > -1]
-    if verbose_flag:
+    if noisy:
         print('first pod line\n', pod_messages[0][0:19], ' ',
               pod_messages[0][166:])
         print('last pod line\n', pod_messages[-1][0:19], ' ',
@@ -530,8 +552,8 @@ def extract_raw_pod(raw_content):
         print('Found ', num_lines)
     messages = [fapsx_message_dict(m) for m in pod_messages]
 
-    verbose_flag = 0
-    if verbose_flag:
+    noisy = 0
+    if noisy:
         print('first messages line\n', messages[0])
         print('last messages line\n', messages[-1])
         print('number of messages is ', len(messages))
@@ -548,18 +570,12 @@ def extract_raw_determBasal(raw_content):
 
     determBasalDF = pd.DataFrame({})
     date_patt = raw_content[:8]
-    verbose_flag = 1
-    if verbose_flag:
+    noisy = 0
+    if noisy:
         print(">>>   call to extract_raw_determBasal")
         print("first 256 characters : ", raw_content[:256])
         print("last  256 characters : ", raw_content[-256:])
         print("date_patt is ", date_patt)
-
-    # put a hack here for cases where there are no determine basal record
-    # this enables code to run and parse pod logs.  Fix better later
-    quit_here = 0
-    if quit_here:
-        return determBasalDF
 
     # split by newline:
     lines_raw = raw_content.splitlines()
@@ -569,13 +585,18 @@ def extract_raw_determBasal(raw_content):
     determBasal_patt = "68 - DEV: SUGGESTED:"
     idx = 0
     numLines = len(lines_raw)
+    print("numLines = ", numLines, " in extract_raw_determBasal")
+    if numLines == 0:
+        print("numLines = ", numLines, " in extract_raw_determBasal")
+        return determBasalDF
     line_array = []
     timestamp_array = []
     json_length_array = []
     bg_array = []
     cob_array = []
     iob_array = []
-    print("numLines = ", numLines)
+    if noisy:
+        print("numLines in determBasal section = ", numLines)
     while idx < numLines-1:
         thisLine = lines_raw[idx]
         if determBasal_patt in thisLine:
@@ -594,13 +615,18 @@ def extract_raw_determBasal(raw_content):
 
             json_dict = json.loads(json_message)
 
-            # print(idx, timestamp, cob, iob)
-            line_array.append(idx)
-            timestamp_array.append(timestamp)
-            bg_array.append(json_dict['bg'])
-            cob_array.append(float(json_dict['COB']))
-            iob_array.append(float(json_dict['IOB']))
-            json_length_array.append(jdx - idx)
+            # check configuration of json_dict
+            if "bg" in json_dict:
+                # print(idx, timestamp, cob, iob)
+                line_array.append(idx)
+                timestamp_array.append(timestamp)
+                bg_array.append(json_dict['bg'])
+                cob_array.append(float(json_dict['COB']))
+                iob_array.append(float(json_dict['IOB']))
+                json_length_array.append(jdx - idx)
+            else:
+                print("json_dict missing bg, skipping")
+                printDict(json_dict)
             idx = jdx
         else:
             idx = idx+1
