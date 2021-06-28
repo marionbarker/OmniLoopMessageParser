@@ -87,3 +87,8 @@ def main(fileDict, outFlag, vFlag):
             # plot pandas dataframe containing detemine basal data
             thisOutFile = generatePlot(outFlag, fileDict, fapsxDF)
             print('Determine Basal plot created:     ', thisOutFile)
+
+        # repeat this at end of report to make it easier to find
+        if len(fapsxDF) > 0:
+            print("Min # json lines ", fapsxDF['num_json_lines'].min())
+            print("Max # json lines ", fapsxDF['num_json_lines'].max())
