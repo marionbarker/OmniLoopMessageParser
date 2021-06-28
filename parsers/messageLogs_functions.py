@@ -353,6 +353,10 @@ def loop_read_file(fileDict):
             podMgrDict = {}
 
     elif fileDict['loopType'].lower() == "fx":
+        # tried to split this into 2 functions, each with its own grep
+        # and it slowed down again - leave this in one place
+        # Talk to Brian about piping to a string directly instead of using
+        #  tmp files.  And if use tmp files - making them true temps.
         # file = open(filename, "r", encoding='UTF8')
         ofile = "/Users/marion/tmpdir/tmpfile1.txt"
         grep_str = '"318 - DEV"'
@@ -362,6 +366,7 @@ def loop_read_file(fileDict):
         file = open(ofile, "r", encoding='UTF8')
         raw_content_pod = file.read()
         file.close()
+        # for determine basal, max # lines in json (in survey) was 218
         ofile = "/Users/marion/tmpdir/tmpfile2.txt"
         grep_str = '"68 - DEV"'
         sys_str = "grep -A 250 " + grep_str + " " + filename + " > " + ofile
@@ -539,9 +544,10 @@ def extract_raw_pod(raw_content):
         print('first line\n', lines_raw[0])
         print('last line\n', lines_raw[-1])
 
-    # pod_patt = "318 - DEV: Device message:"
-    # using the grep, this should no longer be necessary
-    pod_patt = "318 - DEV:"
+    # Note, there are some 318 - DEV: lines that don't send pod message
+    # Need to come back and fix this, but skip them to avoid problems
+    #  splitting logDF into separate pods later
+    pod_patt = "318 - DEV: Device message:"
     pod_messages = [x for x in lines_raw if x.find(pod_patt) > -1]
     if noisy:
         print('first pod line\n', pod_messages[0][0:19], ' ',
@@ -582,13 +588,16 @@ def extract_raw_determBasal(raw_content):
 
     # now extract the determine basal message
     # use the time pattern from messages to id end of json strings
-    determBasal_patt = "68 - DEV: SUGGESTED:"
+    determBasal_patt = "68 - DEV:"
     idx = 0
     numLines = len(lines_raw)
-    print("numLines = ", numLines, " in extract_raw_determBasal")
+
     if numLines == 0:
         print("numLines = ", numLines, " in extract_raw_determBasal")
         return determBasalDF
+    elif noisy:
+        print("numLines = ", numLines, " in extract_raw_determBasal")
+
     line_array = []
     timestamp_array = []
     json_length_array = []
@@ -645,6 +654,7 @@ def extract_raw_determBasal(raw_content):
 
 def extract_messages(recordType, parsed_content):
     # set up default
+    logDF = pd.DataFrame({})
     noisy = 0
     pod_messages = ['nil']
     if recordType == "messageLog":
@@ -668,8 +678,8 @@ def extract_messages(recordType, parsed_content):
             printList(cgm_messages[-2:-1])
     else:
         print('Filetype is not messageLog or DeviceLog')
-        print('Will parse the raw_content')
-        print(raw_content[0:80])
+        return logDF
+
     # logDF all pod messages in Report (can be across multiple pods)
     logDF = pd.DataFrame(pod_messages)
     logDF['time'] = pd.to_datetime(logDF['time'])
