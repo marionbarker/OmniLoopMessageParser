@@ -8,16 +8,18 @@ import platform
 
 
 def main(fileDict, outFlag, vFlag):
+    # print log process warning message with input file FX
+    if fileDict['loopType'].lower() == 'fx':
+        print('Long process, input file is:')
+        print(' *** ', fileDict['filename'])
+
     # read file, create dictionaries and DataFrames
     loopReadDict = loop_read_file(fileDict)
     # loopReadDict has keys:
     #   fileDict, logDF, podMgrDict, faultInfoDict,
     #   loopVersionDict, determBasalDF
     fileDict = loopReadDict['fileDict']
-    print("fileDict['recordType'] = ", fileDict['recordType'])
     fapsxDF = loopReadDict['determBasalDF']
-    if len(fapsxDF) > 0:
-        print("Max # json lines ", fapsxDF['num_json_lines'].max())
 
     print('\n------------------------------------------')
     print('  File: {:s}'.format(fileDict["personFile"]))
@@ -88,7 +90,7 @@ def main(fileDict, outFlag, vFlag):
             thisOutFile = generatePlot(outFlag, fileDict, fapsxDF)
             print('Determine Basal plot created:     ', thisOutFile)
 
-        # repeat this at end of report to make it easier to find
+        # report # json lines while testing across various log files
         if len(fapsxDF) > 0:
             print("Min # json lines ", fapsxDF['num_json_lines'].min())
             print("Max # json lines ", fapsxDF['num_json_lines'].max())
