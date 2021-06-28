@@ -313,6 +313,7 @@ def loop_read_file(fileDict):
     # check loopType and act accordingly
     filename = fileDict['filename']
     if fileDict['loopType'].lower() == "loop":
+        # for historical reasons, parse_filehandle uses a handle
         file = open(filename, "r", encoding='UTF8')
         parsed_content, firstChars = parse_filehandle(file)
         # ensure file is closed
@@ -353,31 +354,15 @@ def loop_read_file(fileDict):
             podMgrDict = {}
 
     elif fileDict['loopType'].lower() == "fx":
-        # file = open(filename, "r", encoding='UTF8')
-        ofile = "/Users/marion/tmpdir/tmpfile1.txt"
-        grep_str = '"318 - DEV"'
-        sys_str = "grep " + grep_str + " " + filename + " > " + ofile
-        # print("sys_str ", sys_str)
-        os.system(sys_str)
-        file = open(ofile, "r", encoding='UTF8')
-        raw_content_pod = file.read()
-        file.close()
-        ofile = "/Users/marion/tmpdir/tmpfile2.txt"
-        grep_str = '"68 - DEV"'
-        sys_str = "grep -A 250 " + grep_str + " " + filename + " > " + ofile
-        # print("sys_str ", sys_str)
-        os.system(sys_str)
-        file = open(ofile, "r", encoding='UTF8')
-        raw_content_determBasal = file.read()
-        file.close()
-        # For FAPSX, use extract_raw to parse, create new dataframe from FAPSX
+        # For FAPSX, initial prototype read all data and then used
+        # extract_raw to parse, create new dataframe from FAPSX
         #   enable tracking of IOB, COB and BG
-        # call the 2 new functions using the content split with grep
+        # New version, call separates functions
         if noisy:
             printDict(fileDict)
-        # logDF, determBasalDF = extract_raw(raw_content)
-        logDF = extract_raw_pod(raw_content_pod)
-        determBasalDF = extract_raw_determBasal(raw_content_determBasal)
+        # logDF, determBasalDF = extract_raw(filename)
+        logDF = extract_raw_pod(filename)
+        determBasalDF = extract_raw_determBasal(filename)
         if noisy:
             print('check logDF', logDF)
         if logDF.empty:
@@ -413,9 +398,15 @@ def otherP(message):
     return message['device'] != "Omnipod"
 
 
-def extract_raw(raw_content):
+# deprecated function - leave for reference
+def extract_raw(filename):
     logDF = pd.DataFrame({})
     determBasalDF = pd.DataFrame({})
+    # read the temp file
+    file = open(filename, "r", encoding='UTF8')
+    raw_content = file.read()
+    file.close()
+
     noisy = 0
     if noisy:
         print(">>>   call to extract_raw placeholder")
@@ -525,8 +516,25 @@ def extract_raw(raw_content):
     return logDF, determBasalDF
 
 
-def extract_raw_pod(raw_content):
+# parse pod messages into DataFrame
+def extract_raw_pod(filename):
+    # initialize logDF to empty DataFrame
     logDF = pd.DataFrame({})
+
+    # use grep (factor of 3 faster than find on each line)
+    # todo - change this to be a temporary file
+    # or perhaps pipe into string directly - ask Brian
+    tmp_file = "/Users/marion/tmpdir/tmpfile_pod.txt"
+    grep_str = '"318 - DEV"'
+    sys_str = "grep " + grep_str + " " + filename + " > " + tmp_file
+    os.system(sys_str)
+
+    # read the temp file
+    file = open(filename, "r", encoding='UTF8')
+    raw_content = file.read()
+    file.close()
+
+    # parse the messages
     noisy = 0
     if noisy:
         print(">>>   call to extract_raw_pod")
@@ -566,9 +574,24 @@ def extract_raw_pod(raw_content):
     return logDF
 
 
-def extract_raw_determBasal(raw_content):
-
+# parse the determine basal json messages into DataFrame
+def extract_raw_determBasal(filename):
+    # initialize determBasalDF to empty DataFrame
     determBasalDF = pd.DataFrame({})
+
+    # use grep (factor of 3 faster than find on each line)
+    # todo - change this to be a temporary file
+    # or perhaps pipe into string directly - ask Brian
+    tmp_file = "/Users/marion/tmpdir/tmpfile_determ_basal.txt"
+    grep_str = '"68 - DEV"'
+    # in survey of files, max # lines to date is 218, so use 250 in grep
+    sys_str = "grep -A 250 " + grep_str + " " + filename + " > " + tmp_file
+    os.system(sys_str)
+
+    # read the temp file
+    file = open(filename, "r", encoding='UTF8')
+    raw_content = file.read()
+    file.close()
     date_patt = raw_content[:8]
     noisy = 0
     if noisy:
@@ -581,14 +604,18 @@ def extract_raw_determBasal(raw_content):
     lines_raw = raw_content.splitlines()
 
     # now extract the determine basal message
-    # use the time pattern from messages to id end of json strings
-    determBasal_patt = "68 - DEV: SUGGESTED:"
+    # use the date_patt at beginning of line to id end of json strings
+    determBasal_patt = "68 - DEV"
     idx = 0
     numLines = len(lines_raw)
-    print("numLines = ", numLines, " in extract_raw_determBasal")
+
     if numLines == 0:
         print("numLines = ", numLines, " in extract_raw_determBasal")
         return determBasalDF
+    elif noisy:
+        print("numLines = ", numLines, " in extract_raw_determBasal")
+
+    # initialize the arrays to use for DataFrame
     line_array = []
     timestamp_array = []
     json_length_array = []
@@ -597,6 +624,8 @@ def extract_raw_determBasal(raw_content):
     iob_array = []
     if noisy:
         print("numLines in determBasal section = ", numLines)
+
+    # find each json string in lines_raw
     while idx < numLines-1:
         thisLine = lines_raw[idx]
         if determBasal_patt in thisLine:
@@ -617,7 +646,6 @@ def extract_raw_determBasal(raw_content):
 
             # check configuration of json_dict
             if "bg" in json_dict:
-                # print(idx, timestamp, cob, iob)
                 line_array.append(idx)
                 timestamp_array.append(timestamp)
                 bg_array.append(json_dict['bg'])
@@ -668,8 +696,7 @@ def extract_messages(recordType, parsed_content):
             printList(cgm_messages[-2:-1])
     else:
         print('Filetype is not messageLog or DeviceLog')
-        print('Will parse the raw_content')
-        print(raw_content[0:80])
+
     # logDF all pod messages in Report (can be across multiple pods)
     logDF = pd.DataFrame(pod_messages)
     logDF['time'] = pd.to_datetime(logDF['time'])
