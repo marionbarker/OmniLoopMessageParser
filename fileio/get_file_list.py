@@ -30,6 +30,15 @@ def get_file_list(folderPath):
             list_of_dates.append(os.path.getmtime(folderPath +
                                                   '/' + personFile))
 
+    elif thisLevel[0][-3:] == 'txt':
+        for y in thisLevel:
+            if y == '.DS_Store':
+                continue
+            personFile = y
+            list_of_reports.append(personFile)
+            list_of_dates.append(os.path.getmtime(folderPath +
+                                                  '/' + personFile))
+
     else:
         for x in thisLevel:
             if x == '.DS_Store':
