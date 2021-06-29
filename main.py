@@ -20,6 +20,7 @@ def main(fileDict, outFlag, vFlag):
     #   loopVersionDict, determBasalDF
     fileDict = loopReadDict['fileDict']
     fapsxDF = loopReadDict['determBasalDF']
+    # print(loopReadDict)
 
     print('\n------------------------------------------')
     print('  File: {:s}'.format(fileDict["personFile"]))
@@ -69,28 +70,31 @@ def main(fileDict, outFlag, vFlag):
     elif fileDict['recordType'] == 'FAPSX':
         print('  ----------------------------------------')
         print('  This file a FAPSX log file')
-        analyzeAllPodsInDeviceLog(fileDict, loopReadDict, outFlag, vFlag)
-        thisOutFile = outFlag + '/' + 'logDFCmb_out.csv'
-        writeCombinedLogToOutputFile(thisOutFile, loopReadDict['logDF'])
+        logDF = loopReadDict['logDF']
+        if not logDF.empty:
+            analyzeAllPodsInDeviceLog(fileDict, loopReadDict, outFlag, vFlag)
+            thisOutFile = outFlag + '/' + 'logDFCmb_out.csv'
+            writeCombinedLogToOutputFile(thisOutFile, loopReadDict['logDF'])
 
         # Prepare the output from parsing the Determine Basal record FreeAPS X
         fapsxDF = loopReadDict['determBasalDF']
-        # create a csv file but don't add unique user name/dates to it
-        thisOutFile = outFlag + '/' + 'fapsxDF_out.csv'
-        print("Determine Basal csv file created: ", thisOutFile)
-        fapsxDF.to_csv(thisOutFile)
+        if not fapsxDF.empty:
+            # create a csv file but don't add unique user name/dates to it
+            thisOutFile = outFlag + '/' + 'fapsxDF_out.csv'
+            print("Determine Basal csv file created: ", thisOutFile)
+            fapsxDF.to_csv(thisOutFile)
 
-        # until we get it updated, PC does not yet do plots
-        thisPlatform = platform.system()
+            # until we get it updated, PC does not yet do plots
+            thisPlatform = platform.system()
 
-        if thisPlatform == 'Windows':
-            print("PC plots do not work yet, skip plots")
-        else:
-            # plot pandas dataframe containing detemine basal data
-            thisOutFile = generatePlot(outFlag, fileDict, fapsxDF)
-            print('Determine Basal plot created:     ', thisOutFile)
+            if thisPlatform == 'Windows':
+                print("PC plots do not work yet, skip plots")
+            else:
+                # plot pandas dataframe containing detemine basal data
+                thisOutFile = generatePlot(outFlag, fileDict, fapsxDF)
+                print('Determine Basal plot created:     ', thisOutFile)
 
-        # report # json lines while testing across various log files
-        if len(fapsxDF) > 0:
-            print("Min # json lines ", fapsxDF['num_json_lines'].min())
-            print("Max # json lines ", fapsxDF['num_json_lines'].max())
+            # report # json lines while testing across various log files
+            if len(fapsxDF) > 0:
+                print("Min # json lines ", fapsxDF['num_json_lines'].min())
+                print("Max # json lines ", fapsxDF['num_json_lines'].max())
