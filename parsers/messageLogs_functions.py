@@ -155,6 +155,7 @@ def message_dict(data):
         msgDict=msgDict)
     return podMessagesDict
 
+
 def fapsx_message_dict(data):
     # extract dateTtime from beginning of line
     timestamp = data[0:10] + ' ' + data[11:19]
@@ -383,14 +384,15 @@ def loop_read_file(fileDict):
         # logDF, determBasalDF = extract_raw(raw_content)
         logDF = extract_raw_pod(raw_content_pod)
         determBasalDF = extract_raw_determBasal(raw_content_determBasal)
-        if noisy:
-            print('check logDF', logDF)
-        if logDF.empty:
+        fileDict['recordType'] = "FAPSX"  # overwrite if both DF are empty
+        if determBasalDF.empty and logDF.empty:
             fileDict['recordType'] = "not_FAPSX"
             fileDict['date'] = fileDict['recordType']
-            # print(logDF)
+        elif logDF.empty:
+            thisDate = pd.to_datetime(determBasalDF.loc[0,
+                                      'date_time'])
+            fileDict['date'] = thisDate.strftime('%Y%m%d')
         else:
-            fileDict['recordType'] = "FAPSX"
             thisDate = logDF.loc[0, 'time']
             fileDict['date'] = thisDate.strftime('%Y%m%d')
         faultInfoDict = {}
@@ -540,6 +542,14 @@ def extract_raw_pod(raw_content):
 
     # split by newline:
     lines_raw = raw_content.splitlines()
+    numLines = len(lines_raw)
+
+    if numLines == 0:
+        print("numLines = ", numLines, " in extract_raw_pod")
+        return logDF
+    elif noisy:
+        print("numLines = ", numLines, " in extract_raw_pod")
+
     if noisy:
         print('first line\n', lines_raw[0])
         print('last line\n', lines_raw[-1])
