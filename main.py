@@ -100,3 +100,4 @@ def main(fileDict, outFlag, vFlag):
                       determBasalDF['num_json_lines'].min())
                 print("Max # json lines ",
                       determBasalDF['num_json_lines'].max())
+                # print(determBasalDF)
