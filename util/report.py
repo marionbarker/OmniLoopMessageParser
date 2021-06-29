@@ -346,20 +346,35 @@ def generatePlot(outFlag, fileDict, df):
     # Defin near 0 IOB
     nearZeroVal = 0.2
 
-    nrow = 3
+    nrow = 5
     ncol = 1
     day_in_sec = 24*60*60
     two_hr_in_sec = day_in_sec/12
     bottom_ticks = np.arange(0, day_in_sec, step=two_hr_in_sec)
-    fig, axes = plt.subplots(nrow, ncol, figsize=(15, 5))
+    fig, axes = plt.subplots(nrow, ncol, figsize=(15, 7))
+
     axes[0].set_title(person + ' ' + datestring +
-                      '; Neg IOB < {:4.1f}'.format(-nearZeroVal))
+                      '; Neg IOB < {:4.1f}; '.format(-nearZeroVal) +
+                      'Suggested Dosing')
     df.plot.line(x='time', y='BG', c='green', ax=axes[0],
                  xlim=[0, day_in_sec], xticks=bottom_ticks)
     df.plot.line(x='time', y='IOB', c='blue', ax=axes[1],
                  xlim=[0, day_in_sec], xticks=bottom_ticks)
     df.plot.line(x='time', y='COB', c='green', ax=axes[2],
                  xlim=[0, day_in_sec], xticks=bottom_ticks)
+
+    df.plot.line(x='time', y='Basal', c='green', ax=axes[3],
+                 xlim=[0, day_in_sec], xticks=bottom_ticks, label="Basal")
+    df.plot.scatter(x='time', y='Basal', c='green',
+                    ax=axes[3], label="U/hr")
+    df.plot.line(x='time', y='Bolus', c='red', ax=axes[3],
+                 xlim=[0, day_in_sec], xticks=bottom_ticks, label="Bolus")
+    df.plot.scatter(x='time', y='Bolus', c='red',
+                    ax=axes[3], label="units")
+    df.plot.line(x='time', y='SensRatio', c='green', ax=axes[4],
+                 xlim=[0, day_in_sec], xticks=bottom_ticks)
+    df.plot.scatter(x='time', y='SensRatio', c='black',
+                    ax=axes[4])
 
     zeroIOB = df[(df.IOB > -nearZeroVal) & (df.IOB < nearZeroVal)]
     zeroIOB.plot.scatter(x='time', y='BG', c='blue',
@@ -376,6 +391,7 @@ def generatePlot(outFlag, fileDict, df):
                           ax=axes[1], label="Neg IOB")
     dfNegIOB.plot.scatter(x='time', y='COB', c='red',
                           ax=axes[2], label="Neg IOB")
+
     for x in axes:
         x.grid('on')
         x.legend(bbox_to_anchor=(1.11, 1.0), framealpha=1.0)
@@ -398,8 +414,22 @@ def generatePlot(outFlag, fileDict, df):
     b = max(cob_ylim[1], 100)
     axes[2].set_ylim([a, b])
 
+    # Set up y axis for Basal/Bolus
+    axes[3].set_ylabel("Basal/Bolus")
+    unit_ylim = axes[3].get_ylim()
+    a = min(unit_ylim[0], 0)
+    b = 1.2 * unit_ylim[1]
+    axes[3].set_ylim([a, b])
+
+    # Set up sensitivity ratio axis scaling
+    sensRatio_ylim = axes[4].get_ylim()
+    a = min(sensRatio_ylim[0], 0.5)
+    b = max(sensRatio_ylim[1], 1.5)
+    axes[4].set_ylim([a, b])
+
     plt.draw()
     plt.pause(0.001)
+    # plt.pause(5)
     # for use in interactive screen: plt.draw();plt.pause(0.001)
     plt.savefig(thisOutFile)
     plt.close(fig)

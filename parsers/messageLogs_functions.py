@@ -476,14 +476,45 @@ def extract_raw(raw_content):
     date_patt = pod_messages[0][:8]
     determBasal_patt = "68 - DEV: SUGGESTED:"
     # db_messages = [x for x in lines_raw if x.find(determBasal_patt)>-1]
+    """
+     items in json, choose the ones we want:
+        "temp": "absolute",
+        "bg": 79,
+        "tick": "+0",
+        "eventualBG": 111,
+        "insulinReq": -0.25,
+        "reservoir": 75.6,
+        "deliverAt": "2021-06-28T04:02:55.250Z",
+        "sensitivityRatio": 1,
+        "predBGs": { numbers here for one or more predictions}
+        "COB": 18,
+        "IOB": 0.69,
+        "reason": "COB: 18, Dev: 16, BGI: -3, ISF: 56, CR: 13.15,
+                   Target: 82, minPredBG 68, minGuardBG 62, IOBpredBG 54,
+                   COBpredBG 111, UAMpredBG 59; Eventual BG 111 >= 82,
+                   insulinReq -0.25; setting 60m low temp of 0U/h. ",
+        "rate": 0,
+        "duration": 60
+        or
+        "units": 0.075,
+        "duration": 30,
+        "rate": 0.9
+        or
+        nothing - if Skip neutral temps is not selected
+                    and scheduled basal is suggested
+    """
+
     idx = 0
     numLines = len(lines_raw)
     line_array = []
     timestamp_array = []
     json_length_array = []
     bg_array = []
+    sens_array = []
     cob_array = []
     iob_array = []
+    rate_array = []
+    bolus_array = []
     print("numLines = ", numLines)
     while idx < numLines-1:
         thisLine = lines_raw[idx]
@@ -510,8 +541,20 @@ def extract_raw(raw_content):
                 line_array.append(idx)
                 timestamp_array.append(timestamp)
                 bg_array.append(json_dict['bg'])
+                if "sensitivityRatio" in json_dict:
+                    sens_array.append(json_dict['sensitivityRatio'])
+                else:
+                    sens_array.append(np.nan)
                 cob_array.append(float(json_dict['COB']))
                 iob_array.append(float(json_dict['IOB']))
+                if "rate" in json_dict:
+                    rate_array.append(json_dict['rate'])
+                else:
+                    rate_array.append(np.nan)
+                if "units" in json_dict:
+                    bolus_array.append(json_dict['units'])
+                else:
+                    bolus_array.append(np.nan)
                 json_length_array.append(jdx - idx)
             else:
                 print("json_dict missing bg, skipping")
@@ -523,7 +566,8 @@ def extract_raw(raw_content):
 
         d = {'date_time': timestamp_array, 'line#': line_array,
              'BG': bg_array, 'COB': cob_array, 'IOB': iob_array,
-             'num_json_lines': json_length_array}
+             'Bolus': bolus_array, 'Basal': rate_array,
+             'SensRatio': sens_array, 'num_json_lines': json_length_array}
         determBasalDF = pd.DataFrame(d)
         # split the time into a new column
         time_array = pd.to_datetime(determBasalDF['date_time']).dt.time
@@ -608,14 +652,45 @@ def extract_raw_determBasal(raw_content):
     elif noisy:
         print("numLines = ", numLines, " in extract_raw_determBasal")
 
+    """
+     items in json, choose the ones we want:
+        "temp": "absolute",
+        "bg": 79,
+        "tick": "+0",
+        "eventualBG": 111,
+        "insulinReq": -0.25,
+        "reservoir": 75.6,
+        "deliverAt": "2021-06-28T04:02:55.250Z",
+        "sensitivityRatio": 1,
+        "predBGs": { numbers here for one or more predictions}
+        "COB": 18,
+        "IOB": 0.69,
+        "reason": "COB: 18, Dev: 16, BGI: -3, ISF: 56, CR: 13.15,
+                   Target: 82, minPredBG 68, minGuardBG 62, IOBpredBG 54,
+                   COBpredBG 111, UAMpredBG 59; Eventual BG 111 >= 82,
+                   insulinReq -0.25; setting 60m low temp of 0U/h. ",
+        "rate": 0,
+        "duration": 60
+        or
+        "units": 0.075,
+        "duration": 30,
+        "rate": 0.9
+        or
+        nothing - if Skip neutral temps is not selected
+                    and scheduled basal is suggested
+    """
+
+    idx = 0
+    numLines = len(lines_raw)
     line_array = []
     timestamp_array = []
     json_length_array = []
     bg_array = []
+    sens_array = []
     cob_array = []
     iob_array = []
-    if noisy:
-        print("numLines in determBasal section = ", numLines)
+    rate_array = []
+    bolus_array = []
     while idx < numLines-1:
         thisLine = lines_raw[idx]
         if determBasal_patt in thisLine:
@@ -636,12 +711,25 @@ def extract_raw_determBasal(raw_content):
 
             # check configuration of json_dict
             if "bg" in json_dict:
+
                 # print(idx, timestamp, cob, iob)
                 line_array.append(idx)
                 timestamp_array.append(timestamp)
                 bg_array.append(json_dict['bg'])
+                if "sensitivityRatio" in json_dict:
+                    sens_array.append(json_dict['sensitivityRatio'])
+                else:
+                    sens_array.append(np.nan)
                 cob_array.append(float(json_dict['COB']))
                 iob_array.append(float(json_dict['IOB']))
+                if "rate" in json_dict:
+                    rate_array.append(json_dict['rate'])
+                else:
+                    rate_array.append(np.nan)
+                if "units" in json_dict:
+                    bolus_array.append(json_dict['units'])
+                else:
+                    bolus_array.append(np.nan)
                 json_length_array.append(jdx - idx)
             else:
                 print("json_dict missing bg, skipping")
@@ -653,7 +741,8 @@ def extract_raw_determBasal(raw_content):
 
         d = {'date_time': timestamp_array, 'line#': line_array,
              'BG': bg_array, 'COB': cob_array, 'IOB': iob_array,
-             'num_json_lines': json_length_array}
+             'Bolus': bolus_array, 'Basal': rate_array,
+             'SensRatio': sens_array, 'num_json_lines': json_length_array}
         determBasalDF = pd.DataFrame(d)
         # split the time into a new column
         time_array = pd.to_datetime(determBasalDF['date_time']).dt.time
