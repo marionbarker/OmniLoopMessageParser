@@ -19,7 +19,7 @@ def main(fileDict, outFlag, vFlag):
     #   fileDict, logDF, podMgrDict, faultInfoDict,
     #   loopVersionDict, determBasalDF
     fileDict = loopReadDict['fileDict']
-    fapsxDF = loopReadDict['determBasalDF']
+    determBasalDF = loopReadDict['determBasalDF']
     # print(loopReadDict)
 
     print('\n------------------------------------------')
@@ -76,13 +76,13 @@ def main(fileDict, outFlag, vFlag):
             thisOutFile = outFlag + '/' + 'logDFCmb_out.csv'
             writeCombinedLogToOutputFile(thisOutFile, loopReadDict['logDF'])
 
-        # Prepare the output from parsing the Determine Basal record FreeAPS X
-        fapsxDF = loopReadDict['determBasalDF']
-        if not fapsxDF.empty:
+        # Prepare the output from parsing the Determine Basal from FreeAPS X
+        determBasalDF = loopReadDict['determBasalDF']
+        if not determBasalDF.empty:
             # create a csv file but don't add unique user name/dates to it
-            thisOutFile = outFlag + '/' + 'fapsxDF_out.csv'
+            thisOutFile = outFlag + '/' + 'determBasalDF_out.csv'
             print("Determine Basal csv file created: ", thisOutFile)
-            fapsxDF.to_csv(thisOutFile)
+            determBasalDF.to_csv(thisOutFile)
 
             # until we get it updated, PC does not yet do plots
             thisPlatform = platform.system()
@@ -91,10 +91,12 @@ def main(fileDict, outFlag, vFlag):
                 print("PC plots do not work yet, skip plots")
             else:
                 # plot pandas dataframe containing detemine basal data
-                thisOutFile = generatePlot(outFlag, fileDict, fapsxDF)
+                thisOutFile = generatePlot(outFlag, fileDict, determBasalDF)
                 print('Determine Basal plot created:     ', thisOutFile)
 
             # report # json lines while testing across various log files
-            if len(fapsxDF) > 0:
-                print("Min # json lines ", fapsxDF['num_json_lines'].min())
-                print("Max # json lines ", fapsxDF['num_json_lines'].max())
+            if len(determBasalDF) > 0:
+                print("Min # json lines ",
+                      determBasalDF['num_json_lines'].min())
+                print("Max # json lines ",
+                      determBasalDF['num_json_lines'].max())
