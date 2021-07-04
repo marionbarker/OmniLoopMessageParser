@@ -31,12 +31,10 @@ from util.misc import combineByte
 from util.misc import printDict, printList
 from parsers.messagePatternParsing import processMsg
 # add for FAPSX files
-import time
 import os
-from collections import Counter
+import subprocess
 import numpy as np
 import json
-from datetime import datetime
 
 
 # Some markdown headings don't start on their own line. This regular expression
@@ -294,6 +292,8 @@ def loop_read_file(fileDict):
       returns a dictionary of items
     """
     fileDict['recordType'] = "unknown"
+    fileDict['number_enactSuggested'] = 0  # placeholder
+    fileDict['number_enactSuccess'] = 0  # placeholder
     parsed_content = {}
     # define empty dataframes
     logDF = pd.DataFrame({})
@@ -376,6 +376,28 @@ def loop_read_file(fileDict):
         file = open(ofile, "r", encoding='UTF8')
         raw_content_determBasal = file.read()
         file.close()
+        # apply filter for lines that enactSuggested and code
+        # for success or failure
+        enact_string = '"enactSuggested()"'
+        enact_success = '"531 - DEV:"'
+
+        cmd_enact = "grep " + enact_string + " " + ofile
+        wc_chk = subprocess.Popen(cmd_enact + " | wc", shell=True,
+                                  stdout=subprocess.PIPE).stdout
+        ret_val = wc_chk.read()
+        lc_wc_cc = list(map(int, ret_val.decode().split()))
+        num_suggested = lc_wc_cc[0]
+
+        cmd_success = cmd_enact + " | grep " + enact_success
+        wc_chk = subprocess.Popen(cmd_success + " | wc", shell=True,
+                                  stdout=subprocess.PIPE).stdout
+        ret_val = wc_chk.read()
+        lc_wc_cc = list(map(int, ret_val.decode().split()))
+        num_success = lc_wc_cc[0]
+
+        fileDict['num_suggested'] = num_suggested
+        fileDict['num_success'] = num_success
+
         # For FAPSX, use extract_raw to parse, create new dataframe from FAPSX
         #   enable tracking of IOB, COB and BG
         # call the 2 new functions using the content split with grep
