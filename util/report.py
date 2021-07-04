@@ -355,7 +355,9 @@ def generatePlot(outFlag, fileDict, df):
 
     axes[0].set_title(person + ' ' + datestring +
                       '; Neg IOB < {:4.1f}; '.format(-nearZeroVal) +
-                      'Suggested Dosing')
+                      ' {:4d}'.format(fileDict['num_success']) +
+                      ' of {:4d}'.format(fileDict['num_suggested']) +
+                      ' enactSuggested were successful')
     df.plot.line(x='time', y='BG', c='green', ax=axes[0],
                  xlim=[0, day_in_sec], xticks=bottom_ticks)
     df.plot.line(x='time', y='IOB', c='blue', ax=axes[1],
@@ -415,7 +417,7 @@ def generatePlot(outFlag, fileDict, df):
     axes[2].set_ylim([a, b])
 
     # Set up y axis for Basal/Bolus
-    axes[3].set_ylabel("Basal/Bolus")
+    axes[3].set_ylabel("enactSuggest")
     unit_ylim = axes[3].get_ylim()
     a = min(unit_ylim[0], 0)
     b = 1.2 * unit_ylim[1]
