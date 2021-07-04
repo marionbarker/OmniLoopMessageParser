@@ -35,6 +35,7 @@ import os
 import subprocess
 import numpy as np
 import json
+import tempfile
 
 
 # Some markdown headings don't start on their own line. This regular expression
@@ -354,12 +355,22 @@ def loop_read_file(fileDict):
             podMgrDict = {}
 
     elif fileDict['loopType'].lower() == "fx":
+        """ working version before trying the suprocess approach
+            restore it when subprocess method did not work
+        """
         # tried to split this into 2 functions, each with its own grep
         # and it slowed down again - leave this in one place
         # Talk to Brian about piping to a string directly instead of using
         #  tmp files.  And if use tmp files - making them true temps.
         # file = open(filename, "r", encoding='UTF8')
-        ofile = "/Users/marion/tmpdir/tmpfile1.txt"
+        """ replace explicit ofile names here to tempfile names """
+        # ofile = "/Users/marion/tmpdir/tmpfile1.txt"
+        deleteTmpFilesWhenDone = 1
+        tmp_fp = tempfile.NamedTemporaryFile(suffix=".txt", delete=False)
+        ofile = tmp_fp.name
+        if deleteTmpFilesWhenDone == 0:
+            print('tmp file name for pod is:', ofile)
+        tmp_fp.close
         grep_str = '"318 - DEV"'
         sys_str = "grep " + grep_str + " " + filename + " > " + ofile
         # print("sys_str ", sys_str)
@@ -367,8 +378,18 @@ def loop_read_file(fileDict):
         file = open(ofile, "r", encoding='UTF8')
         raw_content_pod = file.read()
         file.close()
+        # clean up (delete the file)
+        if deleteTmpFilesWhenDone:
+            sys_str = "rm -f " + ofile
+            os.system(sys_str)
+
         # for determine basal, max # lines in json (in survey) was 218
-        ofile = "/Users/marion/tmpdir/tmpfile2.txt"
+        # ofile = "/Users/marion/tmpdir/tmpfile2.txt"
+        tmp_fp = tempfile.NamedTemporaryFile(suffix=".txt", delete=False)
+        ofile = tmp_fp.name
+        if deleteTmpFilesWhenDone == 0:
+            print('tmp file name for determBasal is:', ofile)
+        tmp_fp.close
         grep_str = '"68 - DEV"'
         sys_str = "grep -A 250 " + grep_str + " " + filename + " > " + ofile
         # print("sys_str ", sys_str)
@@ -376,12 +397,29 @@ def loop_read_file(fileDict):
         file = open(ofile, "r", encoding='UTF8')
         raw_content_determBasal = file.read()
         file.close()
+
+        """ new approach starts here
+            This doesn't work - io.BufferedContent has no splitlines method
+            """
+        """
+        grep_str = '"318 - DEV"'
+        cmd_pod = "grep " + grep_str + " " + filename
+        raw_content_pod = subprocess.Popen(cmd_pod, shell=True,
+                                           stdout=subprocess.PIPE).stdout
+        grep_str = '"68 - DEV"'
+        cmd_determBasal = "grep " + grep_str + " " + filename
+        raw_content_determBasal = subprocess.Popen(
+                cmd_determBasal, shell=True, stdout=subprocess.PIPE).stdout
+        """
+        """ new approach ends here """
+
         # apply filter for lines that enactSuggested and code
         # for success or failure
         enact_string = '"enactSuggested()"'
         enact_success = '"531 - DEV:"'
 
-        cmd_enact = "grep " + enact_string + " " + ofile
+        # cmd_enact = "grep " + enact_string + " " + ofile
+        cmd_enact = "grep " + enact_string + " " + filename
         wc_chk = subprocess.Popen(cmd_enact + " | wc", shell=True,
                                   stdout=subprocess.PIPE).stdout
         ret_val = wc_chk.read()
@@ -394,6 +432,11 @@ def loop_read_file(fileDict):
         ret_val = wc_chk.read()
         lc_wc_cc = list(map(int, ret_val.decode().split()))
         num_success = lc_wc_cc[0]
+
+        # clean up (delete the file)
+        if deleteTmpFilesWhenDone:
+            sys_str = "rm -f " + ofile
+            os.system(sys_str)
 
         fileDict['num_suggested'] = num_suggested
         fileDict['num_success'] = num_success
