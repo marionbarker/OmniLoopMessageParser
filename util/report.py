@@ -352,6 +352,7 @@ def generatePlot(outFlag, fileDict, df):
     two_hr_in_sec = day_in_sec/12
     xRange = [0, day_in_sec+1]
     bottom_ticks = np.arange(0, day_in_sec+1, step=two_hr_in_sec)
+    mkSize = 10
 
     fig, axes = plt.subplots(nrow, ncol, figsize=(15, 7))
 
@@ -362,36 +363,35 @@ def generatePlot(outFlag, fileDict, df):
                       ' ({:4d}'.format(fileDict['num_success']) +
                       ' of {:4d})'.format(fileDict['num_suggested']))
 
-    df.plot.line(x='time', y='BG', c='green', ax=axes[0],
-                 xlim=xRange, xticks=bottom_ticks)
-
-    df.plot.line(x='time', y='IOB', c='blue', ax=axes[1],
-                 xlim=xRange, xticks=bottom_ticks)
-    df.plot.line(x='time', y='COB', c='green', ax=axes[2],
-                 xlim=xRange, xticks=bottom_ticks)
+    df.plot(x='time', y='BG', c='green', ax=axes[0], style='-',
+            xlim=xRange, xticks=bottom_ticks)
+    df.plot(x='time', y='IOB', c='blue', ax=axes[1], style='-',
+            xlim=xRange, xticks=bottom_ticks)
+    df.plot(x='time', y='COB', c='green', ax=axes[2], style='-',
+            xlim=xRange, xticks=bottom_ticks)
 
     df.plot(x='time', y='Basal', c='green', ax=axes[3], style=".",
             xlim=xRange, xticks=bottom_ticks, label="Basal(U/hr)")
     df.plot(x='time', y='Bolus', c='red', ax=axes[3], style="+",
             xlim=xRange, xticks=bottom_ticks, label="Bolus(U)")
     df.plot(x='time', y='SensRatio', c='black', ax=axes[4], style="+",
-            xlim=xRange, xticks=bottom_ticks, label="SensRatio")
+            xlim=xRange, xticks=bottom_ticks)
 
     zeroIOB = df[(df.IOB > -nearZeroVal) & (df.IOB < nearZeroVal)]
-    zeroIOB.plot.scatter(x='time', y='BG', c='blue',
-                         ax=axes[0], label="~0 IOB")
-    zeroIOB.plot.scatter(x='time', y='IOB', c='blue',
-                         ax=axes[1], label="~0 IOB")
-    zeroIOB.plot.scatter(x='time', y='COB', c='blue',
-                         ax=axes[2], label="~0 IOB")
+    zeroIOB.plot(x='time', y='BG', c='blue', style='.', markersize=mkSize,
+                 ax=axes[0], label="~0 IOB")
+    zeroIOB.plot(x='time', y='IOB', c='blue', style='.', markersize=mkSize,
+                 ax=axes[1], label="~0 IOB")
+    zeroIOB.plot(x='time', y='COB', c='blue', style='.', markersize=mkSize,
+                 ax=axes[2], label="~0 IOB")
     # negative IOB
     dfNegIOB = df[df.IOB < -nearZeroVal]
-    dfNegIOB.plot.scatter(x='time', y='BG', c='red',
-                          ax=axes[0], label="Neg IOB")
-    dfNegIOB.plot.scatter(x='time', y='IOB', c='red',
-                          ax=axes[1], label="Neg IOB")
-    dfNegIOB.plot.scatter(x='time', y='COB', c='red',
-                          ax=axes[2], label="Neg IOB")
+    dfNegIOB.plot(x='time', y='BG', c='red', style='.', markersize=mkSize,
+                  ax=axes[0], label="Neg IOB")
+    dfNegIOB.plot(x='time', y='IOB', c='red', style='.', markersize=mkSize,
+                  ax=axes[1], label="Neg IOB")
+    dfNegIOB.plot(x='time', y='COB', c='red', style='.', markersize=mkSize,
+                  ax=axes[2], label="Neg IOB")
 
     for x in axes:
         x.grid('on')
@@ -405,18 +405,21 @@ def generatePlot(outFlag, fileDict, df):
         idx += 1
 
     # set limits for BG (always in mg/dl)
+    axes[0].set_ylabel("BG")
     bg_ylim = axes[0].get_ylim()
     a = min(bg_ylim[0], 0)
     b = max(1.1*bg_ylim[1], 200)
     axes[0].set_ylim([a, b])
 
     # handle case where IOB is never zero for entire plot
+    axes[1].set_ylabel("IOB")
     iob_ylim = axes[1].get_ylim()
     a = min(1.1*iob_ylim[0], -1)
     b = max(1.1*iob_ylim[1], 10)
     axes[1].set_ylim([a, b])
 
     # handle case where COB is 0 for entire plot
+    axes[2].set_ylabel("COB")
     cob_ylim = axes[2].get_ylim()
     a = max(cob_ylim[0], 0)
     b = max(cob_ylim[1], 100)
@@ -430,6 +433,7 @@ def generatePlot(outFlag, fileDict, df):
     axes[3].set_ylim([a, b])
 
     # Set up sensitivity ratio axis scaling
+    axes[4].set_ylabel("SensRatio")
     sensRatio_ylim = axes[4].get_ylim()
     a = min(sensRatio_ylim[0], 0.5)
     b = max(sensRatio_ylim[1], 1.5)
