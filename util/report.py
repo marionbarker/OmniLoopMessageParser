@@ -372,14 +372,20 @@ def generatePlot(outFlag, fileDict, df):
 
     fig, axes = plt.subplots(nrow, ncol, figsize=(15, 7))
 
-    axes[0].set_title(person + ' ' + datestring +
-                      '; Neg IOB < {:4.1f}; '.format(-nearZeroVal) +
-                      'Enact Success: {:3.0f}% TB'.format(tb_pctSucc) +
-                      ' ({:4d}'.format(tb_success) +
-                      ' of {:4d}); '.format(tb_suggest) +
-                      '{:3.0f}% SMB'.format(smb_pctSucc) +
-                      ' ({:4d}'.format(smb_success) +
-                      ' of {:4d})'.format(smb_suggest))
+    title_string = (person + ' ' + datestring +
+                    '; Neg IOB < {:4.1f}; '.format(-nearZeroVal) +
+                    'Enact Success: {:3.0f}% TB'.format(tb_pctSucc) +
+                    ' ({:4d}'.format(tb_success) +
+                    ' of {:4d}); '.format(tb_suggest) +
+                    '{:3.0f}% SMB'.format(smb_pctSucc) +
+                    ' ({:4d}'.format(smb_success) +
+                    ' of {:4d})'.format(smb_suggest))
+
+    print()
+    print("Plot Title:")
+    print(" *** ", title_string)
+
+    axes[0].set_title(title_string)
 
     df.plot(x='time', y='BG', c='green', ax=axes[0], style='-',
             xlim=xRange, xticks=bottom_ticks)
