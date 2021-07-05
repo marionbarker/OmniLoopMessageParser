@@ -350,33 +350,32 @@ def generatePlot(outFlag, fileDict, df):
     ncol = 1
     day_in_sec = 24*60*60
     two_hr_in_sec = day_in_sec/12
-    bottom_ticks = np.arange(0, day_in_sec, step=two_hr_in_sec)
+    xRange = [0, day_in_sec+1]
+    bottom_ticks = np.arange(0, day_in_sec+1, step=two_hr_in_sec)
+
     fig, axes = plt.subplots(nrow, ncol, figsize=(15, 7))
 
+    pctSucc = 100 * fileDict['num_success']/fileDict['num_suggested']
     axes[0].set_title(person + ' ' + datestring +
                       '; Neg IOB < {:4.1f}; '.format(-nearZeroVal) +
-                      ' {:4d}'.format(fileDict['num_success']) +
-                      ' of {:4d}'.format(fileDict['num_suggested']) +
-                      ' enactSuggested were successful')
-    df.plot.line(x='time', y='BG', c='green', ax=axes[0],
-                 xlim=[0, day_in_sec], xticks=bottom_ticks)
-    df.plot.line(x='time', y='IOB', c='blue', ax=axes[1],
-                 xlim=[0, day_in_sec], xticks=bottom_ticks)
-    df.plot.line(x='time', y='COB', c='green', ax=axes[2],
-                 xlim=[0, day_in_sec], xticks=bottom_ticks)
+                      '{:3.0f}% enactSuggested successful'.format(pctSucc) +
+                      ' ({:4d}'.format(fileDict['num_success']) +
+                      ' of {:4d})'.format(fileDict['num_suggested']))
 
-    df.plot.line(x='time', y='Basal', c='green', ax=axes[3],
-                 xlim=[0, day_in_sec], xticks=bottom_ticks, label="Basal")
-    df.plot.scatter(x='time', y='Basal', c='green',
-                    ax=axes[3], label="U/hr")
-    df.plot.line(x='time', y='Bolus', c='red', ax=axes[3],
-                 xlim=[0, day_in_sec], xticks=bottom_ticks, label="Bolus")
-    df.plot.scatter(x='time', y='Bolus', c='red',
-                    ax=axes[3], label="units")
-    df.plot.line(x='time', y='SensRatio', c='green', ax=axes[4],
-                 xlim=[0, day_in_sec], xticks=bottom_ticks)
-    df.plot.scatter(x='time', y='SensRatio', c='black',
-                    ax=axes[4])
+    df.plot.line(x='time', y='BG', c='green', ax=axes[0],
+                 xlim=xRange, xticks=bottom_ticks)
+
+    df.plot.line(x='time', y='IOB', c='blue', ax=axes[1],
+                 xlim=xRange, xticks=bottom_ticks)
+    df.plot.line(x='time', y='COB', c='green', ax=axes[2],
+                 xlim=xRange, xticks=bottom_ticks)
+
+    df.plot(x='time', y='Basal', c='green', ax=axes[3], style=".",
+            xlim=xRange, xticks=bottom_ticks, label="Basal(U/hr)")
+    df.plot(x='time', y='Bolus', c='red', ax=axes[3], style="+",
+            xlim=xRange, xticks=bottom_ticks, label="Bolus(U)")
+    df.plot(x='time', y='SensRatio', c='black', ax=axes[4], style="+",
+            xlim=xRange, xticks=bottom_ticks, label="SensRatio")
 
     zeroIOB = df[(df.IOB > -nearZeroVal) & (df.IOB < nearZeroVal)]
     zeroIOB.plot.scatter(x='time', y='BG', c='blue',
@@ -397,6 +396,13 @@ def generatePlot(outFlag, fileDict, df):
     for x in axes:
         x.grid('on')
         x.legend(bbox_to_anchor=(1.11, 1.0), framealpha=1.0)
+
+    idx = 0
+    while idx < 4:
+        x_axis = axes[idx].axes.get_xaxis()
+        # x_label = x_axis.get_label()
+        x_axis.set_ticklabels([])
+        idx += 1
 
     # set limits for BG (always in mg/dl)
     bg_ylim = axes[0].get_ylim()
