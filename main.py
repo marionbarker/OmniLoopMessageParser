@@ -81,7 +81,7 @@ def main(fileDict, outFlag, vFlag):
         if not determBasalDF.empty:
             # create a csv file but don't add unique user name/dates to it
             thisOutFile = outFlag + '/' + 'determBasalDF_out.csv'
-            print("Determine Basal csv file created: ", thisOutFile)
+            print(" *** Determine Basal csv file created: ", thisOutFile)
             determBasalDF.to_csv(thisOutFile)
 
             # until we get it updated, PC does not yet do plots
@@ -92,12 +92,4 @@ def main(fileDict, outFlag, vFlag):
             else:
                 # plot pandas dataframe containing detemine basal data
                 thisOutFile = generatePlot(outFlag, fileDict, determBasalDF)
-                print('Determine Basal plot created:     ', thisOutFile)
-
-            # report # json lines while testing across various log files
-            if len(determBasalDF) > 0:
-                print("Min # json lines ",
-                      determBasalDF['num_json_lines'].min())
-                print("Max # json lines ",
-                      determBasalDF['num_json_lines'].max())
-                # print(determBasalDF)
+                print(' *** Determine Basal plot created:     ', thisOutFile)
