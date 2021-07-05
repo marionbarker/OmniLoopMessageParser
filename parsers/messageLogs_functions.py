@@ -293,8 +293,6 @@ def loop_read_file(fileDict):
       returns a dictionary of items
     """
     fileDict['recordType'] = "unknown"
-    fileDict['number_enactSuggested'] = 0  # placeholder
-    fileDict['number_enactSuccess'] = 0  # placeholder
     parsed_content = {}
     # define empty dataframes
     logDF = pd.DataFrame({})
@@ -355,53 +353,16 @@ def loop_read_file(fileDict):
             podMgrDict = {}
 
     elif fileDict['loopType'].lower() == "fx":
-        """ working version before trying the suprocess approach
-            restore it when subprocess method did not work
         """
-        # tried to split this into 2 functions, each with its own grep
-        # and it slowed down again - leave this in one place
-        # Talk to Brian about piping to a string directly instead of using
-        #  tmp files.  And if use tmp files - making them true temps.
-        # file = open(filename, "r", encoding='UTF8')
-        """ replace explicit ofile names here to tempfile names """
-        # ofile = "/Users/marion/tmpdir/tmpfile1.txt"
-        deleteTmpFilesWhenDone = 1
-        tmp_fp = tempfile.NamedTemporaryFile(suffix=".txt", delete=False)
-        ofile = tmp_fp.name
-        if deleteTmpFilesWhenDone == 0:
-            print('tmp file name for pod is:', ofile)
-        tmp_fp.close
-        grep_str = '"318 - DEV"'
-        sys_str = "grep " + grep_str + " " + filename + " > " + ofile
-        # print("sys_str ", sys_str)
-        os.system(sys_str)
-        file = open(ofile, "r", encoding='UTF8')
-        raw_content_pod = file.read()
-        file.close()
-        # clean up (delete the file)
-        if deleteTmpFilesWhenDone:
-            sys_str = "rm -f " + ofile
-            os.system(sys_str)
+            read the raw content then parse for pods / fx separately
+        """
+        fp = open(filename, "r", encoding='UTF8')
+        raw_content = fp.read()
+        fp.close()
 
-        # for determine basal, max # lines in json (in survey) was 218
-        # ofile = "/Users/marion/tmpdir/tmpfile2.txt"
-        tmp_fp = tempfile.NamedTemporaryFile(suffix=".txt", delete=False)
-        ofile = tmp_fp.name
-        if deleteTmpFilesWhenDone == 0:
-            print('tmp file name for determBasal is:', ofile)
-        tmp_fp.close
-        grep_str = '"68 - DEV"'
-        max_lines = 250  # number of lines used with grep
-        sys_str = "grep -A 250 " + grep_str + " " + filename + " > " + ofile
-        # print("sys_str ", sys_str)
-        os.system(sys_str)
-        file = open(ofile, "r", encoding='UTF8')
-        raw_content_determBasal = file.read()
-        file.close()
+        logDF = extract_raw_pod(raw_content)
+        determBasalDF = extract_raw_determBasal(raw_content)
 
-        logDF = extract_raw_pod(raw_content_pod)
-        determBasalDF = extract_raw_determBasal(raw_content_determBasal,
-                                                max_lines)
         fileDict['recordType'] = "FAPSX"  # overwrite if both DF are empty
         if determBasalDF.empty and logDF.empty:
             fileDict['recordType'] = "not_FAPSX"
@@ -465,6 +426,8 @@ def extract_raw_pod(raw_content):
     #  when splitting logDF into separate pods later
     pod_patt = "318 - DEV: Device message:"
     pod_messages = [x for x in lines_raw if x.find(pod_patt) > -1]
+    if len(pod_messages) == 0:
+        return logDF
     if noisy:
         print('first pod line\n', pod_messages[0][0:19], ' ',
               pod_messages[0][166:])
@@ -488,10 +451,13 @@ def extract_raw_pod(raw_content):
     return logDF
 
 
-def extract_raw_determBasal(raw_content, max_lines):
+def extract_raw_determBasal(raw_content):
 
     determBasalDF = pd.DataFrame({})
     date_patt = raw_content[:8]
+    # number of lines after json string starts to search for TB/SMB success
+    max_lines = 400
+
     noisy = 0
     if noisy:
         print(">>>   call to extract_raw_determBasal")
@@ -612,6 +578,11 @@ def extract_raw_determBasal(raw_content, max_lines):
                     # search for pump_events: "239 - DEV: New pump events:"
                     while (jdx < numLines-2) and (jdx < (line_0+max_lines-2)):
                         jdx += 1
+                        # if the next json string happens before New pump event
+                        # break out of loop
+                        if determBasal_patt in lines_raw[jdx]:
+                            idx = jdx
+                            break
                         if lines_raw[jdx].find(pump_events) > -1:
                             mdx = jdx
                             while mdx-jdx < pe_num:
