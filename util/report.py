@@ -346,6 +346,22 @@ def generatePlot(outFlag, fileDict, df):
     # Defin near 0 IOB
     nearZeroVal = 0.2
 
+    tb_filt0 = df[df.TB_Success == 0]
+    tb_filt1 = df[df.TB_Success == 1]
+    # value is nan if no TB or SMB was attempted
+    tm_failed = len(tb_filt0)
+    tb_success = len(tb_filt1)
+    tb_suggest = tm_failed+tb_success
+    tb_pctSucc = 100 * tb_success / tb_suggest
+
+    smb_filt0 = df[df.SMB_Success == 0]
+    smb_filt1 = df[df.SMB_Success == 1]
+    # value is nan if no TB or SMB was attempted
+    smb_failed = len(smb_filt0)
+    smb_success = len(smb_filt1)
+    smb_suggest = smb_failed+smb_success
+    smb_pctSucc = 100 * smb_success / smb_suggest
+
     nrow = 5
     ncol = 1
     day_in_sec = 24*60*60
@@ -356,12 +372,14 @@ def generatePlot(outFlag, fileDict, df):
 
     fig, axes = plt.subplots(nrow, ncol, figsize=(15, 7))
 
-    pctSucc = 100 * fileDict['num_success']/fileDict['num_suggested']
     axes[0].set_title(person + ' ' + datestring +
                       '; Neg IOB < {:4.1f}; '.format(-nearZeroVal) +
-                      '{:3.0f}% enactSuggested successful'.format(pctSucc) +
-                      ' ({:4d}'.format(fileDict['num_success']) +
-                      ' of {:4d})'.format(fileDict['num_suggested']))
+                      'Enact Success: {:3.0f}% TB'.format(tb_pctSucc) +
+                      ' ({:4d}'.format(tb_success) +
+                      ' of {:4d}); '.format(tb_suggest) +
+                      '{:3.0f}% SMB'.format(smb_pctSucc) +
+                      ' ({:4d}'.format(smb_success) +
+                      ' of {:4d})'.format(smb_suggest))
 
     df.plot(x='time', y='BG', c='green', ax=axes[0], style='-',
             xlim=xRange, xticks=bottom_ticks)
@@ -370,10 +388,18 @@ def generatePlot(outFlag, fileDict, df):
     df.plot(x='time', y='COB', c='green', ax=axes[2], style='-',
             xlim=xRange, xticks=bottom_ticks)
 
-    df.plot(x='time', y='Basal', c='green', ax=axes[3], style=".",
-            xlim=xRange, xticks=bottom_ticks, label="Basal(U/hr)")
-    df.plot(x='time', y='Bolus', c='red', ax=axes[3], style="+",
-            xlim=xRange, xticks=bottom_ticks, label="Bolus(U)")
+    # plot all the suggestions in green/blue
+    df.plot(x='time', y='Basal', c='green', ax=axes[3], style="+",
+            xlim=xRange, xticks=bottom_ticks, label="TB(U/hr)")
+    df.plot(x='time', y='Bolus', c='blue', ax=axes[3], style=".",
+            xlim=xRange, xticks=bottom_ticks, label="SMB(U)")
+
+    # plot the "failed" suggestions in red
+    tb_filt0.plot(x='time', y='Basal', c='red', ax=axes[3], style="+",
+                  xlim=xRange, xticks=bottom_ticks, label="fail TB")
+    smb_filt0.plot(x='time', y='Bolus', c='red', ax=axes[3], style=".",
+                   xlim=xRange, xticks=bottom_ticks, label="fail SMB")
+
     df.plot(x='time', y='SensRatio', c='black', ax=axes[4], style="+",
             xlim=xRange, xticks=bottom_ticks)
 
@@ -426,7 +452,7 @@ def generatePlot(outFlag, fileDict, df):
     axes[2].set_ylim([a, b])
 
     # Set up y axis for Basal/Bolus
-    axes[3].set_ylabel("enactSuggest")
+    axes[3].set_ylabel("TB / SMB")
     unit_ylim = axes[3].get_ylim()
     a = min(unit_ylim[0], 0)
     b = 1.2 * unit_ylim[1]
