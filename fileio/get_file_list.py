@@ -67,12 +67,13 @@ def getFileDict(folderPath, personFile, loopType):
     fileDict = {'filename': folderPath + '/' + personFile,
                 'path': folderPath,
                 'personFile': personFile,
+                'file': "",
                 'loopType': loopType,
                 'recordType': "unknown",
                 'date': thisDate}
     # parse the person and date from in personFile
     #   For loopType = "Loop", get date from person/LoopReport_date.md)
-    #   For loopType = "FX", the first 8 characters in the file are the date.
+    #   For loopType = "FX", the date is extracted later from inside the file.
     # The recordType and date may be updated in parsers/loop_read_file
     val = '^.*/'
     thisPerson = re.findall(val, personFile)
@@ -82,6 +83,13 @@ def getFileDict(folderPath, personFile, loopType):
         thisPerson = thisPerson[0][0:-1]
 
     fileDict['person'] = thisPerson
+
+    val = '/.*$'
+    raw_filename = re.findall(val, personFile)
+    if not raw_filename:
+        fileDict['file'] = personFile
+    else:
+        fileDict['file'] = raw_filename[0][1:]
 
     if loopType.lower() == "loop":
         val = '/.*$'

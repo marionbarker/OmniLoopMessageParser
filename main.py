@@ -3,16 +3,12 @@ from analysis.analyzePodMessages import analyzePodMessages
 from analysis.analyzeAllPodsInDeviceLog import analyzeAllPodsInDeviceLog
 from util.report import printLoopDict
 from util.report import writeCombinedLogToOutputFile
-from util.report import generatePlot
+from util.report import generatePlot, printDict
 import platform
+import os
 
 
 def main(fileDict, outFlag, vFlag):
-    # print log process warning message with input file FX
-    if fileDict['loopType'].lower() == 'fx':
-        print('Long process, input file is:')
-        print(' *** ', fileDict['filename'])
-
     # read file, create dictionaries and DataFrames
     loopReadDict = loop_read_file(fileDict)
     # loopReadDict has keys:
@@ -21,6 +17,29 @@ def main(fileDict, outFlag, vFlag):
     fileDict = loopReadDict['fileDict']
     determBasalDF = loopReadDict['determBasalDF']
     # print(loopReadDict)
+    if fileDict['recordType'] == 'FAPSX':
+        # printDict(fileDict)
+        # file was identified as being FAPSX by loop_read_file
+        if fileDict['file'] == "log_prev.txt":
+            old_name = (fileDict['path'] + "/" +
+                        fileDict['person'] + "/" +
+                        fileDict['file'])
+            fileDict['file'] = (fileDict['date'] + "_" +
+                                fileDict['file'])
+            fileDict['personFile'] = (fileDict['person'] + "/" +
+                                      fileDict['file'])
+            fileDict['filename'] = (fileDict['path'] + "/" +
+                                    fileDict['personFile'])
+            new_name = (fileDict['path'] + "/" +
+                        fileDict['person'] + "/" +
+                        fileDict['file'])
+            # print("Renaming: \n *** ", old_name, "\n *** ", new_name)
+            sys_cmd = "mv -f " + old_name + " " + new_name
+            # print("sys_cmd is :", sys_cmd)
+            os.system(sys_cmd)
+            # printDict(fileDict)
+        # else:
+            # print("No renaming necessary")
 
     print('\n------------------------------------------')
     print('  File: {:s}'.format(fileDict["personFile"]))
