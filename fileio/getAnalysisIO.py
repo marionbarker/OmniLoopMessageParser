@@ -6,7 +6,7 @@ import platform
 def getAnalysisIO(pathOption, loopType, vFlag, macFlag):
     """
     return filePath, outFlag
-       When doing "real" analysis, use (1, 4, 0) or (1, 4, 1)
+       When doing "real" analysis, use (1, type, 4, 0) or (1, type, 4, 1)
        Add macFlag to handle Mac to use shared drive (Drobo) - default
        Update pathOption to handle Loop vs FreeAPS X log files
 
@@ -49,13 +49,13 @@ def getAnalysisIO(pathOption, loopType, vFlag, macFlag):
 
     if pathOption == 0:
         filePath = topPath + '/' + 'Other_LoopReportFiles'
-    elif pathOption == 1 and loopType == "Loop":
+    elif pathOption == 1 and loopType.lower() == "loop":
         filePath = topPath + '/' + 'LoopReportFiles'
-    elif pathOption == 1 and loopType == "FX":
+    elif pathOption == 1 and loopType.lower() == "fx":
         filePath = topPath + '/' + 'FAPSX_Files' + '/' + 'Input'
-    elif type(pathOption) == str and loopType == "Loop":
+    elif type(pathOption) == str and loopType.lower() == "loop":
         filePath = topPath + '/' + 'LoopReportFiles' + '/' + pathOption
-    elif type(pathOption) == str and loopType == "FX":
+    elif type(pathOption) == str and loopType.lower() == "fx":
         filePath = topPath + '/' + 'FAPSX_Files' + '/' + 'Input' + \
                    '/' + pathOption
     else:
@@ -71,14 +71,13 @@ def getAnalysisIO(pathOption, loopType, vFlag, macFlag):
     elif vFlag == 3:
         outFlag = topPath + '/' + 'LoopReportPythonAnalysis' + '/' \
                   + 'init_survey.csv'
-    elif vFlag == 4:
+    elif vFlag == 4 and loopType.lower() == "loop":
         outFlag = topPath + '/' + 'LoopReportPythonAnalysis' + '/' \
-                  + 'verboseOutput' + '/'
+                  + 'verboseOutput'
+    elif vFlag == 4 and loopType.lower() == "fx":
+        outFlag = topPath + '/' + 'FAPSX_Files' + '/' + 'Output'
     else:
         print('  vFlag not recognized for getAnalysisIO')
         outFlag = 0
-
-    # modify outFlag when pathOption is 3
-    outFlag = topPath + '/' + 'FAPSX_Files' + '/' + 'Output'
 
     return filePath, outFlag
