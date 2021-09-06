@@ -74,7 +74,8 @@ def parse_1d(byteList, msgDict):
     msgDict['pod_progress_meaning'] = getPodProgressMeaning(byte_1 & 0xF)
 
     # get pulses and units of insulin NOT delivered
-    pulsesNot = dword_3 & 0x007F
+    # fixed mask was 0x007f instead of 0x07ff
+    pulsesNot = dword_3 & 0x07FF
     insulinNot = getUnitsFromPulses(pulsesNot)
     msgDict['pulses_not_delivered'] = pulsesNot
     msgDict['insulin_not_delivered'] = insulinNot
