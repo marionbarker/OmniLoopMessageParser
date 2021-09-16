@@ -237,9 +237,6 @@ def getDescriptiveStringFromPodStateRow(md, reqTB, reqBolus, pod_progress):
         else:
             dStr = loopPrefix + \
                 'SetBolus of {:.2f} u'.format(md['prompt_bolus_u'])
-    elif md['msgType'] == '0x0614':
-        dStr = loopPrefix + '{:s}, fault_code {:s}, reseed_word {:x} '.format(
-            md['msgMeaning'], md['fault_code'], md['nonce_reseed_word'])
     elif md['msgType'] == '0x0e':
         dStr = loopPrefix + '{:s}'.format(md['msgMeaning'])
     elif md['msgType'] == '0x11':
@@ -283,6 +280,9 @@ def getDescriptiveStringFromPodStateRow(md, reqTB, reqBolus, pod_progress):
         dStr = podPrefix + md['msgMeaning']
     elif md['msgType'] == 'ACK':
         dStr = podPrefix + 'ACK (I heard you but I did not understand)'
+    elif md['msgType'] == '0x0614':
+        dStr = podPrefix + '{:s}, fault_code {:s}, reseed_word {:x} '.format(
+            md['msgMeaning'], md['fault_code'], md['nonce_reseed_word'])
 
     return dStr
 
