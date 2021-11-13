@@ -1,5 +1,9 @@
 # OmniLoopMessageParser
-python code to parse the messages found in Loop Reports when pump is Omnipod
+Parse Files (python):
+* Loop Reports: parse the messages when pump is Omnipod
+* FreeAPS X Log Files: 
+   * parse the messages when pump is Omnipod
+   * prepare plots of the day showing BG, IOB, COB, TB/SMB, SensRatio regardless of pump type
 
 ## July 2020
 * Reorganize the code (with help from #1 child)
