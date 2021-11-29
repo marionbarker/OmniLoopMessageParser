@@ -196,7 +196,7 @@ def device_message_dict(data):
     # extract common information, parse Omnipod, other devices ignored for now
     # note that address is ffffffff until Loop and Pod finish some init steps
     device, logAddr, action, restOfLine = stringToUnpack.split(' ', 3)
-    if device == "Omnipod":
+    if device[0:7] == "Omnipod":
         # address is what pod thinks address is
         address, msgDict = splitFullMsg(restOfLine)
         if (logAddr.lower() != address) and (address != 'ffffffff'):
@@ -391,12 +391,13 @@ def loop_read_file(fileDict):
 
 
 def omnipodP(message):
-    return message['device'] == "Omnipod"
+    thisIsAPod = message['device'][0:7] == "Omnipod"
+    return thisIsAPod
 
 
 def otherP(message):
-    # later can add other devices, for now, just not Omnipod
-    return message['device'] != "Omnipod"
+    thisIsAPod = message['device'][0:7] == "Omnipod"
+    return not thisIsAPod
 
 
 def extract_raw_pod(raw_content):
