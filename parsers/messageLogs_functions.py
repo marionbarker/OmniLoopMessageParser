@@ -199,7 +199,7 @@ def device_message_dict(data):
     if device[0:7] == "Omnipod":
         # address is what pod thinks address is
         address, msgDict = splitFullMsg(restOfLine)
-        if (logAddr.lower() != address) and (address != 'ffffffff'):
+        if noisy and (logAddr.lower() != address) and (address != 'ffffffff'):
             print('\nThe two message numbers do not agree \n',
                   logAddr, address)
             print(msg_body)
