@@ -42,16 +42,18 @@ def findBreakPoints(podFrame):
     # get list of addresses
     addressList = podFrame['address'].to_list()
 
-    # iterate to find breakPoints
+    # iterate to find breakPoints and generate list of podAddresses
     frameLength = len(addressList)
     breakPoints = [0]
     idx = 0
+    podAddresses = []
     # Joe has version with 10 fs instead of 8
     noPodAddress = 'ffffffff'
     thisAddress = addressList[idx]
     for val in addressList:
         if (thisAddress != val) and (thisAddress[0:8] != noPodAddress):
             breakPoints.append(idx)
+            podAddresses.append(thisAddress)
         thisAddress = val
         idx = idx+1
 
@@ -59,10 +61,8 @@ def findBreakPoints(podFrame):
     if breakPoints[-1] != frameLength:
         breakPoints.append(frameLength)
 
-    # get a list of the unique pod addresses in frame
-    podAddresses = list(podFrame['address'].unique())
-    if noPodAddress in podAddresses:
-        podAddresses.remove(noPodAddress)
+    # need one extra address because of number of break points.
+    podAddresses.append(thisAddress)
 
     # all done, return list
     return podAddresses, breakPoints
