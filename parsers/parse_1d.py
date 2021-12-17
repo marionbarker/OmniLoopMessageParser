@@ -91,6 +91,6 @@ def parse_1d(byteList, msgDict):
         msgDict['reservoir'] = insulin
 
     msgDict['mlen'] = 12
-    msgDict['checkSum'] = cksm
+    # msgDict['checkSum'] = cksm
 
     return msgDict
