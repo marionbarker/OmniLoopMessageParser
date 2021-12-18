@@ -105,7 +105,7 @@ def splitFullMsg(hexToParse):
           https://github.com/openaps/openomni/wiki/Message-Structure
 
         An ACK hexToParse has 2 historical formats, both with empty message
-            ## MessageLog <= 10 bytes with no CRC
+            ## MessageLog <= 10 hex characters with no CRC
             ## Device Communication  has address, packetNumber and CRC
 
         Because all messages (except ACK) have seqNum,
@@ -116,22 +116,22 @@ def splitFullMsg(hexToParse):
     thisLen = len(hexToParse)
     # Handle older ## message log format for ACK
     if thisLen <= 10:
-        byte89 = 0
+        B9 = 0  # match label in wiki
         # processMsg below returns ACK from an empty msg_body
         msg_body = ''
         CRC = '0000'  # indicates no CRC provided
     else:
-        byte89 = combineByte(list(bytearray.fromhex(hexToParse[8:10])))
+        B9 = combineByte(list(bytearray.fromhex(hexToParse[8:10])))
         msg_body = hexToParse[12:-4]
         CRC = hexToParse[-4:]
     msgDict = processMsg(msg_body)
     # for ACK, extract packet number (if available) - request from Joe
     #    use seqNum key for storage
     if msgDict['msgType'] == 'ACK':
-        packetNumber = (byte89 & 0x1F)
+        packetNumber = (B9 & 0x1F)
         msgDict['seqNum'] = packetNumber
     else:
-        msgDict['seqNum'] = (byte89 & 0x3C) >> 2
+        msgDict['seqNum'] = (B9 & 0x3C) >> 2
     msgDict['rawHex'] = hexToParse
     msgDict['CRC'] = '0x' + CRC
     noisy = 0
