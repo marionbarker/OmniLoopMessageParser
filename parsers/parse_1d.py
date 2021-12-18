@@ -31,7 +31,7 @@ def parse_1d(byteList, msgDict):
         0PPPSNNN dword = 0000 pppp pppp pppp psss snnn nnnn nnnn
         0000 4 zero bits
         ppppppppppppp 13 bits, Total 0.05U insulin pulses
-        ssss 4 bits, message sequence number (saved B9>>2)
+        ssss 4 bits, message sequence # of last processed programming command
         nnn nnnn nnnn 11 bits, 0.05U Insulin pulses not delivered
                                      if cancelled by user
     # byte 6:9 = AATTTTRR
@@ -53,18 +53,17 @@ def parse_1d(byteList, msgDict):
 
     dword_3 = combineByte(byteList[2:6])
     dword_4 = combineByte(byteList[6:10])
-    cksm = hex(combineByte(byteList[10:12]))
 
     msgDict['podOnTime'] = (dword_4 >> 10) & 0x1FFF
     msgDict['reservoir'] = ''  # placeholder for desired order
 
     # get pulses and units of insulin delivered
+    # dword_3: 0PPPSNNN = 0000 pppp pppp pppp psss snnn nnnn nnnn
     pulsesDelivered = (dword_3 >> 15) & 0x1FFF
     insulinDelivered = getUnitsFromPulses(pulsesDelivered)
     msgDict['pulsesTotal'] = pulsesDelivered
     msgDict['insulinDelivered'] = insulinDelivered
-
-    msgDict['seqNum'] = (dword_3 >> 11) & 0xF
+    msgDict['cmdSeqNum'] = (dword_3 >> 11) & 0xF
 
     msgDict['extended_bolus_active'] = (byte_1 >> 4 & 0x8) != 0
     msgDict['immediate_bolus_active'] = (byte_1 >> 4 & 0x4) != 0
