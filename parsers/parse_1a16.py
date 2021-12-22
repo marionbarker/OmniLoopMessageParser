@@ -67,7 +67,7 @@ def parse_1a16(byteList, msgDict):
     TableNum = byteList[6]
     chsum = hex(combineByte(byteList[7:9]))
     hhEntries = byteList[9]  # number of half hr entries, max is 24 = 12 hrs
-    secsX8Left = combineByte(byteList[10:12])  # always 0x3840
+    secsX8Left = combineByte(byteList[10:12])  # always 0x3840 for a 1/2 hr temp basal
     pulsesPerHhr = combineByte(byteList[12:14])   # pulses per half hr segment
     # TODO - fix this section
     # if mlen == 0x0e:
@@ -94,11 +94,12 @@ def parse_1a16(byteList, msgDict):
     totalEntryX10pulses = combineByte(byteList[(12+mlen):(14+mlen)])
     delayMicroSec = combineByte(byteList[(14+mlen):(18+mlen)])
 
-    if firstEntryX10pulses != totalEntryX10pulses:
-        print('Warning - temp basal not properly configured, # pulses')
-
-    if firstDelayMicroSec != delayMicroSec:
-        print('Warning - temp basal not properly configured, # microsec')
+    # These values are always the same from the PDM
+    # if firstEntryX10pulses != totalEntryX10pulses:
+    #    print('Warning - temp basal not properly configured, # pulses')
+    #
+    # if firstDelayMicroSec != delayMicroSec:
+    #    print('Warning - temp basal not properly configured, # microsec')
 
     msgDict['TableNum'] = TableNum
     msgDict['chsum'] = chsum
@@ -116,9 +117,9 @@ def parse_1a16(byteList, msgDict):
     msgDict['totalEntryX10pulses'] = totalEntryX10pulses
     msgDict['delayMicroSec'] = delayMicroSec
 
-    msgDict['pulses_in_TB_halfHr'] = 0.1 * firstEntryX10pulses
+    msgDict['pulses_in_TB_halfHr'] = 0.1 * totalEntryX10pulses
     # u per pulse * half hours per hour * number of pulses = rate u/hr
-    basalRate = Decimal(0.05 * 2 * 0.1 * firstEntryX10pulses)
+    basalRate = Decimal(0.05 * 2 * 0.1 * totalEntryX10pulses)
     x = round(basalRate, 2)
     msgDict['temp_basal_rate_u_per_hr'] = float(x)
 
