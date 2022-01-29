@@ -61,6 +61,7 @@ def getPodInitCmdCount(initFrame):
             podInitCmdCount['PP115'] = msgDict['pod_progress']
             podInitCmdCount['recvGain'] = msgDict['recvGain']
             podInitCmdCount['rssiValue'] = msgDict['rssiValue']
+            podInitCmdCount['pmVersion'] = msgDict['pmVersion']
             podInitCmdCount['piVersion'] = msgDict['piVersion']
             podInitCmdCount['lot'] = msgDict['lot']
             podInitCmdCount['tid'] = msgDict['tid']
@@ -72,6 +73,7 @@ def getPodInitCmdCount(initFrame):
 
         elif msgDict['msgType'] == '0x011b':
             podInitCmdCount['cnt011b'] += 1
+            podInitCmdCount['pmVersion'] = msgDict['pmVersion']
             podInitCmdCount['piVersion'] = msgDict['piVersion']
             podInitCmdCount['lot'] = msgDict['lot']
             podInitCmdCount['tid'] = msgDict['tid']

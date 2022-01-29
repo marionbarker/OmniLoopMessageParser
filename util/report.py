@@ -84,13 +84,23 @@ def printPodInfo(podInfo, nomNumSteps):
             if podInfo['numInitSteps'] > nomNumSteps:
                 print('    *** Pod exceeded nominal init steps of {:d}'
                       ' ***'.format(nomNumSteps))
-            print(f'   Pod: Addr {podInfo["podAddr"]}, '
-                  f'Lot {podInfo["lot"]}, '
-                  f'Tid {podInfo["tid"]}, '
-                  f'PI: {podInfo["piVersion"]}, '
-                  f'gain {podInfo["recvGain"]}, '
-                  f'rssi {podInfo["rssiValue"]}'
-                  f', numInitSteps {podInfo["numInitSteps"]}')
+            if podInfo["rssiValue"] == 0:
+                # BLE pod
+                print(f'   Pod: Addr {podInfo["podAddr"]}, '
+                      f'Lot {podInfo["lot"]}, '
+                      f'Seq {podInfo["tid"]}, '
+                      f'Pod_FW: {podInfo["pmVersion"]}, '
+                      f'BLE_FW: {podInfo["piVersion"]}'
+                      f', numInitSteps {podInfo["numInitSteps"]}')
+            else:
+                print(f'   Pod: Addr {podInfo["podAddr"]}, '
+                      f'Lot {podInfo["lot"]}, '
+                      f'Tid {podInfo["tid"]}, '
+                      f'PM: {podInfo["pmVersion"]}, '
+                      f'PI: {podInfo["piVersion"]}, '
+                      f'gain {podInfo["recvGain"]}, '
+                      f'rssi {podInfo["rssiValue"]}'
+                      f', numInitSteps {podInfo["numInitSteps"]}')
         else:
             printDict(podInfo)
     return
@@ -117,19 +127,15 @@ def printLogInfoSummary(logInfoDict):
     print('            Last  message in log :', logInfoDict['last_msg'])
     print('  Total elapsed time in log (hrs) : {:6.1f}'.format(
            logInfoDict['msgLogHrs']))
-    print('                Radio on estimate : {:6.1f}, {:5.1f}%'.format(
-           logInfoDict['radioOnHrs'],
-           100*logInfoDict['radioOnHrs']/logInfoDict['msgLogHrs']))
-    #if ('send_receive_messages' in logInfoDict):
-    if (0):
-        print('   Number of messages (sent/recv) :{:5d} ({:4d} / {:4d})'.format(
-               logInfoDict['numMsgs'], logInfoDict['send_receive_messages'][1],
-               logInfoDict['send_receive_messages'][0]))
+    if (('send_receive_messages' in logInfoDict) and
+       (logInfoDict['send_receive_messages'].count() == 2)):
+        print('   Number of messages (sent/recv) :{:5d} ({:4d} / {:4d})'.
+              format(logInfoDict['numMsgs'],
+                     logInfoDict['send_receive_messages'][1],
+                     logInfoDict['send_receive_messages'][0]))
     print('    Messages in completed actions :{:5d} : {:.1f}%'.format(
            logInfoDict['totalCompletedMessages'],
            logInfoDict['percentCompleted']))
-    print('          Number of nonce resyncs :{:5d}'.format(
-           logInfoDict['numberOfNonceResync']))
     print('       Total Bolus Req in log (u) : {:7.2f}'.format(
            logInfoDict['totBolus']))
     if 'autB' in logInfoDict:
@@ -140,6 +146,14 @@ def printLogInfoSummary(logInfoDict):
             print('               Automatic (u) : {:7.2f}, {:3.0f} %'.format(
                    logInfoDict['autB'],
                    100*logInfoDict['autB']/logInfoDict['totBolus']))
+    if (logInfoDict['numberOfNonceResync'] > 0):
+        print('\n   ## Eros Only')
+        print('          Number of nonce resyncs :{:5d}'.format(
+               logInfoDict['numberOfNonceResync']))
+    # radio on was only needed in early days of Eros testing, drop this
+    # print('                Radio on estimate : {:6.1f}, {:5.1f}%'.format(
+    #        logInfoDict['radioOnHrs'],
+    #        100*logInfoDict['radioOnHrs']/logInfoDict['msgLogHrs']))
     return
 
 
