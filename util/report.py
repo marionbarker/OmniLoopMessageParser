@@ -4,6 +4,7 @@ from util.pod import getPodProgressMeaning
 from util.misc import printDict
 import matplotlib.pyplot as plt
 import numpy as np
+from util.crc_16 import crc_16
 
 
 """
@@ -78,22 +79,33 @@ def getStringFromInt(thisValue):
 
 
 def printPodInfo(podInfo, nomNumSteps):
-    if 'rssiValue' in podInfo:
+    if 'pmVersion' in podInfo:
         # print('\n')
         if 'numInitSteps' in podInfo:
             if podInfo['numInitSteps'] > nomNumSteps:
                 print('    *** Pod exceeded nominal init steps of {:d}'
                       ' ***'.format(nomNumSteps))
-            if podInfo["rssiValue"] == 0:
+            if podInfo['pmVersion'][0] == '4':
                 # BLE pod
-                print(f'   Pod: Addr {podInfo["podAddr"]}, '
+                print(f' Dash Pod: Addr {podInfo["podAddr"]}, '
                       f'Lot {podInfo["lot"]}, '
                       f'Seq {podInfo["tid"]}, '
                       f'Pod_FW: {podInfo["pmVersion"]}, '
                       f'BLE_FW: {podInfo["piVersion"]}'
                       f', numInitSteps {podInfo["numInitSteps"]}')
+            elif podInfo['pmVersion'][0] == '2':
+                # Eros Pod
+                print(f' Eros Pod: Addr {podInfo["podAddr"]}, '
+                      f'Lot {podInfo["lot"]}, '
+                      f'Tid {podInfo["tid"]}, '
+                      f'PM: {podInfo["pmVersion"]}, '
+                      f'PI: {podInfo["piVersion"]}, '
+                      f'gain {podInfo["recvGain"]}, '
+                      f'rssi {podInfo["rssiValue"]}'
+                      f', numInitSteps {podInfo["numInitSteps"]}')
             else:
-                print(f'   Pod: Addr {podInfo["podAddr"]}, '
+                # Unknown Type of Pod
+                print(f' Unkn Pod: Addr {podInfo["podAddr"]}, '
                       f'Lot {podInfo["lot"]}, '
                       f'Tid {podInfo["tid"]}, '
                       f'PM: {podInfo["pmVersion"]}, '
