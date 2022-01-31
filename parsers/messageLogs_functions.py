@@ -49,7 +49,8 @@ FIXME_RE = re.compile(r'(?!#).(##+.*)')
 #  note it's either MessageLog or Device Communication Log
 MARKDOWN_HEADINGS_TO_EXTRACT = ['OmnipodPumpManager', 'MessageLog',
                                 'PodState', 'PodInfoFaultEvent',
-                                'Device Communication Log', 'LoopVersion']
+                                'Device Communication Log', 'LoopVersion',
+                                'Version', 'OmniBLEPumpManager']
 
 
 # this is only called for files that end in ".md"
@@ -134,10 +135,10 @@ def splitFullMsg(hexToParse):
         msgDict['seqNum'] = (B9 & 0x3C) >> 2
     msgDict['rawHex'] = hexToParse
     msgDict['CRC'] = '0x' + CRC
-    noisy = 0
-    if noisy and msgDict['msgType'] == '0x0202':
-        print(f' ** {msgDict["msgMeaning"]}, gain: {msgDict["recvGain"]}, \
-                rssi: {msgDict["rssiValue"]}')
+    # noisy = 0
+    # if noisy and msgDict['msgType'] == '0x0202':
+    #    print(f' ** {msgDict["msgMeaning"]}, gain: {msgDict["recvGain"]}, \
+    #            rssi: {msgDict["rssiValue"]}')
     return address, msgDict
 
 
@@ -227,6 +228,13 @@ def extract_pod_manager(data):
         except ValueError:
             print('Information Only: PodState not defined in log file')
             # ab = 4 # non op
+    elif data.get('OmniBLEPumpManager'):
+        try:
+            podMgrDict = dict([[x.strip() for x in v.split(':', 1)]
+                              for v in data['PodState']])
+        except ValueError:
+            print('Information Only: PodState not defined in log file')
+            # ab = 4 # non op
     return podMgrDict
 
 
@@ -244,6 +252,9 @@ def extract_loop_version(data, firstChars):
     if 'LoopVersion' in data:
         loopVersionDict = dict([[x.strip() for x in v.split(':', 1)]
                                for v in data['LoopVersion']])
+    elif 'Version' in data:
+        loopVersionDict = dict([[x.strip() for x in v.split(':', 1)]
+                               for v in data['Version']])
 
     """
     else:
