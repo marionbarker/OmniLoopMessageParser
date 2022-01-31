@@ -19,14 +19,16 @@ def getAnalysisIO(pathOption, loopType, vFlag, macFlag):
        loopType:
           # identify if Loop or FAPSX files
           "Loop" for Loop Report markdown file
-          "FX"   for FreeAPS X files
+          "FX"   for FreeAPS X files (no dash support right now)
 
        vFlag:
          0: output analysis to terminal window, outFlag = 0
          1: deprecated, outFlag = 0
          2: output analysis to terminal window, outFlag = 0
          3: output podInitCmdCount to survey file, outFlag is filename
-         4: (init, podState, full df) to csv, outFlag verboseOutput folder
+         Next few return path in outFlag to verboseOutput folder
+         4 and 5: Eros and Dash (init, podState, full df) to csv
+         6: special purpose for Dash to trigger CRC output
 
        macFlag:
          0: use Drobo folder for Mac
@@ -71,7 +73,7 @@ def getAnalysisIO(pathOption, loopType, vFlag, macFlag):
     elif vFlag == 3:
         outFlag = topPath + '/' + 'LoopReportPythonAnalysis' + '/' \
                   + 'init_survey.csv'
-    elif vFlag == 4 and loopType.lower() == "loop":
+    elif vFlag >= 4 and loopType.lower() == "loop":
         outFlag = topPath + '/' + 'LoopReportPythonAnalysis' + '/' \
                   + 'verboseOutput'
     elif vFlag == 4 and loopType.lower() == "fx":
