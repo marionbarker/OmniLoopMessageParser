@@ -505,3 +505,82 @@ def generatePlot(outFlag, fileDict, df):
     plt.close(fig)
 
     return thisOutFile
+
+
+def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps):
+    # if final message is not 0x1d or 0x0202, return without printing
+    # print('   podState columns', podState.columns)
+    # printDict(logInfoDict)
+    # printDict(fileDict)
+    secondRow = podState.iloc[1][:]
+    secondMsg = secondRow['msgDict']
+    lastRow = podState.iloc[-1][:]
+    lastMsg = lastRow['msgDict']
+    # intialize variables to flag they have not been updated
+    sendMsgs = -999
+    recvMsgs = -999
+    if (('send_receive_messages' in logInfoDict) and
+       (logInfoDict['send_receive_messages'].count() == 2)):
+        sendMsgs = logInfoDict['send_receive_messages'][1]
+        recvMsgs = logInfoDict['send_receive_messages'][0]
+    Finish1 = 'Nominal'
+    Finish2 = 'Success'
+    hexPattern = ''
+    if lastMsg['msgMeaning'] == 'FaultEvent':
+        print(lastMsg['logged_fault'])
+        if (lastMsg['logged_fault'] != "0x1c" and
+           lastMsg['logged_fault'] != "0x18"):
+            hexPattern = lastMsg['rawHex']
+            Finish1 = lastMsg['logged_fault']
+            Finish2 = 'Fault'
+    isItThere = os.path.isfile(outFile)
+    # now open the file
+    stream_out = open(outFile, mode='at')
+    if not isItThere:
+        # set up a table format order
+        headerString = 'Who, Finish1, Finish2, lastMsgDate, podAddr, ' + \
+                       'podHrs, logHrs, #Messages, #Sent, #Recv, ' + \
+                       '#Recv/#Send%,  InsulinDelivered, LotNo, SeqNo, ' + \
+                       'PodFW, BleFW, rawHex(Fault), filename ' + \
+                       'buildDate, codeVersion, Commit, Comment'
+        stream_out.write(headerString)
+        stream_out.write('\n')
+#    loopVersionDict = loopReadDict['loopVersionDict']
+#    fileDict = loopReadDict['fileDict']
+
+    if 'pmVersion' in secondMsg:
+        podFw = secondMsg['pmVersion']
+        bleFw = secondMsg['piVersion']
+        lotNo = secondMsg['lot']
+        seqNo = secondMsg['tid']
+    else:
+        podFw = ''
+        bleFw = ''
+        lotNo = ''
+        seqNo = ''
+    stream_out.write(f"{fileDict['person']},")
+    stream_out.write(f"{Finish1},")
+    stream_out.write(f"{Finish2},")
+    stream_out.write(f"{logInfoDict['last_msg']},")
+    stream_out.write(f"{lastRow['address']},")
+    stream_out.write(f"{(logInfoDict['podOnTime']/60):6.2f},")
+    stream_out.write(f"{logInfoDict['msgLogHrs']:6.2f},")
+    stream_out.write(f"{logInfoDict['numMsgs']},")
+    stream_out.write(f"{sendMsgs},")
+    stream_out.write(f"{recvMsgs},")
+    stream_out.write(f"{100*recvMsgs/sendMsgs:6.0f},")
+    stream_out.write(f"{logInfoDict['insulinDelivered']:6.2f},")
+    stream_out.write(f"{lotNo},")
+    stream_out.write(f"{seqNo},")
+    stream_out.write(f"{podFw},")
+    stream_out.write(f"{bleFw},")
+    stream_out.write(f"{hexPattern},")
+    stream_out.write(f"{fileDict['personFile']},")
+    stream_out.write(f"{fileDict['codeVersion']},")
+    stream_out.write(f"{fileDict['buildDateString']},")
+    # - this is Loop gitRev right now, don't print it out
+    # stream_out.write(f"{fileDict['gitRevision'][0:6]},")
+    stream_out.write('\n')
+    stream_out.close()
+    print('  Row appended to ', outFile)
+    return

@@ -5,6 +5,7 @@ from util.report import printPodInfo, printPodDict, printLogInfoSummary
 from util.report import printActionSummary
 from util.report import writeDescriptivePodStateToOutputFile
 from util.report import printUncategorizedMessages
+from util.report import writeDashStats
 from util.pod import getLogInfoFromState
 from analysis.podStateAnalysis import getPodState
 from analysis.podInitAnalysis import getPodInitCmdCount
@@ -26,13 +27,23 @@ def analyzePodMessages(fileDict, podFrame, podDict, outFlag,
      : 2: like 0, + printPodInitFrame if exceeds nominal steps
      : 3: output podInitCmdCount to outFlag, skip balance and return
      : 4: like 2, + verboseOutput (init, podState, full df) to csv
+     : 5: same as 4 plus add extra for Dash
     """
     REPORT_INIT_ONLY = 3
     VERBOSE_OUT_FILE = 4
     nomNumInitSteps = 18  # nominal number steps to initialize pod
+    dashStatsFlag = 0
+
+    if vFlag == 5:
+        dashStatsFile = outFlag + '/' + 'dash_stats.csv'
+        dashStatsFlag = 1
+        vFlag = 4  # rest of code uses this for verbose reporting
 
     # This is time (sec) radio on Pod stays awake once comm is initiated
+    # Eros only:
     radio_on_time = 30
+    # For Dash, this is 3 minutes but app reconnects every time pod BT drops.
+    # right now - not tracking this for Dash
 
     # add more stuff and return as a DataFrame
     df = generate_table(podFrame, radio_on_time)
@@ -149,14 +160,20 @@ def analyzePodMessages(fileDict, podFrame, podDict, outFlag,
         if numACK > 0:
             print(f'    ***  Detected {numACK} ACK(s) during life of pod')
 
-        printActionSummary(actionSummary)
+        # turn these off - not useful, action list no longer complete
+        if 0:
+            printActionSummary(actionSummary)
 
-        # report for uncategorized commands
-        if len(frameBalance) > 0:
-            printUncategorizedMessages(frameBalance, podState)
+            # report for uncategorized commands
+            if len(frameBalance) > 0:
+                printUncategorizedMessages(frameBalance, podState)
 
     if hasFault:
         print('\nFault Details')
         printDict(faultProcessedMsg)
+
+    if dashStatsFlag == 1:
+        writeDashStats(dashStatsFile, podState, fileDict, logInfoDict,
+                       numInitSteps)
 
     return
