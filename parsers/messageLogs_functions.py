@@ -391,6 +391,20 @@ def loop_read_file(fileDict):
         print('loopType is not recognized')
         return loopReadDict
 
+    # There are some items that are useful to have in fileDict that are
+    # sometimes found in loopVersionDict
+    # fill those in with values or empty strings before returning.
+    fileDict['codeVersion'] = ''
+    fileDict['buildDateString'] = ''
+    fileDict['gitRevision'] = ''
+    if 'codeVersion' in loopVersionDict:
+        fileDict['codeVersion'] = loopVersionDict['codeVersion']
+    if 'Version' in loopVersionDict:
+        fileDict['codeVersion'] = loopVersionDict['Version']
+    if 'buildDateString' in loopVersionDict:
+        fileDict['buildDateString'] = loopVersionDict['buildDateString']
+    if 'gitRevision' in loopVersionDict:
+        fileDict['gitRevision'] = loopVersionDict['gitRevision']
     loopReadDict = {'fileDict': fileDict,
                     'logDF': logDF,
                     'podMgrDict': podMgrDict,
