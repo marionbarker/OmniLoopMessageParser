@@ -95,7 +95,7 @@ def analyzePodMessages(fileDict, podFrame, podDict, outFlag,
 
     if podInitState >= 0:
         if vFlag == VERBOSE_OUT_FILE or \
-           vFlag == 2 and numInitSteps >= nomNumInitSteps:
+           vFlag == 2 and numInitSteps > nomNumInitSteps:
             printInitFrame(podInitFrame)
 
     if vFlag == VERBOSE_OUT_FILE:
