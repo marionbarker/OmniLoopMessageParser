@@ -584,3 +584,43 @@ def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps):
     stream_out.close()
     print('  Row appended to ', outFile)
     return
+
+
+def writeHexCrcPattern(outFile, logDF):
+    # print(logDF.iloc[1][:])
+    # print('   input columns', logDF.columns)
+    # columnList = ['time', 'address',
+    #               'type', 'msgDict']
+    recvDF = logDF[logDF['type'] == "receive"]
+    recvDF = recvDF[recvDF['device'] == "Omnipod-Dash"]
+    if len(recvDF) == 0:
+        print('No appropriate rows in logDF, returning')
+
+    isItThere = os.path.isfile(outFile)
+    # now open the file
+    stream_out = open(outFile, mode='at')
+    if not isItThere:
+        # set up a table format order
+        headerString = 'timeStamp, podAddr, ' + \
+                       'type, rawHex, calcCRC, ' + \
+                       'podCRC'
+        stream_out.write(headerString)
+        stream_out.write('\n')
+    # print('\n *** Appending CRC data to \n     {:s}'.format(outFile))
+    # print(recvDF.iloc[0][:])
+
+    for index, row in recvDF.iterrows():
+        msgDict = row['msgDict']
+        rawHex = msgDict['rawHex']
+        stream_out.write(f"{row['time']},")
+        stream_out.write(f"{row['address']},")
+        stream_out.write(f"{row['type']},")
+        stream_out.write(f"{rawHex},")
+        crcCalc = crc_16(rawHex)
+        stream_out.write(f"{crcCalc:04x},")
+        stream_out.write(f"{rawHex[-4:]}")
+        stream_out.write('\n')
+    stream_out.close()
+    print('  Output appended to ', outFile)
+
+    return

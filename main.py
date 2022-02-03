@@ -118,5 +118,3 @@ def main(fileDict, outFlag, vFlag):
                 # plot pandas dataframe containing detemine basal data
                 thisOutFile = generatePlot(outFlag, fileDict, determBasalDF)
                 print(' *** Determine Basal plot created:     ', thisOutFile)
-
-    print('------------------------------------------\n')
