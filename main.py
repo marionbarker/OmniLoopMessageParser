@@ -3,6 +3,7 @@ from analysis.analyzePodMessages import analyzePodMessages
 from analysis.analyzeAllPodsInDeviceLog import analyzeAllPodsInDeviceLog
 from util.report import printLoopDict
 from util.report import writeCombinedLogToOutputFile
+from util.report import writeHexCrcPattern
 from util.report import generatePlot, printDict
 import platform
 import os
@@ -16,6 +17,12 @@ def main(fileDict, outFlag, vFlag):
     # loopReadDict has keys:
     #   fileDict, logDF, podMgrDict, faultInfoDict,
     #   loopVersionDict, determBasalDF
+    if vFlag == 6:
+        thisOutFile = outFlag + '/' + 'dash_crc.txt'
+        logDF = loopReadDict['logDF']
+        writeHexCrcPattern(thisOutFile, logDF)
+        return
+
     fileDict = loopReadDict['fileDict']
     determBasalDF = loopReadDict['determBasalDF']
     # print(loopReadDict)
@@ -84,9 +91,6 @@ def main(fileDict, outFlag, vFlag):
         print('  ----------------------------------------')
         print('  This file uses Device Communication Log')
         analyzeAllPodsInDeviceLog(fileDict, loopReadDict, outFlag, vFlag)
-        if vFlag == 4:
-            thisOutFile = outFlag + '/' + 'logDFCmb_out.csv'
-            writeCombinedLogToOutputFile(thisOutFile, loopReadDict['logDF'])
 
     elif fileDict['recordType'] == 'FAPSX':
         print('  ----------------------------------------')
