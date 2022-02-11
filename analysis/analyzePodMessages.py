@@ -123,6 +123,7 @@ def analyzePodMessages(fileDict, podFrame, podDict, outFlag,
     else:
         hasFault = False
         thisFault = 'Nominal'
+        faultProcessedMsg = {}
 
     # process the action frame
     # returns a dictionary plus total completed message count)
@@ -160,10 +161,10 @@ def analyzePodMessages(fileDict, podFrame, podDict, outFlag,
         if numACK > 0:
             print(f'    ***  Detected {numACK} ACK(s) during life of pod')
 
-        # turn these off - not useful, action list no longer complete
-        if 0:
-            printActionSummary(actionSummary)
+        printActionSummary(actionSummary)
 
+        # turn these back on - still useful, action list no longer complete
+        if 1:
             # report for uncategorized commands
             if len(frameBalance) > 0:
                 printUncategorizedMessages(frameBalance, podState)
@@ -174,6 +175,6 @@ def analyzePodMessages(fileDict, podFrame, podDict, outFlag,
 
     if dashStatsFlag == 1:
         writeDashStats(dashStatsFile, podState, fileDict, logInfoDict,
-                       numInitSteps)
+                       numInitSteps, faultProcessedMsg)
 
     return

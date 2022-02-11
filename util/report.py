@@ -145,9 +145,11 @@ def printLogInfoSummary(logInfoDict):
               format(logInfoDict['numMsgs'],
                      logInfoDict['send_receive_messages'][1],
                      logInfoDict['send_receive_messages'][0]))
-    print('    Messages in completed actions :{:5d} : {:.1f}%'.format(
-           logInfoDict['totalCompletedMessages'],
-           logInfoDict['percentCompleted']))
+    # comment out Completed Actions, have not kept that code up to date
+    # not relevant for dash testing
+    # print('    Messages in completed actions :{:5d} : {:.1f}%'.format(
+    #       logInfoDict['totalCompletedMessages'],
+    #       logInfoDict['percentCompleted']))
     print('       Total Bolus Req in log (u) : {:7.2f}'.format(
            logInfoDict['totBolus']))
     if 'autB' in logInfoDict:
@@ -507,7 +509,8 @@ def generatePlot(outFlag, fileDict, df):
     return thisOutFile
 
 
-def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps):
+def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps, 
+                   faultProcessedMsg):
     # if final message is not 0x1d or 0x0202, return without printing
     # print('   podState columns', podState.columns)
     # printDict(logInfoDict)
@@ -526,12 +529,11 @@ def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps):
     Finish1 = 'Nominal'
     Finish2 = 'Success'
     hexPattern = ''
-    if lastMsg['msgMeaning'] == 'FaultEvent':
-        print(lastMsg['logged_fault'])
-        if (lastMsg['logged_fault'] != "0x1c" and
-           lastMsg['logged_fault'] != "0x18"):
-            hexPattern = lastMsg['rawHex']
-            Finish1 = lastMsg['logged_fault']
+    if faultProcessedMsg:
+        if (faultProcessedMsg['logged_fault'] != "0x1c" and
+           faultProcessedMsg['logged_fault'] != "0x18"):
+            hexPattern = faultProcessedMsg['rawHex']
+            Finish1 = faultProcessedMsg['logged_fault']
             Finish2 = 'Fault'
     isItThere = os.path.isfile(outFile)
     # now open the file
@@ -542,7 +544,8 @@ def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps):
                        'podHrs, logHrs, #Messages, #Sent, #Recv, ' + \
                        '#Recv/#Send%,  InsulinDelivered, LotNo, SeqNo, ' + \
                        'PodFW, BleFW, rawHex(Fault), filename ' + \
-                       'buildDate, codeVersion, Commit, Comment'
+                       'appNameAndVersion, gitRevision, gitBranch, ' + \
+                       'buildDate, Comment, More Comments'
         stream_out.write(headerString)
         stream_out.write('\n')
 #    loopVersionDict = loopReadDict['loopVersionDict']
@@ -576,10 +579,10 @@ def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps):
     stream_out.write(f"{bleFw},")
     stream_out.write(f"{hexPattern},")
     stream_out.write(f"{fileDict['personFile']},")
-    stream_out.write(f"{fileDict['codeVersion']},")
+    stream_out.write(f"{fileDict['appNameAndVersion']},")
+    stream_out.write(f"{fileDict['gitRevision']},")
+    stream_out.write(f"{fileDict['gitBranch']},")
     stream_out.write(f"{fileDict['buildDateString']},")
-    # - this is Loop gitRev right now, don't print it out
-    # stream_out.write(f"{fileDict['gitRevision'][0:6]},")
     stream_out.write('\n')
     stream_out.close()
     print('  Row appended to ', outFile)

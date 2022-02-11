@@ -392,19 +392,27 @@ def loop_read_file(fileDict):
         return loopReadDict
 
     # There are some items that are useful to have in fileDict that are
-    # sometimes found in loopVersionDict
+    # sometimes found in loopVersionDict and sometimes with different id
+    # This field has had various names over the versions of Loop, collect them
     # fill those in with values or empty strings before returning.
-    fileDict['codeVersion'] = ''
+    fileDict['appNameAndVersion'] = ''
     fileDict['buildDateString'] = ''
     fileDict['gitRevision'] = ''
+    fileDict['gitBranch'] = ''
+    if 'appNameAndVersion' in loopVersionDict:
+        fileDict['appNameAndVersion'] = loopVersionDict['appNameAndVersion']
     if 'codeVersion' in loopVersionDict:
-        fileDict['codeVersion'] = loopVersionDict['codeVersion']
+        fileDict['appNameAndVersion'] = loopVersionDict['codeVersion']
+        loopVersionDict['appNameAndVersion'] = loopVersionDict['codeVersion']
     if 'Version' in loopVersionDict:
-        fileDict['codeVersion'] = loopVersionDict['Version']
+        fileDict['appNameAndVersion'] = loopVersionDict['Version']
+        loopVersionDict['appNameAndVersion'] = loopVersionDict['Version']
     if 'buildDateString' in loopVersionDict:
         fileDict['buildDateString'] = loopVersionDict['buildDateString']
     if 'gitRevision' in loopVersionDict:
         fileDict['gitRevision'] = loopVersionDict['gitRevision']
+    if 'gitBranch' in loopVersionDict:
+        fileDict['gitBranch'] = loopVersionDict['gitBranch']
     loopReadDict = {'fileDict': fileDict,
                     'logDF': logDF,
                     'podMgrDict': podMgrDict,
