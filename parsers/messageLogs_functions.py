@@ -47,10 +47,11 @@ FIXME_RE = re.compile(r'(?!#).(##+.*)')
 # Add new ## PodInfoFaultEvent markdown heading
 # Add new ## Device Communication Log markdown heading:
 #  note it's either MessageLog or Device Communication Log
-MARKDOWN_HEADINGS_TO_EXTRACT = ['OmnipodPumpManager', 'MessageLog',
+MARKDOWN_HEADINGS_TO_EXTRACT = ['OmnipodPumpManager', 'OmniBLEPumpManager',
+                                'MessageLog', 'Device Communication Log',
                                 'PodState', 'PodInfoFaultEvent',
-                                'Device Communication Log', 'LoopVersion',
-                                'Version', 'OmniBLEPumpManager']
+                                'LoopVersion', 'Version', 'Build Details',
+                                ]
 
 
 # this is only called for files that end in ".md"
@@ -65,10 +66,6 @@ def parse_filehandle(filehandle):
     # read content from file
     content = filehandle.read()
 
-    # saved first lines in case LoopVersion not found
-    maxChars = 1000
-    firstChars = content[0:maxChars]
-
     # remove << which breaks one line into two (in the soup section later)
     content = content.replace('<<', '')
 
@@ -81,6 +78,7 @@ def parse_filehandle(filehandle):
     for header in soup.find_all(['h2', 'h3'],
                                 text=MARKDOWN_HEADINGS_TO_EXTRACT):
         nextNode = header
+        print(nextNode)
         data.setdefault(header.text, [])
         while True:
             nextNode = nextNode.nextSibling
@@ -95,7 +93,7 @@ def parse_filehandle(filehandle):
                 data[header.text].extend(
                                          [text for text in
                                           nextNode.stripped_strings])
-    return data, firstChars
+    return data
 
 
 def splitFullMsg(hexToParse):
@@ -246,41 +244,18 @@ def extract_fault_info(data):
     return faultInfoDict
 
 
-def extract_loop_version(data, firstChars):
+def extract_loop_version(data):
     # set up default
     loopVersionDict = {}
-    if 'LoopVersion' in data:
+    if 'Build Details' in data:
+        loopVersionDict = dict([[x.strip() for x in v.split(':', 1)]
+                               for v in data['Build Details']])
+    elif 'LoopVersion' in data:
         loopVersionDict = dict([[x.strip() for x in v.split(':', 1)]
                                for v in data['LoopVersion']])
     elif 'Version' in data:
         loopVersionDict = dict([[x.strip() for x in v.split(':', 1)]
                                for v in data['Version']])
-
-    """
-    else:
-        print(firstChars)
-        # break this at \n
-        versionLines = []
-        idx = 0
-        foundIt = 0
-        for line in firstChars.strip().split("\n"):
-            versionLines[idx] = line
-            print(idx, versionLines[idx])
-            if versionLines[idx][3:9] == "gitRev":
-                foundIt = idx
-            idx += 1
-
-        print('FoundIt = ', foundIt)
-        print(versionLines)
-        # search for keywords in versionLines, try to extract loopVersionDict
-        if foundIt > 0:
-            idx = 0
-            loopVersionDict['Version'] = versionLines[foundIt + idx]
-            while idx < 6:
-                idx += 1
-                v = versionLines[foundIt + idx]
-                #loopVersionDict = dict([[x.strip() for x in v.split(':', 1)]
-    """
 
     return loopVersionDict
 
@@ -325,7 +300,7 @@ def loop_read_file(fileDict):
     filename = fileDict['filename']
     if fileDict['loopType'].lower() == "loop":
         file = open(filename, "r", encoding='UTF8')
-        parsed_content, firstChars = parse_filehandle(file)
+        parsed_content = parse_filehandle(file)
         # ensure file is closed
         file.close()
         if parsed_content.get('MessageLog'):
@@ -357,7 +332,7 @@ def loop_read_file(fileDict):
 
         logDF = extract_messages(fileDict['recordType'], parsed_content)
         faultInfoDict = extract_fault_info(parsed_content)
-        loopVersionDict = extract_loop_version(parsed_content, firstChars)
+        loopVersionDict = extract_loop_version(parsed_content)
         if 'PodState' in parsed_content:
             podMgrDict = extract_pod_manager(parsed_content)
         else:
