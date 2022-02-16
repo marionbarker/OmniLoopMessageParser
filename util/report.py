@@ -518,7 +518,7 @@ def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps,
     secondRow = podState.iloc[1][:]
     secondMsg = secondRow['msgDict']
     lastRow = podState.iloc[-1][:]
-    lastMsg = lastRow['msgDict']
+
     # intialize variables to flag they have not been updated
     sendMsgs = -999
     recvMsgs = -999
@@ -529,12 +529,14 @@ def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps,
     Finish1 = 'Nominal'
     Finish2 = 'Success'
     hexPattern = ''
+    pdmRefCode = ''
     if faultProcessedMsg:
         if (faultProcessedMsg['logged_fault'] != "0x1c" and
            faultProcessedMsg['logged_fault'] != "0x18"):
             hexPattern = faultProcessedMsg['rawHex']
             Finish1 = faultProcessedMsg['logged_fault']
             Finish2 = 'Fault'
+            pdmRefCode = faultProcessedMsg['pdmRefCode']
     isItThere = os.path.isfile(outFile)
     # now open the file
     stream_out = open(outFile, mode='at')
@@ -543,7 +545,8 @@ def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps,
         headerString = 'Who, Finish1, Finish2, lastMsgDate, podAddr, ' + \
                        'podHrs, logHrs, #Messages, #Sent, #Recv, ' + \
                        '#Recv/#Send%,  InsulinDelivered, LotNo, SeqNo, ' + \
-                       'PodFW, BleFW, rawHex(Fault), filename ' + \
+                       'PodFW, BleFW, rawHex(Fault), PDM RefCode, ' + \
+                       'filename ' + \
                        'appNameAndVersion, gitRevision, gitBranch, ' + \
                        'buildDate, Comment, More Comments'
         stream_out.write(headerString)
@@ -578,6 +581,7 @@ def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps,
     stream_out.write(f"{podFw},")
     stream_out.write(f"{bleFw},")
     stream_out.write(f"{hexPattern},")
+    stream_out.write(f"{pdmRefCode},")
     stream_out.write(f"{fileDict['personFile']},")
     stream_out.write(f"{fileDict['appNameAndVersion']},")
     stream_out.write(f"{fileDict['gitRevision']},")
