@@ -1,4 +1,5 @@
 from util.pod import getUnitsFromPulses
+from util.pod import getFaultMsg
 import numpy as np
 import pandas as pd
 
@@ -60,7 +61,7 @@ def getPodState(frame):
 
         msgType = msgDict['msgType']
         if msgType == '0x0202':
-            faultProcessedMsg = msgDict
+            faultProcessedMsg = getFaultMsg(msgDict)
 
         timeAsleep = row['timeAsleep']
         if np.isnan(timeAsleep):

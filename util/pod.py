@@ -45,7 +45,8 @@ def getActionDict():
            'actionName' : (idxToNameForSearch list ('sendName', 'recvName')
                  }
     These will be searched for in this order and those indices removed from
-    pod frame before the next search (see getPodState in checkAction.py)
+    pod frame before the next search
+        (see getPodState in analysis.podStateAnalysis)
 
     Remove 'Status&Bolus'    : (2, ('0x0e',   '0x1d', '0x1a17', '0x1d')),
     in preparation of newer Loop code that no longer issues a status request
@@ -324,3 +325,38 @@ def getNameFromMsgType(msgType):
         '0x1f7': 'CnxAll'}
 
     return msgName[msgType]
+
+
+# if appropriate:
+#   add the PDM-style Ref Code to the msgDict
+def getFaultMsg(msgDict):
+    faultProcessedMsg = msgDict
+    thisFault = faultProcessedMsg['logged_fault']
+    # The following "logged_fault" strings are not Faults,
+    #    so no PDM RefCode needed
+    notAFault = {'0x1c', '0x18', '0x00'}
+    if thisFault in {'0x31'}:
+        faultProcessedMsg['pdmRefCode'] = \
+            'Programming Error - report to developers'
+    elif thisFault not in notAFault:
+        # generate PDM RefCode
+        #    pdmRefCode = 'TT-VVVHH-IIIRR-FFF'
+        # ref: https://github.com/openaps/openomni/wiki/PDM-Ref-Codes
+        if thisFault in {'0x14'}:
+            TT = '17'
+        else:
+            TT = '19'
+        VVV = '{0:#0{1}d}'.format(msgDict['byte_V'], 3)
+        # next few are the integer parts
+        hours = msgDict['fault_time_minutes_since_pod_activation']//60
+        HH = '{0:#0{1}d}'.format(hours, 2)
+        insulin = msgDict['total_pulses_delivered']//20
+        III = '{0:#0{1}d}'.format(insulin, 3)
+        reservoir = msgDict['word_R']//20
+        RR = '{0:#0{1}d}'.format(reservoir, 2)
+        faultProcessedMsg['pdmRefCode'] = TT + '-' + \
+            VVV + HH + '-' + \
+            III + RR + '-' + \
+            msgDict['decimal_fault_string']
+
+    return faultProcessedMsg

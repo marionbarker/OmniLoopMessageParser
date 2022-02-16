@@ -138,6 +138,7 @@ def parse_0202(byteList, msgDict):
     msgDict['insulinDelivered'] = getUnitsFromPulses(word_N)
 
     msgDict['logged_fault'] = '{:#04x}'.format(byte_P)
+    msgDict['decimal_fault_string'] = '{0:#0{1}d}'.format(byte_P, 3)
     # msgDict['logged_fault'] = f'{byte_P: 0x%X}'
 
     msgDict['fault_time_minutes_since_pod_activation'] = word_Q
@@ -150,6 +151,7 @@ def parse_0202(byteList, msgDict):
     msgDict['podOnTime'] = word_S
     msgDict['alerts_bit_mask'] = byte_T
     msgDict['table_fault'] = (byte_U == 2)
+    msgDict['word_R'] = word_R
     msgDict['byte_V'] = byte_V
     msgDict['byte_W'] = byte_W
     msgDict['pod_progress_at_fault'] = byte_X
