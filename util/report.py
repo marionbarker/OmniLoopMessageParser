@@ -81,11 +81,12 @@ def getStringFromInt(thisValue):
 def printPodInfo(podInfo, nomNumSteps):
     if 'pmVersion' in podInfo:
         # print('\n')
+        printDict(podInfo)
         if 'numInitSteps' in podInfo:
             if podInfo['numInitSteps'] > nomNumSteps:
                 print('    *** Pod exceeded nominal init steps of {:d}'
                       ' ***'.format(nomNumSteps))
-            if podInfo['pmVersion'][0] == '4':
+            if podInfo['podStyle'] == 'Dash':
                 # BLE pod
                 print(f' Dash Pod: Addr {podInfo["podAddr"]}, '
                       f'Lot {podInfo["lot"]}, '
@@ -93,7 +94,7 @@ def printPodInfo(podInfo, nomNumSteps):
                       f'Pod_FW: {podInfo["pmVersion"]}, '
                       f'BLE_FW: {podInfo["piVersion"]}'
                       f', numInitSteps {podInfo["numInitSteps"]}')
-            elif podInfo['pmVersion'][0] == '2':
+            elif podInfo['podStyle'] == 'Eros':
                 # Eros Pod
                 print(f' Eros Pod: Addr {podInfo["podAddr"]}, '
                       f'Lot {podInfo["lot"]}, '
@@ -530,9 +531,9 @@ def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps,
     Finish2 = 'Success'
     hexPattern = ''
     pdmRefCode = ''
+    notAFault = {'0x1c', '0x18', '0x00'}
     if faultProcessedMsg:
-        if (faultProcessedMsg['logged_fault'] != "0x1c" and
-           faultProcessedMsg['logged_fault'] != "0x18"):
+        if faultProcessedMsg['logged_fault'] not in notAFault:
             hexPattern = faultProcessedMsg['rawHex']
             Finish1 = faultProcessedMsg['logged_fault']
             Finish2 = 'Fault'

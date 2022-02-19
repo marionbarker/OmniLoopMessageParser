@@ -138,24 +138,28 @@ def returnPodID(podDict, podInfo):
     # configure podID as an empty dictionary
     podID = {}
     # if captured initialization steps, use info in podInfo
-    if podInfo.get('rssiValue'):
+    if podInfo.get('podType'):
+        podID['podType'] = podInfo['podType']
         podID['lot'] = podInfo['lot']
         podID['tid'] = podInfo['tid']
         podID['piVersion'] = podInfo['piVersion']
+        podID['pmVersion'] = podInfo['pmVersion']
         podID['address'] = podInfo['podAddr']
-    # otherwise use podDict assuming OmnipodManager was found in file
-    elif podDict.get('lot'):
-        podID['lot'] = podDict['lot']
-        podID['tid'] = podDict['tid']
-        podID['piVersion'] = podDict['piVersion']
-        podID['address'] = podDict['address']
-    # sometimes we have nothing
+    # sometimes we do not capture that message
     else:
         podID = {
+            'podType': 'unknown',
             'lot': 'unknown',
             'tid': 'unknown',
             'piVersion': 'unknown',
-            'address': 'unknown'}
+            'pmVersion': 'unknown',
+            'address': podInfo['podAddr']}
+    if podID['podType'] == 2:
+        podID['podStyle'] = 'Eros'
+    elif podID['podType'] == 4:
+        podID['podStyle'] = 'Dash'
+    else:
+        podID['podStyle'] = 'Unkn'
 
     return podID
 
@@ -331,6 +335,7 @@ def getNameFromMsgType(msgType):
 #   add the PDM-style Ref Code to the msgDict
 def getFaultMsg(msgDict):
     faultProcessedMsg = msgDict
+    faultProcessedMsg['pdmRefCode'] = ''
     thisFault = faultProcessedMsg['logged_fault']
     # The following "logged_fault" strings are not Faults,
     #    so no PDM RefCode needed

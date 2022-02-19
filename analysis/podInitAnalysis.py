@@ -21,6 +21,9 @@ def getPodInitCmdCount(initFrame):
         'recvGain': -1,
         'rssiValue': -1,
         'podAddr': 'n/a',
+        'podType': 0,
+        'podStyle': 'Unkn',
+        'pmVersion': 0,
         'piVersion': 0,
         'lot': 0,
         'tid': 0,
@@ -61,6 +64,13 @@ def getPodInitCmdCount(initFrame):
             podInitCmdCount['PP115'] = msgDict['pod_progress']
             podInitCmdCount['recvGain'] = msgDict['recvGain']
             podInitCmdCount['rssiValue'] = msgDict['rssiValue']
+            podInitCmdCount['podType'] = msgDict['podType']
+            if podInitCmdCount['podType'] == 2:
+                podInitCmdCount['podStyle'] = 'Eros'
+            elif podInitCmdCount['podType'] == 4:
+                podInitCmdCount['podStyle'] = 'Dash'
+            else:
+                podInitCmdCount['podStyle'] = 'Unkn'
             podInitCmdCount['pmVersion'] = msgDict['pmVersion']
             podInitCmdCount['piVersion'] = msgDict['piVersion']
             podInitCmdCount['lot'] = msgDict['lot']
