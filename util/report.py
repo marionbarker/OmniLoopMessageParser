@@ -81,7 +81,7 @@ def getStringFromInt(thisValue):
 def printPodInfo(podInfo, nomNumSteps):
     if 'pmVersion' in podInfo:
         # print('\n')
-        printDict(podInfo)
+        # printDict(podInfo)
         if 'numInitSteps' in podInfo:
             if podInfo['numInitSteps'] > nomNumSteps:
                 print('    *** Pod exceeded nominal init steps of {:d}'
@@ -548,8 +548,10 @@ def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps,
                        '#Recv/#Send%,  InsulinDelivered, LotNo, SeqNo, ' + \
                        'PodFW, BleFW, rawHex(Fault), PDM RefCode, ' + \
                        'filename ' + \
-                       'appNameAndVersion, gitRevision, gitBranch, ' + \
-                       'buildDate, Comment, More Comments'
+                       'appNameAndVersion, buildDate, ' + \
+                       'gitRevision, gitBranch, ' + \
+                       'workspaceGitRevision, workspaceGitBranch, ' + \
+                       'Comment, More Comments'
         stream_out.write(headerString)
         stream_out.write('\n')
 #    loopVersionDict = loopReadDict['loopVersionDict']
@@ -585,9 +587,11 @@ def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps,
     stream_out.write(f"{pdmRefCode},")
     stream_out.write(f"{fileDict['personFile']},")
     stream_out.write(f"{fileDict['appNameAndVersion']},")
+    stream_out.write(f"{fileDict['buildDateString']},")
     stream_out.write(f"{fileDict['gitRevision']},")
     stream_out.write(f"{fileDict['gitBranch']},")
-    stream_out.write(f"{fileDict['buildDateString']},")
+    stream_out.write(f"{fileDict['workspaceGitRevision']},")
+    stream_out.write(f"{fileDict['workspaceGitBranch']},")
     stream_out.write('\n')
     stream_out.close()
     print('  Row appended to ', outFile)

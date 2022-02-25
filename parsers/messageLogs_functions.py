@@ -374,6 +374,8 @@ def loop_read_file(fileDict):
     fileDict['buildDateString'] = ''
     fileDict['gitRevision'] = ''
     fileDict['gitBranch'] = ''
+    fileDict['workspaceGitRevision'] = ''
+    fileDict['workspaceGitBranch'] = ''
     if 'appNameAndVersion' in loopVersionDict:
         fileDict['appNameAndVersion'] = loopVersionDict['appNameAndVersion']
     if 'codeVersion' in loopVersionDict:
@@ -388,6 +390,11 @@ def loop_read_file(fileDict):
         fileDict['gitRevision'] = loopVersionDict['gitRevision']
     if 'gitBranch' in loopVersionDict:
         fileDict['gitBranch'] = loopVersionDict['gitBranch']
+    if 'workspaceGitRevision' in loopVersionDict:
+        fileDict['workspaceGitRevision'] = \
+            loopVersionDict['workspaceGitRevision']
+    if 'workspaceGitBranch' in loopVersionDict:
+        fileDict['workspaceGitBranch'] = loopVersionDict['workspaceGitBranch']
     loopReadDict = {'fileDict': fileDict,
                     'logDF': logDF,
                     'podMgrDict': podMgrDict,
