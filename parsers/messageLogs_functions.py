@@ -441,13 +441,16 @@ def extract_raw_pod(raw_content):
     # Need to come back and fix this, but skip them to avoid problems
     #  when splitting logDF into separate pods later
     # At some point in time, FAX started using a different pattern
-    pod_patt1 = "318 - DEV: Device message:"
-    pod_messages = [x for x in lines_raw if x.find(pod_patt1) > -1]
+    pod_patt = "318 - DEV: Device message:"
+    pod_messages = [x for x in lines_raw if x.find(pod_patt) > -1]
     if len(pod_messages) == 0:
-        pod_patt2 = "385 - DEV: Device message:"
-        pod_messages = [x for x in lines_raw if x.find(pod_patt2) > -1]
+        pod_patt = "385 - DEV: Device message:"
+        pod_messages = [x for x in lines_raw if x.find(pod_patt) > -1]
         if len(pod_messages) == 0:
-            return logDF
+            pod_patt = "417 - DEV: Device message:"
+            pod_messages = [x for x in lines_raw if x.find(pod_patt) > -1]
+            if len(pod_messages) == 0:
+                return logDF
     if noisy:
         print('first pod line\n', pod_messages[0][0:19], ' ',
               pod_messages[0][166:])
@@ -490,7 +493,7 @@ def extract_raw_determBasal(raw_content):
 
     # now extract the determine basal message
     # use the time pattern from messages to id end of json strings
-    determBasal_patt = "68 - DEV:"
+    determBasal_patt = " 68 - DEV:"
     pump_events = "239 - DEV: New pump events:"
     pe_num = 4  # number of lines to search for Bolus or TempBasal
 
@@ -561,7 +564,14 @@ def extract_raw_determBasal(raw_content):
                     break
                 json_message += lines_raw[jdx]
 
-            json_dict = json.loads(json_message)
+            try:
+                json_dict = json.loads(json_message)
+            except Exception as e:
+                print("Failure parsing at line number", idx)
+                print(e)
+                # skip over broken part
+                idx += 1
+                continue
 
             # check configuration of json_dict
             if "bg" in json_dict:
