@@ -78,7 +78,6 @@ def parse_filehandle(filehandle):
     for header in soup.find_all(['h2', 'h3'],
                                 text=MARKDOWN_HEADINGS_TO_EXTRACT):
         nextNode = header
-        print(nextNode)
         data.setdefault(header.text, [])
         while True:
             nextNode = nextNode.nextSibling
