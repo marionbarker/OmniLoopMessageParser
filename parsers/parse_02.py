@@ -1,6 +1,7 @@
 # file: parse_02 - does the parsing for the 0x02 message returned from the pod
 from util.misc import combineByte
 from util.pod import getUnitsFromPulses
+from util.pod import getResetFaultList
 import numpy as np
 
 
@@ -158,8 +159,9 @@ def parse_0202(byteList, msgDict):
     msgDict['word_Y'] = word_Y
     msgDict['checkSum'] = cksm
 
-    # but if logged_fault is 0x34, many registers are reset
-    if msgDict['logged_fault'] == '0x34':
+    # but if logged_fault is a resetFaults, many registers are reset
+    resetFaults = getResetFaultList()
+    if msgDict['logged_fault'] in resetFaults:
         msgDict['pulses_not_delivered'] = np.nan
         msgDict['pulsesTotal'] = np.nan
         msgDict['fault_time_minutes_since_pod_activation'] = np.nan

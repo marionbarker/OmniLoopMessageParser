@@ -5,6 +5,12 @@ website ref: https://github.com/openaps/openomni/wiki/Pod-Progress-State
 """
 
 
+def getResetFaultList():
+    resetFaults = {'0x34', '0x0d', '0x0e', '0x10', '0x12', '0x1e', '0x22',
+                   '0x36', '0x3b', '0x3c', '0x4f'}
+    return resetFaults
+
+
 def getPodProgressMeaning(thisInt):
     """ convert the value for pod progess into it's meaning """
     podProgress = {
@@ -342,7 +348,7 @@ def getFaultMsg(msgDict):
     notAFault = {'0x1c', '0x18', '0x00'}
     if thisFault in {'0x31'}:
         faultProcessedMsg['pdmRefCode'] = \
-            'Programming Error - report to developers'
+            'Programming Error - report to developers; 11-144-0018-00049'
     elif thisFault not in notAFault:
         # generate PDM RefCode
         #    pdmRefCode = 'TT-VVVHH-IIIRR-FFF'
@@ -352,13 +358,21 @@ def getFaultMsg(msgDict):
         else:
             TT = '19'
         VVV = '{0:#0{1}d}'.format(msgDict['byte_V'], 3)
-        # next few are the integer parts
-        hours = msgDict['fault_time_minutes_since_pod_activation']//60
-        HH = '{0:#0{1}d}'.format(hours, 2)
-        insulin = msgDict['total_pulses_delivered']//20
-        III = '{0:#0{1}d}'.format(insulin, 3)
-        reservoir = msgDict['word_R']//20
-        RR = '{0:#0{1}d}'.format(reservoir, 2)
+        # some faults wipe out registersm PDM inserts specific values
+        resetFaults = getResetFaultList()
+        if thisFault in resetFaults:
+            HH = '00'
+            III = '000'
+            RR = '51'
+        else:
+            # if register values exist, report integer parts
+            hours = int(msgDict['fault_time_minutes_since_pod_activation']//60)
+            HH = '{0:#0{1}d}'.format(hours, 2)
+            insulin = int(msgDict['total_pulses_delivered']//20)
+            III = '{0:#0{1}d}'.format(insulin, 3)
+            reservoir = int(msgDict['word_R']//20)
+            RR = '{0:#0{1}d}'.format(reservoir, 2)
+        # build the PDM-style Ref code
         faultProcessedMsg['pdmRefCode'] = TT + '-' + \
             VVV + HH + '-' + \
             III + RR + '-' + \
