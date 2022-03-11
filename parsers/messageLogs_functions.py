@@ -440,16 +440,10 @@ def extract_raw_pod(raw_content):
     # Need to come back and fix this, but skip them to avoid problems
     #  when splitting logDF into separate pods later
     # At some point in time, FAX started using a different pattern
-    pod_patt = "318 - DEV: Device message:"
+    pod_patt = "DEV: Device message:"
     pod_messages = [x for x in lines_raw if x.find(pod_patt) > -1]
     if len(pod_messages) == 0:
-        pod_patt = "385 - DEV: Device message:"
-        pod_messages = [x for x in lines_raw if x.find(pod_patt) > -1]
-        if len(pod_messages) == 0:
-            pod_patt = "417 - DEV: Device message:"
-            pod_messages = [x for x in lines_raw if x.find(pod_patt) > -1]
-            if len(pod_messages) == 0:
-                return logDF
+        return logDF
     if noisy:
         print('first pod line\n', pod_messages[0][0:19], ' ',
               pod_messages[0][166:])
