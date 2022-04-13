@@ -186,6 +186,8 @@ def device_message_dict(data):
     #   0123456789012345678901234567890123456789012345678901234567890123456789
     #   2020-04-11 09:45:51 +0000 Omnipod 1F02029E send 1f02029e3c030e0100813c
     #   2020-04-01 22:39:59 +0000 DexG6Transmitter 81H33P connection Connected
+    #   2022-04-12 21:43:00 +0000 Omnipod-Dash 171EFBEA connection Pod \
+    #         connected 6B0595EC-B6B6-E8D6-FF0E-2B2E75C2876D
 
     timestamp = data[0:19]
     # skip the UTC time delta characters ( +0000 ), logs are always in UTC
@@ -194,7 +196,10 @@ def device_message_dict(data):
     # extract common information, parse Omnipod, other devices ignored for now
     # note that address is ffffffff until Loop and Pod finish some init steps
     device, logAddr, action, restOfLine = stringToUnpack.split(' ', 3)
-    if device[0:7] == "Omnipod":
+    # ensure Omnipod and either send or receive (ignore other keywords for now)
+    podCommsMessage = (device[0:7] == "Omnipod" and
+                       (action == "send" or action == "receive"))
+    if podCommsMessage:
         # address is what pod thinks address is
         address, msgDict = splitFullMsg(restOfLine)
         if noisy and (logAddr.lower() != address) and (address != 'ffffffff'):
@@ -405,13 +410,15 @@ def loop_read_file(fileDict):
 
 
 def omnipodP(message):
-    thisIsAPod = message['device'][0:7] == "Omnipod"
-    return thisIsAPod
+    thisIsAPodCommsMessage = message['device'][0:7] == "Omnipod" and \
+        (message['type'] == "send" or message['type'] == "receive")
+    return thisIsAPodCommsMessage
 
 
 def otherP(message):
-    thisIsAPod = message['device'][0:7] == "Omnipod"
-    return not thisIsAPod
+    thisIsAPodCommsMessage = message['device'][0:7] == "Omnipod" and \
+        ((message['type'] == "send") or (message['type'] == "receive"))
+    return not thisIsAPodCommsMessage
 
 
 def extract_raw_pod(raw_content):
@@ -657,20 +664,24 @@ def extract_messages(recordType, parsed_content):
         pod_messages = [message_dict(m) for m in parsed_content['MessageLog']]
     elif recordType == "deviceLog":
         # pod messages interleaved with CGM messages in this Loop Report
+        # and in April 2022, the omnipod messages need more filtering
+        # search for address then send and seceive explicitly.
+        #   address connection has been added already.
+        #   Pete warns more keywords may be coming.
         messages = [device_message_dict(m)
                     for m in parsed_content['Device Communication Log']]
         pod_messages = list(filter(omnipodP, messages))
         if noisy:
-            print('\n Pod Messages')
+            print('\n Pod Comm Messages')
             printList(pod_messages[1:5])
-            printList(pod_messages[-2:-1])
+            printList(pod_messages[-5:-1])
 
         # this works - use it later if desired
         if noisy:
-            print('\n CGM Messages')
+            print('\n Not Pod Comm Messages')
             cgm_messages = list(filter(otherP, messages))
             printList(cgm_messages[1:5])
-            printList(cgm_messages[-2:-1])
+            printList(cgm_messages[-5:-1])
     else:
         print('Filetype is not messageLog or DeviceLog')
         return logDF
