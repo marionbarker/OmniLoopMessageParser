@@ -68,6 +68,8 @@ def parse_filehandle(filehandle):
 
     # remove << which breaks one line into two (in the soup section later)
     content = content.replace('<<', '')
+    # remove < which breaks one line into two (in the soup section later)
+    content = content.replace('<', '')
 
     # make sure each Header is properly format for soup use
     for fixme in re.findall(FIXME_RE, content):
