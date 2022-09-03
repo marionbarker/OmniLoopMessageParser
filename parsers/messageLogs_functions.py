@@ -445,12 +445,15 @@ def extract_raw_pod(raw_content):
         print('first line\n', lines_raw[0])
         print('last line\n', lines_raw[-1])
 
-    # Note, there are some 318 - DEV: lines that don't send pod message
-    # Need to come back and fix this, but skip them to avoid problems
-    #  when splitting logDF into separate pods later
-    # At some point in time, FAX started using a different pattern
+    # update 9/3/2022 to handle the new Pod connect
+    #  disconnect and Unacknowledged message log output
     pod_patt = "DEV: Device message:"
-    pod_messages = [x for x in lines_raw if x.find(pod_patt) > -1]
+    pod_connect_patt = "DEV: Device message: Pod"
+    pod_unack_patt = "DEV: Device message: Unacknowledged"
+    pod_messages = [x for x in lines_raw
+                    if (x.find(pod_patt) > -1) and
+                    (x.find(pod_connect_patt) == -1) and
+                    (x.find(pod_unack_patt) == -1)]
     if len(pod_messages) == 0:
         return logDF
     if noisy:
