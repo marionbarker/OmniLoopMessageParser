@@ -84,7 +84,7 @@ def main(fileDict, outFlag, vFlag):
         print('  ----------------------------------------')
         print('  This file uses Device Communication Log')
         analyzeAllPodsInDeviceLog(fileDict, loopReadDict, outFlag, vFlag)
-        if vFlag == 4:
+        if vFlag == 4 or vFlag == 5:
             thisOutFile = outFlag + '/' + 'logDFCmb_out.csv'
             writeCombinedLogToOutputFile(thisOutFile, loopReadDict['logDF'])
 
