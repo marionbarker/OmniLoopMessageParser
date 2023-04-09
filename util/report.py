@@ -292,10 +292,10 @@ def writeDescriptivePodStateToOutputFile(outFile, commentString, podState):
     if verboseFlag:
         columnList = ['timeStamp', 'deltaSec', 'timeCumMin', 'seqNum',
                       'address', 'pod_progress', 'type', 'msgType',
-                      'insulinDelivered', 'msgDict', 'description']
+                      'insulinDelivered', 'secSinceCgm', 'msgDict', 'description']
     else:
         columnList = ['timeStamp', 'deltaSec', 'timeCumMin',
-                      'pod_progress', 'msgType', 'insulinDelivered', 'msgDict',
+                      'pod_progress', 'msgType', 'insulinDelivered', 'secSinceCgm', 'msgDict',
                       'description']
     podState = podState[columnList]
     podState.to_csv(outFile)
