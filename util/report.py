@@ -545,7 +545,9 @@ def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps,
         # set up a table format order
         headerString = 'Who, Finish1, Finish2, lastMsgDate, podAddr, ' + \
                        'podHrs, logHrs, #Messages, #Sent, #Recv, ' + \
-                       '#Recv/#Send%,  InsulinDelivered, LotNo, SeqNo, ' + \
+                       '#Recv/#Send%,  #Messages/logHrs, ' + \
+                       '#countCmdInsulin, #cgmTiming<10, #10-to-250,  #cgmTiming>250, '  + \
+                       'InsulinDelivered, LotNo, SeqNo, ' + \
                        'PodFW, BleFW, rawHex(Fault), PDM RefCode, ' + \
                        'filename ' + \
                        'appNameAndVersion, buildDate, ' + \
@@ -567,6 +569,26 @@ def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps,
         bleFw = ''
         lotNo = ''
         seqNo = ''
+    # extract the rows with an insulin bolus or basal command
+    insulinDF = podState[((podState['msgType'] == '0x1a16') | (podState['msgType'] == '0x1a17'))]
+    totalCount = len(insulinDF)
+    # initialize values in case cgm timing is not available
+    cgmString = 'Not a Dexcom - no timing'
+    countLess = 0 # total number > 10 sec and <= 250 since CGM
+    countBetween = 0 # total number > 10 sec and <= 250 since CGM
+    countOver = 0    # total number > 250 sec
+    # examine the state of the cgm to pod time
+    cgmExists = podState[(podState['secSinceCgm'] > 0.0)]
+    if not( cgmExists.empty ):
+        cgmString = "Dexcom available - timing reported"
+        lessDF = insulinDF[((insulinDF['secSinceCgm'] <= 10))]
+        countLess = len(lessDF)
+        betweenDF = insulinDF[((insulinDF['secSinceCgm'] > 10) & (insulinDF['secSinceCgm'] < 250))]
+        countBetween = len(betweenDF)
+        overDF = insulinDF[((insulinDF['secSinceCgm'] >= 250))]
+        countOver = len(overDF)
+    print(cgmString)
+    #print()
     stream_out.write(f"{fileDict['person']},")
     stream_out.write(f"{Finish1},")
     stream_out.write(f"{Finish2},")
@@ -578,6 +600,11 @@ def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps,
     stream_out.write(f"{sendMsgs},")
     stream_out.write(f"{recvMsgs},")
     stream_out.write(f"{100*recvMsgs/sendMsgs:6.0f},")
+    stream_out.write(f"{60.0*logInfoDict['numMsgs']/logInfoDict['podOnTime']:6.1f},")
+    stream_out.write(f"{totalCount:d},")
+    stream_out.write(f"{countLess:d},")
+    stream_out.write(f"{countBetween:d},")
+    stream_out.write(f"{countOver:d},")
     stream_out.write(f"{logInfoDict['insulinDelivered']:6.2f},")
     stream_out.write(f"{lotNo},")
     stream_out.write(f"{seqNo},")

@@ -714,10 +714,13 @@ def extract_messages(recordType, parsed_content):
     # logDF all pod messages in Report (can be across multiple pods)
     logDF = pd.DataFrame(pod_messages)
     cgmDF = pd.DataFrame(cgm_messages)
-    cgmDF['time'] = pd.to_datetime(cgmDF['time'])
-    cgmDF['deltaSec'] = (cgmDF['time'] -
-                         cgmDF['time'].shift()
-                         ).dt.seconds.fillna(0).astype(float)
+    if cgmDF.empty:
+        print("CGM time stamps not included in log")
+    else:
+        cgmDF['time'] = pd.to_datetime(cgmDF['time'])
+        cgmDF['deltaSec'] = (cgmDF['time'] -
+                            cgmDF['time'].shift()
+                            ).dt.seconds.fillna(0).astype(float)
     logDF['time'] = pd.to_datetime(logDF['time'])
     logDF['deltaSec'] = (logDF['time'] -
                          logDF['time'].shift()
