@@ -190,7 +190,10 @@ def getLogInfoFromState(podState):
     logInfoDict['podOnTime'] = podState.iloc[-1]['podOnTime']
     # extract all 0x1a17 command (bolus)
     bolusState = podState[podState.msgType == '0x1a17']
-    logInfoDict['totBolus'] = bolusState.sum()['reqBolus']
+   # protect against log file with no 0x1a17 commands:
+    logInfoDict['totBolus'] = 0.00
+    if len(bolusState) > 0:
+        logInfoDict['totBolus'] = bolusState['reqBolus'].sum()
     # if autoBolus is present and any values are true, add that to logInfoDict
     """
     # todo - this is not robust
