@@ -17,7 +17,7 @@ analyzePodMessages
 """
 
 
-def analyzePodMessages(fileDict, podFrame, cgmFrame, podDict, outFlag,
+def analyzePodMessages(fileDict, podFrame, podDict, outFlag,
                        vFlag, chunkNum):
     """
     preprocess podFrame to be from a single pod
@@ -47,14 +47,14 @@ def analyzePodMessages(fileDict, podFrame, cgmFrame, podDict, outFlag,
 
     # add more stuff and return as a DataFrame
     df = generate_table(podFrame, radio_on_time)
- 
+
     # Process df to generate the podState associated with every message
     #   Updates to states occur with pod message (mostly 1d) status
     #     (the state for extended_bolus_active is NOT included (always False))
     #   Includes values for requested bolus and TB
     # Note that .iloc for df and podState are identical
     # Indexing within podState requires .loc
-    podState, faultProcessedMsg = getPodState(df, cgmFrame)
+    podState, faultProcessedMsg = getPodState(df)
 
     # generate a number of useful facts from podState
     # a few values are added / modified later as analysis continues

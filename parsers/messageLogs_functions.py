@@ -7,10 +7,6 @@ Add capability to extract messages from FAPSX log file (*.txt)
 
 Updates: changed name to message instead of command, in some places
 
-Updates: now have Dexcom messages in log. 
-    Extract time stamps, create cgm dataframe
-    Report time from prior cgm reading to insulin dosing command
-
 Examples:
     MessageLog format:
     * 2020-02-06 06:01:23 +0000 send 1f036f631c030e01008043
@@ -292,7 +288,6 @@ def loop_read_file(fileDict):
     parsed_content = {}
     # define empty dataframes
     logDF = pd.DataFrame({})
-    cgmDF = pd.DataFrame({})
     determBasalDF = pd.DataFrame({})
     podMgrDict = {}
     loopVersionDict = {}
@@ -302,7 +297,6 @@ def loop_read_file(fileDict):
     # prepare default return dictonary, note that fileDict might be modified
     loopReadDict = {'fileDict': fileDict,
                     'logDF': logDF,
-                    'cgmDF': cgmDF,
                     'podMgrDict': podMgrDict,
                     'faultInfoDict': faultInfoDict,
                     'loopVersionDict': loopVersionDict,
@@ -342,9 +336,7 @@ def loop_read_file(fileDict):
         if parsed_content.get('Device Communication Log'):
             fileDict['recordType'] = "deviceLog"
 
-        [logDF, cgmDF] = extract_messages(fileDict['recordType'], parsed_content)
-        # print('\nin loop_read_file')
-        # print(cgmDF)
+        logDF = extract_messages(fileDict['recordType'], parsed_content)
         faultInfoDict = extract_fault_info(parsed_content)
         loopVersionDict = extract_loop_version(parsed_content)
         if 'PodState' in parsed_content:
@@ -352,7 +344,7 @@ def loop_read_file(fileDict):
         else:
             podMgrDict = {}
 
-    elif fileDict['loopType'].lower() == "fx":  # code for iAPS
+    elif fileDict['loopType'].lower() == "fx":
         """
             read the raw content then parse for pods / fx separately
         """
@@ -411,7 +403,6 @@ def loop_read_file(fileDict):
         fileDict['workspaceGitBranch'] = loopVersionDict['workspaceGitBranch']
     loopReadDict = {'fileDict': fileDict,
                     'logDF': logDF,
-                    'cgmDF': cgmDF,
                     'podMgrDict': podMgrDict,
                     'faultInfoDict': faultInfoDict,
                     'loopVersionDict': loopVersionDict,
@@ -426,19 +417,12 @@ def omnipodP(message):
     return thisIsAPodCommsMessage
 
 
-def cgmValueRecv(message):
-    cmgRecieveMessage = message['device'][0:3] == "Dex" and \
-        message['type'] == "receive"
-    return cmgRecieveMessage
-
-
 def otherP(message):
     thisIsAPodCommsMessage = message['device'][0:7] == "Omnipod" and \
         ((message['type'] == "send") or (message['type'] == "receive"))
     return not thisIsAPodCommsMessage
 
 
-# for iAPS only
 def extract_raw_pod(raw_content):
     logDF = pd.DataFrame({})
     noisy = 0
@@ -495,7 +479,6 @@ def extract_raw_pod(raw_content):
     return logDF
 
 
-# for iAPS only
 def extract_raw_determBasal(raw_content):
 
     determBasalDF = pd.DataFrame({})
@@ -679,10 +662,8 @@ def extract_raw_determBasal(raw_content):
 def extract_messages(recordType, parsed_content):
     # set up default
     logDF = pd.DataFrame({})
-    cgmDF = pd.DataFrame({})
     noisy = 0
     pod_messages = ['nil']
-    cgm_messages = ['nil']
     if recordType == "messageLog":
         # only pod messages are found in this section of the Loop Report
         pod_messages = [message_dict(m) for m in parsed_content['MessageLog']]
@@ -695,7 +676,6 @@ def extract_messages(recordType, parsed_content):
         messages = [device_message_dict(m)
                     for m in parsed_content['Device Communication Log']]
         pod_messages = list(filter(omnipodP, messages))
-        cgm_messages = list(filter(cgmValueRecv, messages))
         if noisy:
             print('\n Pod Comm Messages')
             printList(pod_messages[1:5])
@@ -713,14 +693,9 @@ def extract_messages(recordType, parsed_content):
 
     # logDF all pod messages in Report (can be across multiple pods)
     logDF = pd.DataFrame(pod_messages)
-    cgmDF = pd.DataFrame(cgm_messages)
-    cgmDF['time'] = pd.to_datetime(cgmDF['time'])
-    cgmDF['deltaSec'] = (cgmDF['time'] -
-                         cgmDF['time'].shift()
-                         ).dt.seconds.fillna(0).astype(float)
     logDF['time'] = pd.to_datetime(logDF['time'])
     logDF['deltaSec'] = (logDF['time'] -
                          logDF['time'].shift()
                          ).dt.seconds.fillna(0).astype(float)
 
-    return logDF, cgmDF
+    return logDF

@@ -13,11 +13,9 @@ import os
 def main(fileDict, outFlag, vFlag):
     # read file, create dictionaries and DataFrames
     loopReadDict = loop_read_file(fileDict)
-#    printDict(loopReadDict)
     # loopReadDict has keys:
-    #   fileDict, logDF, cgmDF, podMgrDict, faultInfoDict,
+    #   fileDict, logDF, podMgrDict, faultInfoDict,
     #   loopVersionDict, determBasalDF
-#    thisDF = loopReadDict['cgmDF'])
     fileDict = loopReadDict['fileDict']
     determBasalDF = loopReadDict['determBasalDF']
     # print(loopReadDict)
@@ -76,7 +74,6 @@ def main(fileDict, outFlag, vFlag):
         print('  ----------------------------------------')
         numChunks = 1  # number of pods in log file is always 1
         analyzePodMessages(fileDict, loopReadDict['logDF'],
-                           loopReadDict['cgmDF'],
                            loopReadDict['podMgrDict'],
                            outFlag, vFlag, numChunks)
         if vFlag == 4:
