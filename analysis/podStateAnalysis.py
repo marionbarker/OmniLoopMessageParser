@@ -71,28 +71,22 @@ def getPodState(frame, cgmFrame):
         # use Pandas to find index for time > timeStamp
         # then extract row before
         #print("Pod timeStamp: ", timeStamp, "lastCgmTime: ", lastCgmTime)
-        # for people who added CGM client, CGM time not reported in log
-        if cgmFrame.empty:
+        tmpDF = cgmFrame[(cgmFrame['time'] > lastCgmTime) & (cgmFrame['time'] < timeStamp)]
+        if ( tmpDF.empty ):
+            #print("Empty data frame")
             cgmTime = lastCgmTime
-            secSinceCgm = 0
         else:
-            tmpDF = cgmFrame[(cgmFrame['time'] > lastCgmTime) & (cgmFrame['time'] < timeStamp)]
-            if ( tmpDF.empty ):
-                #print("Empty data frame")
-                cgmTime = lastCgmTime
-            else:
-                #print("Not empty data frame")
-                #print(tmpDF)
-                xx = tmpDF.iloc[0]['time']
-                #print(xx)
-                cgmTime = pd.Timestamp(xx)
+            #print("Not empty data frame")
+            #print(tmpDF)
+            xx = tmpDF.iloc[0]['time']
+            #print(xx)
+            cgmTime = pd.Timestamp(xx)
 
-            #print("Pod timeStamp: ", timeStamp, "    cgmTime: ", cgmTime)
-            secSinceCgm = (timeStamp - cgmTime).total_seconds()
-            lastCgmTime = cgmTime
-            #print("Pod timeStamp: ", timeStamp, "    cgmTime: ", cgmTime,
-            #      "cgmPodDeltaSec", cgmPodDeltaSec)
-
+        #print("Pod timeStamp: ", timeStamp, "    cgmTime: ", cgmTime)
+        secSinceCgm = (timeStamp - cgmTime).total_seconds()
+        lastCgmTime = cgmTime
+        #print("Pod timeStamp: ", timeStamp, "    cgmTime: ", cgmTime,
+        #      "cgmPodDeltaSec", cgmPodDeltaSec)
         msgType = msgDict['msgType']
         if msgType == '0x0202':
             faultProcessedMsg = getFaultMsg(msgDict)
