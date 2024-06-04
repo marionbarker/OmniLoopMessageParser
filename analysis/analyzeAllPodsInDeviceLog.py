@@ -21,13 +21,11 @@ def analyzeAllPodsInDeviceLog(fileDict, loopReadDict, outFlag, vFlag):
             fileDict - pass through to next function
             loopReadDict use these keys:
                 logDF complete set of hex pod messages read from report
-                cgmDF complete set of timestamps for CGM values
                 podMgrDict parsed from ## OmnipodPumpManager
             outFlag used to route output (if needed)
             vFlag pass through selection for verbosity
     """
     logDF = loopReadDict['logDF']
-    cgmDF = loopReadDict['cgmDF']
     podMgrDict = loopReadDict['podMgrDict']
 
     podAddresses, breakPoints = findBreakPoints(logDF)
@@ -53,6 +51,6 @@ def analyzeAllPodsInDeviceLog(fileDict, loopReadDict, outFlag, vFlag):
         print(f'  Report on Omnipod from {fileDict["personFile"]}')
         print(f'     Block {idx} of {numChunks}\n')
 
-        analyzePodMessages(fileDict, podFrame, cgmDF, podMgrDict, outFlag, vFlag, idx)
+        analyzePodMessages(fileDict, podFrame, podMgrDict, outFlag, vFlag, idx)
 
     return
