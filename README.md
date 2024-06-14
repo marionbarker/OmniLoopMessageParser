@@ -1,10 +1,21 @@
 # OmniLoopMessageParser
-Parse Files (python):
-* Loop Reports: parse the messages when pump is Omnipod
-* FreeAPS X Log Files: 
-   * parse the messages when pump is Omnipod
-   * prepare plots of the day showing BG, IOB, COB, TB/SMB, SensRatio regardless of pump type
 
+## Use Cases
+
+1. Parse Saved Files when selected pump is Omnipod and prepare csv file with every Pod message in the file for each individual pod included in the file, valid for
+    * Loop Reports
+    * FreeAPS X Log Files
+        * updated to work with iAPS and Trio files
+1. Parse HEX strings from rPi DASH simulator or Xcode debug logs
+    * This is done one string at a time
+
+If you want to parse a whole saved Xcode debug log refer to [Select OmniBLE Parser Scheme in Xcode](https://github.com/LoopKit/OmniBLE/pull/124#issuecomment-2148210959)
+
+## Usage Instructions
+
+Please see the [wiki](https://github.com/marionbarker/OmniLoopMessageParser/wiki) for instructions on how to use this parser.
+
+ 
 ## July 2020
 * Reorganize the code (with help from #1 child)
     * Use flake8 to force pretty code
@@ -20,37 +31,5 @@ Parse Files (python):
     * The log files (log.txt, log_prev.txt) have the message hex code for pods
     * The format is different, so need to expand the parsers to handle Messages
 
-### example format:
-#### Comments:
-* log.txt is today since midnight local time
-* log_prev.txt is yesterday (midnight to midnight)
-    * no sure what happens if change time zone
-
-#### Manual Extraction Example:
-$ grep "318 - DEV: Device message:" log_prev.txt
-
-#### WARNING
-The log format of: "318 - DEV: Cancel Bolus" without a hex code that might be an open loop glitch (for freeaps-x/release/v0.2.0)
-The instances noted were associated with an uncertain bolus with IOB not handled correctly
-
-#### Showing a 0e, 1d exchange:
-2021-06-06T00:03:53-0700 [DeviceManager] DeviceDataManager.swift - deviceManager(_:logEventForDeviceIdentifier:type:message:completion:) - 318 - DEV: Device message: 1f091a4634030e010003e8
-2021-06-06T00:03:53-0700 [DeviceManager] DeviceDataManager.swift - deviceManager(_:logEventForDeviceIdentifier:type:message:completion:) - 318 - DEV: Device message: 1f091a46380a1d2802265800001a13ff00bc
-
-#### There is no identifying information at the beginning of the file:
-log.txt: first line
-2021-06-07T00:00:01-0700 [DeviceManager] DeviceDataManager.swift - pumpManagerBLEHeartbeatDidFire(_:) - 173 - DEV: Pump Heartbeat
-
-log_prev.txt: last line
-2021-06-06T23:59:00-0700 [DeviceManager] DeviceDataManager.swift - pumpManagerBLEHeartbeatDidFire(_:) - 173 - DEV: Pump Heartbeat
-
-log_prev.txt: first line
-2021-06-06T00:00:49-0700 [Nightscout] FetchGlucoseManager.swift - subscribe() - 26 - DEV: FetchGlucoseManager heartbeat
-
-Compared to Loop output:
-* 2021-04-04 09:22:00 +0000 Omnipod 1F0C2055 send 1f0c2055101f1a0e3ef1a12102009101008000080008170d00005000030d400000000000008293
-* 2021-04-04 09:22:03 +0000 Omnipod 1F0C2055 receive 1f0c2055140a1d5802572008001b4fff81b7
-
-#### Time Stamps
-For FreeAPS X log and log_prev files, they run from midnight local time.
-The time stamp noted is local time with the -0700 (from PDT) indicated difference wrt GMT 
+## Later updates
+* The README.md was not updated with later updates. Please refer to the [wiki](https://github.com/marionbarker/OmniLoopMessageParser/wiki).
