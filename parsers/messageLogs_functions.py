@@ -111,6 +111,8 @@ def splitFullMsg(hexToParse):
         Because all messages (except ACK) have seqNum,
              reuse seqNum key for the ACK packet number in msgDict
 
+        Must put protection here for FAX (Trio/iAPS) log files
+
     """
     address = hexToParse[:8]
     thisLen = len(hexToParse)
@@ -447,7 +449,7 @@ def extract_raw_pod(raw_content):
 
     # update 9/3/2022 to handle the new Pod connect
     #  disconnect and Unacknowledged message log output
-    pod_patt = "DEV: Device message:"
+    pod_patt = "DEV: Device message: 1"
     pod_connect_patt = "DEV: Device message: Pod"
     pod_unack_patt = "DEV: Device message: Unacknowledged"
     pod_messages = [x for x in lines_raw
