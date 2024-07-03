@@ -449,11 +449,13 @@ def extract_raw_pod(raw_content):
 
     # update 9/3/2022 to handle the new Pod connect
     #  disconnect and Unacknowledged message log output
-    pod_patt = "DEV: Device message: 1"
+    pod_patt_f = "DEV: Device message: f"
+    pod_patt_1 = "DEV: Device message: 1"
     pod_connect_patt = "DEV: Device message: Pod"
     pod_unack_patt = "DEV: Device message: Unacknowledged"
     pod_messages = [x for x in lines_raw
-                    if (x.find(pod_patt) > -1) and
+                    if ((x.find(pod_patt_f) > -1) or
+                    (x.find(pod_patt_1) > -1)) and
                     (x.find(pod_connect_patt) == -1) and
                     (x.find(pod_unack_patt) == -1)]
     if len(pod_messages) == 0:
