@@ -22,12 +22,17 @@ def parse_0e(byteList, msgDict):
     requestCode = byteList[2]
 
     msgDict['requestCode'] = '{0:#0{1}x}'.format(requestCode, 4)
+    # unless explicitly overwritten, msgType is '0x0e'
     if requestCode == 0:
+        msgDict['msgType']='0x0e00'
         msgDict['msgMeaning'] = 'RequestStatus'
     elif requestCode == 1:
         msgDict['msgMeaning'] = 'RequestAlert'
     elif requestCode == 2:
         msgDict['msgMeaning'] = 'RequestFault'
+    elif requestCode == 7:
+        msgDict['msgType']='0x0e07'
+        msgDict['msgMeaning'] = 'noSeqStatus'
     else:
         msgDict['msgMeaning'] = 'requestCode' + msgDict['requestCode']
 
