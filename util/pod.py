@@ -69,9 +69,12 @@ def getActionDict():
       'SetupPod': (0, ('0x03', '0x011b')),
       'CnfgDelivFlg': (0, ('0x08', '0x1d')),
       'CnxSetTmpBasal': (2, ('0x1f2', '0x1d', '0x1a16', '0x1d')),
-      'Status&Bolus': (2, ('0x0e',   '0x1d', '0x1a17', '0x1d')),
+      'Status&Bolus00': (2, ('0x0e00',   '0x1d', '0x1a17', '0x1d')),
+      'Status&Bolus07': (2, ('0x0e07',   '0x1d', '0x1a17', '0x1d')),
       'CnxAllSetBasal': (2, ('0x1f7', '0x1d', '0x1a13', '0x1d')),
-      'StatusCheck': (0, ('0x0e', '0x1d')),
+      'StatusCheckOther': (0, ('0x0e', '0x1d')),
+      'StatusCheck00': (0, ('0x0e00', '0x1d')),
+      'StatusCheck07': (0, ('0x0e07', '0x1d')),
       'AcknwlAlerts': (0, ('0x11', '0x1d')),
       'CnfgAlerts': (0, ('0x19', '0x1d')),
       'SetBeeps': (0, ('0x1e', '0x1d')),
@@ -115,7 +118,7 @@ def getPodInitDict():
             13: ['successCA2', '0x1d',  [6]],
             14: ['insertCanu', '0x1a17',  [6]],
             15: ['successIns', '0x1d',  [7]],
-            16: ['statusCheck', '0x0e',  [7]],
+            16: ['statusCheck', '0x0e00',  [7]],
             17: ['initSuccess', '0x1d',  [8]]
             }
 
@@ -251,7 +254,7 @@ def getDescriptiveStringFromPodStateRow(md, reqTB, reqBolus, pod_progress):
         else:
             dStr = loopPrefix + \
                 'SetBolus of {:.2f} u'.format(md['prompt_bolus_u'])
-    elif md['msgType'] == '0x0e':
+    elif md['msgType'][0:3] == '0x0e':
         dStr = loopPrefix + '{:s}'.format(md['msgMeaning'])
     elif md['msgType'] == '0x11':
         dStr = loopPrefix + '0x11 message, {:s}'.format(md['msgMeaning'])
@@ -321,7 +324,9 @@ def getNameFromMsgType(msgType):
         '0x0614': 'PodRespBadNonce',
         '0x07': 'AssignID',
         '0x08': 'CnfgDelivFlg',
-        '0x0e': 'StatusRequest',
+        '0x0e00': 'StatusRequest00',
+        '0x0e07': 'StatusRequest07',
+        '0x0e': 'RequestOther',
         '0x11': 'AcknwlAlerts',
         '0x19': 'CnfgAlerts',
         '0x1a13': 'PrgBasalSch',
