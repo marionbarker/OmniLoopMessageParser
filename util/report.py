@@ -62,7 +62,7 @@ def printInitFrame(podInitFrame):
         print('  {:5.0f}: {:7d}: {:8s}: {:16s}:  '
               '{:5s}: {:20s}: {:7s}'.format(
                cumTime, msgDict['seqNum'], msgDict['msgType'],
-               getNameFromMsgType(msgDict['msgType']),
+               msgDict['msgMeaning'],
                getStringFromInt(last_pod_progress),
                getPodProgressMeaning(last_pod_progress),
                getStringFromInt(row['podOnTime'])))
@@ -144,8 +144,8 @@ def printLogInfoSummary(logInfoDict):
        (logInfoDict['send_receive_messages'].count() == 2)):
         print('   Number of messages (sent/recv) :{:5d} ({:4d} / {:4d})'.
               format(logInfoDict['numMsgs'],
-                     logInfoDict['send_receive_messages'][1],
-                     logInfoDict['send_receive_messages'][0]))
+                     logInfoDict['send_receive_messages'].iloc[1],
+                     logInfoDict['send_receive_messages'].iloc[0]))
     # comment out Completed Actions, have not kept that code up to date
     # not relevant for dash testing
     # print('    Messages in completed actions :{:5d} : {:.1f}%'.format(
@@ -525,8 +525,8 @@ def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps,
     recvMsgs = -999
     if (('send_receive_messages' in logInfoDict) and
        (logInfoDict['send_receive_messages'].count() == 2)):
-        sendMsgs = logInfoDict['send_receive_messages'][1]
-        recvMsgs = logInfoDict['send_receive_messages'][0]
+        sendMsgs = logInfoDict['send_receive_messages'].iloc[1]
+        recvMsgs = logInfoDict['send_receive_messages'].iloc[0]
     Finish1 = 'Nominal'
     Finish2 = 'Success'
     hexPattern = ''
