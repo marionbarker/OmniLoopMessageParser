@@ -36,6 +36,8 @@ def getPodInitCmdCount(initFrame):
         'cnt19': 0,
         'cnt1a17': 0,
         'cnt1a13': 0,
+        'cnt0e00': 0,
+        'cnt0e07': 0,
         'cnt0e': 0,
         'cntACK': 0,
         'cnt0115': 0,
@@ -108,7 +110,13 @@ def getPodInitCmdCount(initFrame):
         elif msgDict['msgType'] == '0x1a13':
             podInitCmdCount['cnt1a13'] += 1
 
-        elif msgDict['msgType'] == '0x0e':
+        elif msgDict['msgType'] == '0x0e00':
+            podInitCmdCount['cnt0e00'] += 1
+
+        elif msgDict['msgType'] == '0x0e07':
+            podInitCmdCount['cnt0e07'] += 1
+
+        elif msgDict['msgType'][0:3] == '0x0e':
             podInitCmdCount['cnt0e'] += 1
 
         # all possible initialzation messages have been counted
