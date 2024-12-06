@@ -83,7 +83,7 @@ def parse_1d(byteList, msgDict):
     msgDict['alerts_bit_mask'] = (dword_4 >> 23) & 0xFF
 
     if (dword_4 & 0x3FF) == 0x3FF:
-        msgDict['reservoir'] = '>50 u'
+        msgDict['reservoir'] = '>50 U'
     else:
         pulses = dword_4 & 0x3FF
         insulin = getUnitsFromPulses(pulses)

@@ -245,20 +245,20 @@ def getDescriptiveStringFromPodStateRow(md, reqTB, reqBolus, pod_progress):
         tmp = md['temp_basal_rate_u_per_hr']
         if tmp < 0.03:
             tmp = 0.00
-        dStr = appPrefix + 'Set Temp Basal Rate of {:.2f} u/hr'.format(tmp)
+        dStr = appPrefix + 'Set Temp Basal Rate of {:.2f} U/hr'.format(tmp)
     elif md['msgType'] == '0x1a17':
         if pod_progress < 5:
             dStr = appPrefix + \
-                'Prime of {:.2f} u'.format(md['prompt_bolus_u'])
+                'Prime of {:.2f} U'.format(md['prompt_bolus_u'])
         elif pod_progress < 8:
             dStr = appPrefix + \
-                'InsertCannula with {:.2f} u'.format(md['prompt_bolus_u'])
+                'InsertCannula with {:.2f} U'.format(md['prompt_bolus_u'])
         elif 'autoBolus' in md and md['autoBolus']:
             dStr = appPrefix + \
-                'AutoBolus of {:.2f} u'.format(md['prompt_bolus_u'])
+                'AutoBolus of {:.2f} U'.format(md['prompt_bolus_u'])
         else:
             dStr = appPrefix + \
-                'SetBolus of {:.2f} u'.format(md['prompt_bolus_u'])
+                'SetBolus of {:.2f} U'.format(md['prompt_bolus_u'])
     elif md['msgType'] == '0x0e00':
         dStr = appPrefix + 'Request Status'
     elif md['msgType'] == '0x0e01':
@@ -298,7 +298,7 @@ def getDescriptiveStringFromPodStateRow(md, reqTB, reqBolus, pod_progress):
             tmp=reqTB
             if tmp < 0.03:
                 tmp = 0.00
-            basalStr = ' TmpBasal running, {:.2f} u/hr'.format(tmp)
+            basalStr = ' TmpBasal running, {:.2f} U/hr'.format(tmp)
         elif md['basal_active']:
             basalStr = ' SchBasal running'
         else:

@@ -129,7 +129,7 @@ def printLogInfoSummary(logInfoDict):
                            logInfoDict['podOnTime']/60)
     print('\n  This pod status:')
     print('           ', podOnTimeString)
-    print('     Insulin delivered by pod (u) : {:7.2f} ({:s})'.format(
+    print('     Insulin delivered by pod (U) : {:7.2f} ({:s})'.format(
            logInfoDict['insulinDelivered'], logInfoDict['sourceString']))
     if logInfoDict.get('logFileHasInit'):
         print('\n  Report below is for all messages to date for this pod')
@@ -151,14 +151,14 @@ def printLogInfoSummary(logInfoDict):
     # print('    Messages in completed actions :{:5d} : {:.1f}%'.format(
     #       logInfoDict['totalCompletedMessages'],
     #       logInfoDict['percentCompleted']))
-    print('       Total Bolus Req in log (u) : {:7.2f}'.format(
+    print('       Total Bolus Req in log (U) : {:7.2f}'.format(
            logInfoDict['totBolus']))
     if 'autB' in logInfoDict:
         if logInfoDict['manB'] < logInfoDict['totBolus']:
-            print('                  Manual (u) : {:7.2f}, ''{:3.0f} %'.format(
+            print('                  Manual (U) : {:7.2f}, ''{:3.0f} %'.format(
                    logInfoDict['manB'],
                    100*logInfoDict['manB']/logInfoDict['totBolus']))
-            print('               Automatic (u) : {:7.2f}, {:3.0f} %'.format(
+            print('               Automatic (U) : {:7.2f}, {:3.0f} %'.format(
                    logInfoDict['autB'],
                    100*logInfoDict['autB']/logInfoDict['totBolus']))
     if (logInfoDict['numberOfNonceResync'] > 0):

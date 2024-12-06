@@ -118,7 +118,7 @@ def parse_1a16(byteList, msgDict):
     msgDict['delayMicroSec'] = delayMicroSec
 
     msgDict['pulses_in_TB_halfHr'] = 0.1 * totalEntryX10pulses
-    # u per pulse * half hours per hour * number of pulses = rate u/hr
+    # u per pulse * half hours per hour * number of pulses = rate U/hr
     basalRate = Decimal(0.05 * 2 * 0.1 * totalEntryX10pulses)
     x = round(basalRate, 2)
     msgDict['temp_basal_rate_u_per_hr'] = float(x)
