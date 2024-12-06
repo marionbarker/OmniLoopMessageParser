@@ -22,7 +22,7 @@ def printActionSummary(actionSummary):
 
     for keys, values in actionSummary.items():
         subDict = values
-        print('    {:14s}  :  {:5.0f},  {:5.0f},  [{:5.0f}, {:5.0f} ] '
+        print('    {:16s}  :  {:5.0f},  {:5.0f},  [{:5.0f}, {:5.0f} ] '
               ': {:5d}'.format(
                keys, subDict['countCompleted'], subDict['meanResponseTime'],
                subDict['minResponseTime'], subDict['maxResponseTime'],
