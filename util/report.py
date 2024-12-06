@@ -17,7 +17,7 @@ This code has functions to handle reporting to stdout or files
 def printActionSummary(actionSummary):
     print('\n  Action Summary with sequential 4 or 2 message sequences with'
           ' action response times in sec')
-    print('      Action        : #Success,  mean, [  min,  max  ] : '
+    print('      Action          : #Success,  mean, [  min,  max  ] : '
           '#Incomplete')
 
     for keys, values in actionSummary.items():
@@ -136,8 +136,8 @@ def printLogInfoSummary(logInfoDict):
     else:
         print('\n  Report below is for the subset of messages contained '
               'in the log')
-    print('\n            First message in log :', logInfoDict['first_msg'])
-    print('            Last  message in log :', logInfoDict['last_msg'])
+    print('\n             First message in log :', logInfoDict['first_msg'])
+    print('             Last  message in log :', logInfoDict['last_msg'])
     print('  Total elapsed time in log (hrs) : {:6.1f}'.format(
            logInfoDict['msgLogHrs']))
     if (('send_receive_messages' in logInfoDict) and
