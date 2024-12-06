@@ -241,8 +241,11 @@ def getDescriptiveStringFromPodStateRow(md, reqTB, reqBolus, pod_progress):
         else:
             dStr = appPrefix + 'Modify Basal Schedule'
     elif md['msgType'] == '0x1a16':
-        dStr = appPrefix + 'Set Temp Basal Rate of {:.2f} u/hr'.format(
-            md['temp_basal_rate_u_per_hr'])
+        # DASH pods: command 0.02 U/hr for actual rate of 0.00 U/hr
+        tmp = md['temp_basal_rate_u_per_hr']
+        if tmp < 0.03:
+            tmp = 0.00
+        dStr = appPrefix + 'Set Temp Basal Rate of {:.2f} u/hr'.format(tmp)
     elif md['msgType'] == '0x1a17':
         if pod_progress < 5:
             dStr = appPrefix + \
@@ -291,7 +294,11 @@ def getDescriptiveStringFromPodStateRow(md, reqTB, reqBolus, pod_progress):
         basalStr = ''
         bolusStr = ''
         if md['temp_basal_active']:
-            basalStr = ' TmpBasal running, {:.2f} u/hr'.format(reqTB)
+            # DASH pods: command 0.02 U/hr for actual rate of 0.00 U/hr
+            tmp=reqTB
+            if tmp < 0.03:
+                tmp = 0.00
+            basalStr = ' TmpBasal running, {:.2f} u/hr'.format(tmp)
         elif md['basal_active']:
             basalStr = ' SchBasal running'
         else:
