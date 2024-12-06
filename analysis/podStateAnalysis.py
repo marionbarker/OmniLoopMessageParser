@@ -58,10 +58,12 @@ def getPodState(frame):
         seqNum = msgDict['seqNum']
         msgMeaning = msgDict['msgMeaning']
         autoBolus = False
+        send_recv='send' # send/recv unknown for FAX, so assign by msgType
 
         msgType = msgDict['msgType']
         if msgType == '0x0202':
             faultProcessedMsg = getFaultMsg(msgDict)
+            send_recv='receive'
 
         timeAsleep = row['timeAsleep']
         if np.isnan(timeAsleep):
@@ -84,18 +86,35 @@ def getPodState(frame):
             TB = msgDict['temp_basal_active']
             schBa = msgDict['basal_active']
             podOnTime = msgDict['podOnTime']
+            send_recv='receive'
 
         elif msgType == '0x0115':
             pod_progress = msgDict['pod_progress']
+            send_recv='receive'
 
         elif msgType == '0x011b':
             pod_progress = msgDict['pod_progress']
+            send_recv='receive'
+
+        elif msgType == '0x011b':
+            pod_progress = msgDict['pod_progress']
+            send_recv='receive'
+
+        # collect the other receive messages here
+        elif msgType == '0x0201' or \
+             msgType == '0x0203' or \
+             msgType == '0x0205' or \
+             msgType == '0x0250' or \
+             msgType == '0x0251' or \
+             msgType == '0x0614' or \
+             msgType == '0x06':
+            send_recv='receive'
 
         if row.get('logAddr'):
             colNames = colNamesDev
             list_of_states.append((index, timeStamp, deltaSec, timeCumSec,
                                   radioOnCumSec, podOnTime, seqNum,
-                                  pod_progress, row['type'], msgType,
+                                  pod_progress, send_recv, msgType,
                                   msgMeaning, insulinDelivered, reqTB,
                                   reqBolus, autoBolus, Bolus, TB, schBa,
                                   row['logAddr'], row['address'], msgDict))
@@ -103,7 +122,7 @@ def getPodState(frame):
             colNames = colNamesMsg
             list_of_states.append((index, timeStamp, deltaSec, timeCumSec,
                                   radioOnCumSec, podOnTime, seqNum,
-                                  pod_progress, row['type'], msgType,
+                                  pod_progress, send_recv, msgType,
                                   msgMeaning, insulinDelivered, reqTB,
                                   reqBolus, Bolus, TB, schBa,
                                   row['address'], msgDict))
