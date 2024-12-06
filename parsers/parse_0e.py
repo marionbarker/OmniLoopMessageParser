@@ -27,8 +27,10 @@ def parse_0e(byteList, msgDict):
         msgDict['msgType']='0x0e00'
         msgDict['msgMeaning'] = 'RequestStatus00'
     elif requestCode == 1:
+        msgDict['msgType']='0x0e01'
         msgDict['msgMeaning'] = 'RequestAlert'
     elif requestCode == 2:
+        msgDict['msgType']='0x0e02'
         msgDict['msgMeaning'] = 'RequestFault'
     elif requestCode == 7:
         msgDict['msgType']='0x0e07'

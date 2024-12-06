@@ -37,6 +37,8 @@ def getPodInitCmdCount(initFrame):
         'cnt1a17': 0,
         'cnt1a13': 0,
         'cnt0e00': 0,
+        'cnt0e01': 0,
+        'cnt0e02': 0,
         'cnt0e07': 0,
         'cnt0e': 0,
         'cntACK': 0,
@@ -112,6 +114,12 @@ def getPodInitCmdCount(initFrame):
 
         elif msgDict['msgType'] == '0x0e00':
             podInitCmdCount['cnt0e00'] += 1
+
+        elif msgDict['msgType'] == '0x0e01':
+            podInitCmdCount['cnt0e01'] += 1
+
+        elif msgDict['msgType'] == '0x0e02':
+            podInitCmdCount['cnt0e02'] += 1
 
         elif msgDict['msgType'] == '0x0e07':
             podInitCmdCount['cnt0e07'] += 1

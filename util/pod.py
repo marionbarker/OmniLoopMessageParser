@@ -72,9 +72,11 @@ def getActionDict():
       'Status&Bolus00': (2, ('0x0e00',   '0x1d', '0x1a17', '0x1d')),
       'Status&Bolus07': (2, ('0x0e07',   '0x1d', '0x1a17', '0x1d')),
       'CnxAllSetBasal': (2, ('0x1f7', '0x1d', '0x1a13', '0x1d')),
-      'StatusCheckOther': (0, ('0x0e', '0x1d')),
-      'StatusCheck00': (0, ('0x0e00', '0x1d')),
-      'StatusCheck07': (0, ('0x0e07', '0x1d')),
+      'RequestStatus00': (0, ('0x0e00', '0x1d')),
+      'RequestStatus07': (0, ('0x0e07', '0x1d')),
+      'RequestAlert': (0, ('0x0e01', '0x1d')),
+      'RequestFault': (0, ('0x0e02', '0x0202')),
+      'RequestStatusOther': (0, ('0x0e', '0x1d')),
       'AcknwlAlerts': (0, ('0x11', '0x1d')),
       'CnfgAlerts': (0, ('0x19', '0x1d')),
       'SetBeeps': (0, ('0x1e', '0x1d')),
@@ -216,55 +218,63 @@ def getDescriptiveStringFromPodStateRow(md, reqTB, reqBolus, pod_progress):
     dStr = ''
     # print(md)
     # print(reqTB, reqBolus)
-    # organize by loop sent then pod sent
-    loopPrefix = 'Loop Sent: '
-    podPrefix = 'Pod  Sent: '
+    # organize by app sent then pod sent
+    appPrefix = 'App Sent: '
+    podPrefix = 'Pod Sent: '
     '''
-        Sent by loop to pod (group the initialization commands first
-        and in expected order)
+        Sent by the OS AID app to the pod
+        (group the initialization commands first and in expected order)
     '''
     if md['msgType'] == '0x07':
-        dStr = loopPrefix + \
+        dStr = appPrefix + \
             'Assign address of {:s} to Pod'.format(md['useAddr'])
     elif md['msgType'] == '0x03':
-        dStr = loopPrefix + 'Setup pod (address = {:s})'.format(md['podAddr'])
+        dStr = appPrefix + 'Setup pod (address = {:s})'.format(md['podAddr'])
     elif md['msgType'] == '0x08':
-        dStr = loopPrefix + 'Configure Delivery Flags, ' + \
+        dStr = appPrefix + 'Configure Delivery Flags, ' + \
             '(Values are {:d}, {:d})'.format(md['JJ(1)'], md['KK(0)'])
     elif md['msgType'] == '0x19':
-        dStr = loopPrefix + 'Configure Alerts'
+        dStr = appPrefix + 'Configure Alerts'
     elif md['msgType'] == '0x1a13':
         if pod_progress < 5:
-            dStr = loopPrefix + 'Set Basal Schedule during initialization'
+            dStr = appPrefix + 'Set Basal Schedule during initialization'
         else:
-            dStr = loopPrefix + 'Modify Basal Schedule'
+            dStr = appPrefix + 'Modify Basal Schedule'
     elif md['msgType'] == '0x1a16':
-        dStr = loopPrefix + 'Set Temp Basal Rate of {:.2f} u/hr'.format(
+        dStr = appPrefix + 'Set Temp Basal Rate of {:.2f} u/hr'.format(
             md['temp_basal_rate_u_per_hr'])
     elif md['msgType'] == '0x1a17':
         if pod_progress < 5:
-            dStr = loopPrefix + \
+            dStr = appPrefix + \
                 'Prime of {:.2f} u'.format(md['prompt_bolus_u'])
         elif pod_progress < 8:
-            dStr = loopPrefix + \
+            dStr = appPrefix + \
                 'InsertCannula with {:.2f} u'.format(md['prompt_bolus_u'])
         elif 'autoBolus' in md and md['autoBolus']:
-            dStr = loopPrefix + \
+            dStr = appPrefix + \
                 'AutoBolus of {:.2f} u'.format(md['prompt_bolus_u'])
         else:
-            dStr = loopPrefix + \
+            dStr = appPrefix + \
                 'SetBolus of {:.2f} u'.format(md['prompt_bolus_u'])
-    elif md['msgType'][0:3] == '0x0e':
-        dStr = loopPrefix + '{:s}'.format(md['msgMeaning'])
+    elif md['msgType'] == '0x0e00':
+        dStr = appPrefix + 'Request Status'
+    elif md['msgType'] == '0x0e01':
+        dStr = appPrefix + 'Request Alert Status'
+    elif md['msgType'] == '0x0e02':
+        dStr = appPrefix + 'Request Fault Status'
+    elif md['msgType'] == '0x0e07':
+        dStr = appPrefix + 'Request Status, do not advance seq number'
+    elif md['msgType'] == '0x0e':
+        dStr = appPrefix + 'Request Other ' + '{:s}'.format(md['msgMeaning'])
     elif md['msgType'] == '0x11':
-        dStr = loopPrefix + '0x11 message, {:s}'.format(md['msgMeaning'])
+        dStr = appPrefix + '0x11 message, {:s}'.format(md['msgMeaning'])
     elif md['msgType'] == '0x1c':
-        dStr = loopPrefix + '{:s}'.format(md['msgMeaning'])
+        dStr = appPrefix + '{:s}'.format(md['msgMeaning'])
     elif md['msgType'] == '0x1e':
-        dStr = loopPrefix + '0x1e message, request code {:s}'.format(
+        dStr = appPrefix + '0x1e message, request code {:s}'.format(
             md['msgMeaning'])
     elif md['msgType'][0:4] == '0x1f':
-        dStr = loopPrefix + md['msgMeaning']
+        dStr = appPrefix + md['msgMeaning']
 
     # Sent by pod back to Loop
     elif md['msgType'] == '0x0115':
@@ -325,6 +335,8 @@ def getNameFromMsgType(msgType):
         '0x07': 'AssignID',
         '0x08': 'CnfgDelivFlg',
         '0x0e00': 'RequestStatus00',
+        '0x0e01': 'RequestAlert',
+        '0x0e02': 'RequestFault',
         '0x0e07': 'RequestStatus07',
         '0x0e': 'RequestOther',
         '0x11': 'AcknwlAlerts',
