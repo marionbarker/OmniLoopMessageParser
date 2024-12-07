@@ -15,18 +15,17 @@ This code has functions to handle reporting to stdout or files
 
 
 def printActionSummary(actionSummary):
+    # do not print incomplete actions. With new 0x0e07 messages, the old method
+    # is not accurate for Status&Bolus00 count of incomplete.
     print('\n  Action Summary with sequential 4 or 2 message sequences with'
           ' action response times in sec')
-    print('      Action          : #Success,  mean, [  min,  max  ] : '
-          '#Incomplete')
+    print('      Action          : #Success,  mean, [  min,  max  ]')
 
     for keys, values in actionSummary.items():
         subDict = values
-        print('    {:16s}  :  {:5.0f},  {:5.0f},  [{:5.0f}, {:5.0f} ] '
-              ': {:5d}'.format(
-               keys, subDict['countCompleted'], subDict['meanResponseTime'],
-               subDict['minResponseTime'], subDict['maxResponseTime'],
-               subDict['countIncomplete']))
+        print('    {:16s}  :  {:5.0f},  {:5.0f},  [{:5.0f}, {:5.0f} ]'.format(
+            keys, subDict['countCompleted'], subDict['meanResponseTime'],
+            subDict['minResponseTime'], subDict['maxResponseTime']))
 
     return
 

@@ -64,13 +64,15 @@ def getActionDict():
             first.  Then the sequences of 2 messages are identified next
     """
 
+    # notes: the 4-message bolus always starts with 0x0e00, not 0x0e07
+    #        it is used when PodManager indicates bolus might be happening
+
     actionDict = {
       'AssignID': (0, ('0x07', '0x0115')),
       'SetupPod': (0, ('0x03', '0x011b')),
       'CnfgDelivFlg': (0, ('0x08', '0x1d')),
       'CnxSetTmpBasal': (2, ('0x1f2', '0x1d', '0x1a16', '0x1d')),
-      'Status&Bolus00': (2, ('0x0e00',   '0x1d', '0x1a17', '0x1d')),
-      'Status&Bolus07': (2, ('0x0e07',   '0x1d', '0x1a17', '0x1d')),
+      'Status&Bolus00': (2, ('0x0e00', '0x1d', '0x1a17', '0x1d')),
       'CnxAllSetBasal': (2, ('0x1f7', '0x1d', '0x1a13', '0x1d')),
       'RequestStatus00': (0, ('0x0e00', '0x1d')),
       'RequestStatus07': (0, ('0x0e07', '0x1d')),
@@ -86,7 +88,7 @@ def getActionDict():
       'CnxBolus': (0, ('0x1f4', '0x1d')),
       'CnxAll': (0, ('0x1f7', '0x1d')),
       'BolusAlone': (0, ('0x1a17', '0x1d')),
-      'TBAlone': (0, ('0x1a16', '0x1d')),
+      'TmpBasalAlone': (0, ('0x1a16', '0x1d')),
       'DeactivatePod': (0, ('0x1c', '0x1d')),
       'PrgBasalSch': (0, ('0x1a13', '0x1d'))
        }
