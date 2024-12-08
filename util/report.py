@@ -15,18 +15,17 @@ This code has functions to handle reporting to stdout or files
 
 
 def printActionSummary(actionSummary):
+    # do not print incomplete actions. With new 0x0e07 messages, the old method
+    # is not accurate for Status&Bolus00 count of incomplete.
     print('\n  Action Summary with sequential 4 or 2 message sequences with'
           ' action response times in sec')
-    print('      Action        : #Success,  mean, [  min,  max  ] : '
-          '#Incomplete')
+    print('      Action          : #Success,  mean, [  min,  max  ]')
 
     for keys, values in actionSummary.items():
         subDict = values
-        print('    {:14s}  :  {:5.0f},  {:5.0f},  [{:5.0f}, {:5.0f} ] '
-              ': {:5d}'.format(
-               keys, subDict['countCompleted'], subDict['meanResponseTime'],
-               subDict['minResponseTime'], subDict['maxResponseTime'],
-               subDict['countIncomplete']))
+        print('    {:16s}  :  {:5.0f},  {:5.0f},  [{:5.0f}, {:5.0f} ]'.format(
+            keys, subDict['countCompleted'], subDict['meanResponseTime'],
+            subDict['minResponseTime'], subDict['maxResponseTime']))
 
     return
 
@@ -62,7 +61,7 @@ def printInitFrame(podInitFrame):
         print('  {:5.0f}: {:7d}: {:8s}: {:16s}:  '
               '{:5s}: {:20s}: {:7s}'.format(
                cumTime, msgDict['seqNum'], msgDict['msgType'],
-               getNameFromMsgType(msgDict['msgType']),
+               msgDict['msgMeaning'],
                getStringFromInt(last_pod_progress),
                getPodProgressMeaning(last_pod_progress),
                getStringFromInt(row['podOnTime'])))
@@ -129,36 +128,36 @@ def printLogInfoSummary(logInfoDict):
                            logInfoDict['podOnTime']/60)
     print('\n  This pod status:')
     print('           ', podOnTimeString)
-    print('     Insulin delivered by pod (u) : {:7.2f} ({:s})'.format(
+    print('     Insulin delivered by pod (U) : {:7.2f} ({:s})'.format(
            logInfoDict['insulinDelivered'], logInfoDict['sourceString']))
     if logInfoDict.get('logFileHasInit'):
         print('\n  Report below is for all messages to date for this pod')
     else:
         print('\n  Report below is for the subset of messages contained '
               'in the log')
-    print('\n            First message in log :', logInfoDict['first_msg'])
-    print('            Last  message in log :', logInfoDict['last_msg'])
+    print('\n             First message in log :', logInfoDict['first_msg'])
+    print('             Last  message in log :', logInfoDict['last_msg'])
     print('  Total elapsed time in log (hrs) : {:6.1f}'.format(
            logInfoDict['msgLogHrs']))
     if (('send_receive_messages' in logInfoDict) and
        (logInfoDict['send_receive_messages'].count() == 2)):
         print('   Number of messages (sent/recv) :{:5d} ({:4d} / {:4d})'.
               format(logInfoDict['numMsgs'],
-                     logInfoDict['send_receive_messages'][1],
-                     logInfoDict['send_receive_messages'][0]))
+                     logInfoDict['send_receive_messages'].iloc[1],
+                     logInfoDict['send_receive_messages'].iloc[0]))
     # comment out Completed Actions, have not kept that code up to date
     # not relevant for dash testing
     # print('    Messages in completed actions :{:5d} : {:.1f}%'.format(
     #       logInfoDict['totalCompletedMessages'],
     #       logInfoDict['percentCompleted']))
-    print('       Total Bolus Req in log (u) : {:7.2f}'.format(
+    print('       Total Bolus Req in log (U) : {:7.2f}'.format(
            logInfoDict['totBolus']))
     if 'autB' in logInfoDict:
         if logInfoDict['manB'] < logInfoDict['totBolus']:
-            print('                  Manual (u) : {:7.2f}, ''{:3.0f} %'.format(
+            print('                  Manual (U) : {:7.2f}, ''{:3.0f} %'.format(
                    logInfoDict['manB'],
                    100*logInfoDict['manB']/logInfoDict['totBolus']))
-            print('               Automatic (u) : {:7.2f}, {:3.0f} %'.format(
+            print('               Automatic (U) : {:7.2f}, {:3.0f} %'.format(
                    logInfoDict['autB'],
                    100*logInfoDict['autB']/logInfoDict['totBolus']))
     if (logInfoDict['numberOfNonceResync'] > 0):
@@ -525,8 +524,8 @@ def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps,
     recvMsgs = -999
     if (('send_receive_messages' in logInfoDict) and
        (logInfoDict['send_receive_messages'].count() == 2)):
-        sendMsgs = logInfoDict['send_receive_messages'][1]
-        recvMsgs = logInfoDict['send_receive_messages'][0]
+        sendMsgs = logInfoDict['send_receive_messages'].iloc[1]
+        recvMsgs = logInfoDict['send_receive_messages'].iloc[0]
     Finish1 = 'Nominal'
     Finish2 = 'Success'
     hexPattern = ''

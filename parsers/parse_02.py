@@ -145,7 +145,7 @@ def parse_0202(byteList, msgDict):
     msgDict['fault_time_minutes_since_pod_activation'] = word_Q
     resLevel = word_R & 0x3FF
     if resLevel == 0x3FF:
-        msgDict['reservoir'] = '>50 u'
+        msgDict['reservoir'] = '>50 U'
     else:
         msgDict['reservoir'] = getUnitsFromPulses(resLevel)
 
