@@ -291,6 +291,8 @@ def loop_read_file(fileDict):
     # define empty dataframes
     logDF = pd.DataFrame({})
     determBasalDF = pd.DataFrame({})
+    determTddDF_old = pd.DataFrame({})
+    determTddDF_tcd = pd.DataFrame({})
     podMgrDict = {}
     loopVersionDict = {}
     faultInfoDict = {}
@@ -302,7 +304,9 @@ def loop_read_file(fileDict):
                     'podMgrDict': podMgrDict,
                     'faultInfoDict': faultInfoDict,
                     'loopVersionDict': loopVersionDict,
-                    'determBasalDF': determBasalDF}
+                    'determBasalDF': determBasalDF,
+                    'determTddDF_old': determTddDF_old,
+                    'determTddDF_tcd': determTddDF_tcd}
 
     # check loopType and act accordingly
     filename = fileDict['filename']
@@ -356,6 +360,8 @@ def loop_read_file(fileDict):
 
         logDF = extract_raw_pod(raw_content)
         determBasalDF = extract_raw_determBasal(raw_content)
+        # read version from old version and evaluate new versionq
+        determTddDF_old, determTddDF_tcd = extract_raw_determTdd(raw_content)
 
         fileDict['recordType'] = "FAPSX"  # overwrite if both DF are empty
         if determBasalDF.empty and logDF.empty:
@@ -408,7 +414,9 @@ def loop_read_file(fileDict):
                     'podMgrDict': podMgrDict,
                     'faultInfoDict': faultInfoDict,
                     'loopVersionDict': loopVersionDict,
-                    'determBasalDF': determBasalDF}
+                    'determBasalDF': determBasalDF,
+                    'determTddDF_old': determTddDF_old,
+                    'determTddDF_tcd': determTddDF_tcd}
 
     return loopReadDict
 
@@ -661,6 +669,173 @@ def extract_raw_determBasal(raw_content):
     determBasalDF['time'] = time_array
 
     return determBasalDF
+
+
+def extract_raw_determTdd(raw_content):
+
+    determTddDF_old = pd.DataFrame({})
+    determTddDF_tcd = pd.DataFrame({})
+    date_patt = raw_content[:8]
+    # number of lines after json string starts to search for TDD success
+    max_lines = 400
+    # phrase for iaps version - this if followed by json format
+    tdd_pattern_old = "340 - DEV: Determinated: "
+
+    noisy = 0
+    if noisy:
+        print(">>>   call to extract_raw_determTdd")
+        print("first 256 characters : ", raw_content[:256])
+        print("last  256 characters : ", raw_content[-256:])
+        print("date_patt is ", date_patt)
+
+    # split by newline:
+    lines_raw = raw_content.splitlines()
+
+    # now extract the TDD old style message
+    # use the time pattern from messages to id end of json strings
+    pe_num = 10  # number of lines to search for TDD
+
+    idx = 0
+    numLines = len(lines_raw)
+
+    if numLines == 0:
+        print("numLines = ", numLines, " in extract_raw_determTdd")
+        return determBasalDF
+    elif noisy:
+        print("numLines = ", numLines, " in extract_raw_determTdd")
+
+    # Old Style information
+    """
+     items in json, old version, choose the ones we want:
+        340 - DEV: Determinated: {
+            "temp": "absolute",
+            "bg": 109,
+            "tick": -1,
+            "eventualBG": 116,
+            "insulinReq": -0.04,
+            "reservoir": 3735928559,
+            "deliverAt": "2024-12-24T08:02:27.573Z",
+            "sensitivityRatio": 1,
+            "CR": 8,
+            "TDD": 4.7,
+            "insulin": {
+                "TDD": 4.7,
+                "bolus": 0.55,
+                "temp_basal": 2.55,
+                "scheduled_basal": 1.6
+            },
+    """
+
+    idx = 0
+    numLines = len(lines_raw)
+    line_array_old = []
+    timestamp_array_old = []
+    json_length_array = []
+    tdd_array_old = []
+
+    # go through one time for old style TDD information
+    while idx < numLines-1:
+        thisLine = lines_raw[idx]
+        if tdd_pattern_old in thisLine:
+            line_0 = idx
+            # extract dateTime from beginning of line
+            timestamp = thisLine[0:10] + ' ' + thisLine[11:19]
+            # json string begins at the { at end of this line and ends before
+            #   beginning of the next line which start with date_patt,
+            #   white space is ignored outside of quotes
+            jdx = idx
+            json_message = "{"
+            while (jdx < numLines-1) and (jdx < (line_0+max_lines-1)):
+                jdx += 1
+                if lines_raw[jdx][:8] == date_patt:
+                    break
+                json_message += lines_raw[jdx]
+
+            try:
+                json_dict = json.loads(json_message)
+            except Exception as e:
+                print("Failure parsing at line number", idx)
+                print(e)
+                # skip over broken part
+                idx += 1
+                continue
+
+            # check configuration of json_dict
+            if "TDD" in json_dict:
+                line_array_old.append(idx)
+                timestamp_array_old.append(timestamp)
+                json_length_array.append(jdx - idx)
+                tdd_array_old.append(json_dict['TDD'])
+            else:
+                if noisy:
+                    print("json_dict missing TDD, skipping")
+                    printDict(json_dict)
+            idx = jdx
+        else:
+            idx = idx+1
+            thisLine = lines_raw[idx]
+
+    # finished the entire lines_raw list, create the data frame
+    d = {'date_time': timestamp_array_old, 'line#_old': line_array_old,
+         'json_length_array': json_length_array,
+         'tdd_array_old': tdd_array_old}
+    determTddDF_old = pd.DataFrame(d)
+
+    if noisy:
+        print(determTddDF_old)
+
+    # new tcd output here
+    """
+     items in log, tcd version - does not use json:
+        84 - DEV: TDD Summary:
+        - Total: 4.9 U
+        - Bolus: 0.55 U (11.2 %)
+        - Temp Basal: 2.75 U (56.1 %)
+        - Scheduled Basal: 1.6 U (32.7 %)
+        - WeightedAverage: 0 U
+        - Hours of Data: 10.336439974175558
+    """
+
+    idx = 0
+    numLines = len(lines_raw)
+    line_array_tcd = []
+    timestamp_array_tcd = []
+    tdd_array_tcd = []
+    tdd_pattern_tcd = "84 - DEV: TDD Summary:"
+
+    # go through one time for old style TDD information
+    while idx < numLines-1:
+        thisLine = lines_raw[idx]
+        if tdd_pattern_tcd in thisLine:
+            line_0 = idx
+            # extract dateTime from beginning of line
+            timestamp = thisLine[0:10] + ' ' + thisLine[11:19]
+            # the next line contains the "- Total: value U" for the TDD
+            jdx = idx+1
+            nextLine = lines_raw[idx+1]
+            if nextLine == "":
+                tdd_string = "not found"
+            else:
+                tdd_string = nextLine
+                tmp = tdd_string.replace("- Total: ","")
+                tdd_string = tmp.replace(" U","")
+            line_array_tcd.append(idx)
+            timestamp_array_tcd.append(timestamp)
+            tdd_array_tcd.append(tdd_string)
+            idx = idx + 6
+        else:
+            idx = idx+1
+            thisLine = lines_raw[idx]
+
+    # finished the entire lines_raw list, create the data frame
+    d = {'date_time': timestamp_array_tcd, 'line#_tcd': line_array_tcd,
+         'tdd_array_tcd': tdd_array_tcd}
+    determTddDF_tcd = pd.DataFrame(d)
+
+    if noisy:
+        print(determTddDF_tcd)
+
+    return determTddDF_old, determTddDF_tcd
 
 
 def extract_messages(recordType, parsed_content):
