@@ -115,20 +115,20 @@ def main(fileDict, outFlag, vFlag):
                 thisOutFile = generatePlot(outFlag, fileDict, determBasalDF)
                 print(' *** Determine Basal plot created:     ', thisOutFile)
 
+        personDateSuffix = fileDict['person'] + '_' + fileDict['date'] + '.csv'
         # Print csv output for determTddDF_old, determTddDF_tcd
         determTddDF_old = loopReadDict['determTddDF_old']
         if not determTddDF_old.empty:
-            # create a csv file but don't add unique user name/dates to it
-            thisOutFile = outFlag + '/' + 'determTddDF_old_out.csv'
+            # create a csv file with unique user name/dates
+            thisOutFile = outFlag + '/' + 'TDD_old_' + personDateSuffix
             print(" *** determTddDF_old csv file created: ", thisOutFile)
             determTddDF_old.to_csv(thisOutFile)
 
         determTddDF_tcd = loopReadDict['determTddDF_tcd']
         if not determTddDF_tcd.empty:
-            # create a csv file but don't add unique user name/dates to it
-            thisOutFile = outFlag + '/' + 'determTddDF_tcd.csv'
+            # create a csv file with unique user name/dates
+            thisOutFile = outFlag + '/' + 'TDD_tcd' + '_' + personDateSuffix
             print(" *** determTddDF_tcd csv file created: ", thisOutFile)
             determTddDF_tcd.to_csv(thisOutFile)
-
 
     print('------------------------------------------\n')

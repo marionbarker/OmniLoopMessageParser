@@ -732,6 +732,9 @@ def extract_raw_determTdd(raw_content):
     timestamp_array_old = []
     json_length_array = []
     tdd_array_old = []
+    bolus_array_old = []
+    tb_array_old = []
+    sb_array_old = []
 
     # go through one time for old style TDD information
     while idx < numLines-1:
@@ -766,6 +769,11 @@ def extract_raw_determTdd(raw_content):
                 timestamp_array_old.append(timestamp)
                 json_length_array.append(jdx - idx)
                 tdd_array_old.append(json_dict['TDD'])
+                insulinDict=json_dict['insulin']
+                bolus_array_old.append(insulinDict['bolus'])
+                tb_array_old.append(insulinDict['temp_basal'])
+                sb_array_old.append(insulinDict['scheduled_basal'])
+
             else:
                 if noisy:
                     print("json_dict missing TDD, skipping")
@@ -776,9 +784,13 @@ def extract_raw_determTdd(raw_content):
             thisLine = lines_raw[idx]
 
     # finished the entire lines_raw list, create the data frame
-    d = {'date_time': timestamp_array_old, 'line#_old': line_array_old,
-         'json_length_array': json_length_array,
-         'tdd_array_old': tdd_array_old}
+    d = {'date_time': timestamp_array_old, 
+         'line_in_log': line_array_old,
+         'json_length': json_length_array,
+         'TDD': tdd_array_old,
+         'Bolus': bolus_array_old,
+         'TempBasal': tb_array_old,
+         'SchBasal': sb_array_old}
     determTddDF_old = pd.DataFrame(d)
 
     if noisy:
@@ -801,6 +813,11 @@ def extract_raw_determTdd(raw_content):
     line_array_tcd = []
     timestamp_array_tcd = []
     tdd_array_tcd = []
+    bolus_array_tcd = []
+    tb_array_tcd = []
+    sb_array_tcd = []
+    wt_ave_tcd = []
+    hr_data_tcd = []
     tdd_pattern_tcd = "84 - DEV: TDD Summary:"
 
     # go through one time for old style TDD information
@@ -812,24 +829,41 @@ def extract_raw_determTdd(raw_content):
             timestamp = thisLine[0:10] + ' ' + thisLine[11:19]
             # the next line contains the "- Total: value U" for the TDD
             jdx = idx+1
-            nextLine = lines_raw[idx+1]
-            if nextLine == "":
-                tdd_string = "not found"
-            else:
-                tdd_string = nextLine
-                tmp = tdd_string.replace("- Total: ","")
-                tdd_string = tmp.replace(" U","")
+            tdd_string = lines_raw[idx+1]
+            tmp = tdd_string.replace("- Total: ","")
+            tdd_string = tmp.replace(" U","")
+            bolus_string = lines_raw[idx+2]
+            tmp = bolus_string.replace("- Bolus: ","")
+            bolus_string = tmp.replace(" U",",")
+            tb_string = lines_raw[idx+3]
+            tmp = tb_string.replace("- Temp Basal: ","")
+            tb_string = tmp.replace(" U",",")
+            sb_string = lines_raw[idx+4]
+            tmp = sb_string.replace("- Scheduled Basal: ","")
+            sb_string = tmp.replace(" U","")
+            wt_string = lines_raw[idx+5]
+            tmp = wt_string.replace("- WeightedAverage: ","")
+            wt_string = tmp.replace(" U","")
+            tmp = lines_raw[idx+6]
+            hr_string = tmp.replace("- Hours of Data: ","")
             line_array_tcd.append(idx)
             timestamp_array_tcd.append(timestamp)
             tdd_array_tcd.append(tdd_string)
+            bolus_array_tcd.append(bolus_string)
+            tb_array_tcd.append(tb_string)
+            sb_array_tcd.append(sb_string)
+            wt_ave_tcd.append(wt_string)
+            hr_data_tcd.append(hr_string)
             idx = idx + 6
         else:
             idx = idx+1
             thisLine = lines_raw[idx]
 
     # finished the entire lines_raw list, create the data frame
-    d = {'date_time': timestamp_array_tcd, 'line#_tcd': line_array_tcd,
-         'tdd_array_tcd': tdd_array_tcd}
+    d = {'date_time': timestamp_array_tcd, 'line_in_log': line_array_tcd,
+         'Total': tdd_array_tcd, 'Bolus': bolus_array_tcd,
+         'TempBasal': tb_array_tcd, 'SchBasal': sb_array_tcd,
+         'WtAverage': wt_ave_tcd, 'HrsOfData': hr_data_tcd}
     determTddDF_tcd = pd.DataFrame(d)
 
     if noisy:
