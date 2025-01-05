@@ -865,6 +865,9 @@ def extract_raw_TDD(raw_content):
     tdd_pattern_tcd_A = "84 - DEV: TDD Summary:"
     tdd_pattern_tcd_B = "111 - DEV: TDD Summary:"
     na_string = "NA"
+    split0 = ": "
+    split1 = " U"
+    split2 = "| "
 
     # go through one time for old style TDD information
     # old hack but it was working so leave it unchanged
@@ -876,31 +879,37 @@ def extract_raw_TDD(raw_content):
             # extract dateTime from beginning of line
             timestamp = thisLine[0:10] + ' ' + thisLine[11:19]
             # the next line contains the "- Total: value U" for the TDD
-            tdd_string = lines_raw[idx+1]
-            tmp = tdd_string.replace("- Total: ","")
-            tdd_string = tmp.replace(" U","")
-            bolus_string = lines_raw[idx+2]
-            tmp = bolus_string.replace("- Bolus: ","")
-            bolus_string = tmp.replace(" U",",")
-            tb_string = lines_raw[idx+3]
-            tmp = tb_string.replace("- Temp Basal: ","")
-            tb_string = tmp.replace(" U",",")
-            sb_string = lines_raw[idx+4]
-            tmp = sb_string.replace("- Scheduled Basal: ","")
-            sb_string = tmp.replace(" U","")
-            wt_string = lines_raw[idx+5]
-            tmp = wt_string.replace("- WeightedAverage: ","")
-            wt_string = tmp.replace(" U","")
-            tmp = lines_raw[idx+6]
-            hr_string = tmp.replace("- Hours of Data: ","")
+            thisString = lines_raw[idx+1]
+            tmp = thisString.split(split0,2)
+            value = tmp[1].split(split1,2)
+            tdd_array_tcd.append(value[0])
+            #
+            thisString = lines_raw[idx+2]
+            tmp = thisString.split(split0,2)
+            value = tmp[1].split(split1,2)
+            bolus_array_tcd.append(value[0])
+            #
+            thisString = lines_raw[idx+3]
+            tmp = thisString.split(split0,2)
+            value = tmp[1].split(split1,2)
+            tb_array_tcd.append(value[0])
+            #
+            thisString = lines_raw[idx+4]
+            tmp = thisString.split(split0,2)
+            value = tmp[1].split(split1,2)
+            sb_array_tcd.append(value[0])
+            #
+            thisString = lines_raw[idx+5]
+            tmp = thisString.split(split0,2)
+            value = tmp[1].split(split1,2)
+            wt_ave_tcd.append(value[0])
+            #
+            thisString = lines_raw[idx+6]
+            value = thisString.split(split0,2)
+            hr_data_tcd.append(value[1])
+            #
             line_array_tcd.append(idx)
             timestamp_array_tcd.append(timestamp)
-            tdd_array_tcd.append(tdd_string)
-            bolus_array_tcd.append(bolus_string)
-            tb_array_tcd.append(tb_string)
-            sb_array_tcd.append(sb_string)
-            wt_ave_tcd.append(wt_string)
-            hr_data_tcd.append(hr_string)
             earliest_date.append(na_string)
             latest_date.append(na_string)
             earliest_type.append(na_string)
@@ -920,24 +929,25 @@ def extract_raw_TDD(raw_content):
             event1 = lines_raw[idx+12]
             line_array_tcd.append(idx)
             timestamp_array_tcd.append(timestamp)
-            value = tdd_string.split("|",3)
-            tdd_array_tcd.append(value[2])
-            value = bolus_string.split("|",3)
-            bolus_array_tcd.append(value[2])
-            value = tb_string.split("|",3)
-            tb_array_tcd.append(value[2])
-            value = sb_string.split("|",3)
-            sb_array_tcd.append(value[2])
-            value = wt_string.split("|",3)
-            wt_ave_tcd.append(value[2])
-            value = hr_string.split(":",2)
+            value = tdd_string.split(split2,3)
+            # remove the two \t after value
+            tdd_array_tcd.append(value[2][:-2])
+            value = bolus_string.split(split2,3)
+            bolus_array_tcd.append(value[2][:-2])
+            value = tb_string.split(split2,3)
+            tb_array_tcd.append(value[2][:-2])
+            value = sb_string.split(split2,3)
+            sb_array_tcd.append(value[2][:-2])
+            value = wt_string.split(split2,3)
+            wt_ave_tcd.append(value[2][:-2])
+            value = hr_string.split(split0,2)
             hr_data_tcd.append(value[1])
             value = event0.split(",",2)
-            type = value[0].split(":",3)
+            type = value[0].split(split0,3)
             earliest_date.append(value[1][-20:-1])
             earliest_type.append(type[2])
             value = event1.split(",",2)
-            type = value[0].split(":",3)
+            type = value[0].split(split0,3)
             latest_date.append(value[1][-20:-1])
             latest_type.append(type[2])
             idx = idx + 15
