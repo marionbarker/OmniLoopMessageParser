@@ -679,7 +679,7 @@ def extract_raw_determTdd(raw_content):
     # number of lines after json string starts to search for TDD success
     max_lines = 400
     # phrase for iaps version - this if followed by json format
-    tdd_pattern_old = "340 - DEV: Determinated: "
+    tdd_pattern_old = " - DEV: Determinated: "
 
     noisy = 0
     if noisy:
@@ -863,7 +863,7 @@ def extract_raw_TDD(raw_content):
     earliest_type = []
     latest_type = []
     tdd_pattern_tcd_A = "84 - DEV: TDD Summary:"
-    tdd_pattern_tcd_B = "111 - DEV: TDD Summary:"
+    tdd_pattern_tcd_B = " - DEV: TDD Summary:"
     na_string = "NA"
     split0 = ": "
     split1 = " U"
@@ -942,14 +942,21 @@ def extract_raw_TDD(raw_content):
             wt_ave_tcd.append(value[2][:-2])
             value = hr_string.split(split0,2)
             hr_data_tcd.append(value[1])
-            value = event0.split(",",2)
-            type = value[0].split(split0,3)
-            earliest_date.append(value[1][-20:-1])
-            earliest_type.append(type[2])
-            value = event1.split(",",2)
-            type = value[0].split(split0,3)
-            latest_date.append(value[1][-20:-1])
-            latest_type.append(type[2])
+            # handle branch new app with no history
+            if event0 == "- Earliest Event: No events available":
+                earliest_date.append(na_string)
+                earliest_type.append(na_string)
+                latest_date.append(na_string)
+                latest_type.append(na_string)
+            else:
+                value = event0.split(",",2)
+                type = value[0].split(split0,3)
+                earliest_date.append(value[1][-20:-1])
+                earliest_type.append(type[2])
+                value = event1.split(",",2)
+                type = value[0].split(split0,3)
+                latest_date.append(value[1][-20:-1])
+                latest_type.append(type[2])
             idx = idx + 15
         else:
             idx = idx+1
