@@ -863,7 +863,7 @@ def extract_raw_TDD(raw_content):
     earliest_type = []
     latest_type = []
     tdd_pattern_tcd_A = "84 - DEV: TDD Summary:"
-    tdd_pattern_tcd_B = "111 - DEV: TDD Summary:"
+    tdd_pattern_tcd_B = " - DEV: TDD Summary:"
     na_string = "NA"
     split0 = ": "
     split1 = " U"
