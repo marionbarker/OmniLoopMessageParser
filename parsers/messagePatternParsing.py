@@ -1,19 +1,19 @@
 # file: messagePatternParsing
 from util.misc import combineByte
 
-from parsers.parse_01 import parse_01
-from parsers.parse_02 import parse_02
-from parsers.parse_03 import parse_03
-from parsers.parse_06 import parse_06
-from parsers.parse_08 import parse_08
-from parsers.parse_0e import parse_0e
-from parsers.parse_1a13 import parse_1a13
-from parsers.parse_1a16 import parse_1a16
-from parsers.parse_1a17 import parse_1a17
-from parsers.parse_19 import parse_19
-from parsers.parse_1c import parse_1c
-from parsers.parse_1d import parse_1d
-from parsers.parse_1f import parse_1f
+from parsers.pod_msg.parse_01 import parse_01
+from parsers.pod_msg.parse_02 import parse_02
+from parsers.pod_msg.parse_03 import parse_03
+from parsers.pod_msg.parse_06 import parse_06
+from parsers.pod_msg.parse_08 import parse_08
+from parsers.pod_msg.parse_0e import parse_0e
+from parsers.pod_msg.parse_1a13 import parse_1a13
+from parsers.pod_msg.parse_1a16 import parse_1a16
+from parsers.pod_msg.parse_1a17 import parse_1a17
+from parsers.pod_msg.parse_19 import parse_19
+from parsers.pod_msg.parse_1c import parse_1c
+from parsers.pod_msg.parse_1d import parse_1d
+from parsers.pod_msg.parse_1f import parse_1f
 
 
 def unparsedMsg(byteList, msgDict):
