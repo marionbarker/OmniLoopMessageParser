@@ -11,10 +11,10 @@ import pandas as pd
 # import os
 import markdown
 from bs4 import BeautifulSoup, NavigableString, Tag
-from util.misc import combineByte
+# from util.misc import combineByte
 from util.misc import printDict, printList
-from parsers.messagePatternParsing import processMsg
-from parsers.messageLogs_functions import fapsx_message_dict
+# from parsers.messagePatternParsing import processMsg
+from parsers.fapsx_message_dict import fapsx_message_dict
 # add for FAPSX files
 import os
 import subprocess

@@ -1,6 +1,9 @@
+"""
 fapsx_message_dict.py
+"""
 
 from parsers.splitFullMsg import splitFullMsg
+
 
 def fapsx_message_dict(data):
     # extract dateTtime from beginning of line

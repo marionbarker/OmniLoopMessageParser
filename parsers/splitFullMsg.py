@@ -1,6 +1,10 @@
+"""
 splitFullMsg.py
+"""
 
 from util.misc import combineByte
+from parsers.messagePatternParsing import processMsg
+
 
 def splitFullMsg(hexToParse):
     """

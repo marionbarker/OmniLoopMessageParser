@@ -40,6 +40,9 @@ import subprocess
 import numpy as np
 import json
 import tempfile
+## as part of reorg
+
+from parsers.splitFullMsg import splitFullMsg
 
 
 # Some markdown headings don't start on their own line. This regular expression
