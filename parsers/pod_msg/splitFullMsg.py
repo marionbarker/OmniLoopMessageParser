@@ -1,9 +1,7 @@
-"""
-splitFullMsg.py
-"""
+# splitFullMsg.py
 
 from util.misc import combineByte
-from parsers.messagePatternParsing import processMsg
+from parsers.pod_msg.messagePatternParsing import processMsg
 
 
 def splitFullMsg(hexToParse):

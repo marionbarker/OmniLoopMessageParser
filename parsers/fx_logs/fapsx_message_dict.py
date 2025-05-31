@@ -2,7 +2,7 @@
 fapsx_message_dict.py
 """
 
-from parsers.splitFullMsg import splitFullMsg
+from parsers.pod_msg.splitFullMsg import splitFullMsg
 
 
 def fapsx_message_dict(data):
