@@ -21,28 +21,19 @@ Examples:
                                 1f0910c8140a1d18022700000016b3ff01e0
 """
 
-# import time
 import re
 import pandas as pd
-# import os
 import markdown
-from bs4 import BeautifulSoup, NavigableString, Tag
-# from util.misc import combineByte
-from util.misc import printDict, printList
-# from parsers.messagePatternParsing import processMsg
-from parsers.fx_extract_raw_functions import extract_raw_pod
-from parsers.fx_extract_raw_functions import extract_raw_determBasal
-from parsers.fx_extract_raw_functions import extract_raw_determTdd
-from parsers.fx_extract_raw_functions import extract_raw_TDD
-# add for FAPSX files
-import os
-import subprocess
 import numpy as np
-import json
-import tempfile
-## as part of reorg
-
+from bs4 import BeautifulSoup, NavigableString, Tag
+#
+from parsers.fx_logs.extract_raw_pod import extract_raw_pod
+from parsers.fx_logs.extract_raw_determBasal import extract_raw_determBasal
+from parsers.fx_logs.extract_raw_determTdd import extract_raw_determTdd
+from parsers.fx_logs.extract_raw_TDD import extract_raw_TDD
 from parsers.splitFullMsg import splitFullMsg
+from util.misc import printDict
+from util.misc import printList
 
 
 # Some markdown headings don't start on their own line. This regular expression
