@@ -1,4 +1,4 @@
-from parsers.messageLogs_functions import loop_read_file
+from parsers.loop_read_file import loop_read_file
 from analysis.analyzePodMessages import analyzePodMessages
 from analysis.analyzeAllPodsInDeviceLog import analyzeAllPodsInDeviceLog
 from util.report import printLoopDict
