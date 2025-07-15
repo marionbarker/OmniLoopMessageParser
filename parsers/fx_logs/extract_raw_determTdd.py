@@ -14,7 +14,7 @@ def extract_raw_determTdd(raw_content):
     # number of lines after json string starts to search for TDD success
     max_lines = 400
     # phrase for iaps version - this if followed by json format
-    tdd_pattern_old = "340 - DEV: Determinated: "
+    tdd_pattern_old = "- DEV: Determinated: "
 
     noisy = 0
     if noisy:
