@@ -147,14 +147,20 @@ def extract_raw_TDD(raw_content):
             wt_ave_tcd.append(value[2][:-2])
             value = hr_string.split(split0,2)
             hr_data_tcd.append(value[1])
-            value = event0.split(",",2)
-            type = value[0].split(split0,3)
-            earliest_date.append(value[1][-20:-1])
-            earliest_type.append(type[2])
-            value = event1.split(",",2)
-            type = value[0].split(split0,3)
-            latest_date.append(value[1][-20:-1])
-            latest_type.append(type[2])
+            if event0 == "- Earliest Event: No events available":
+                earliest_date.append(na_string)
+                earliest_type.append(na_string)
+                latest_date.append(na_string)
+                latest_type.append(na_string)
+            else:
+                value = event0.split(",",2)
+                type = value[0].split(split0,3)
+                earliest_date.append(value[1][-20:-1])
+                earliest_type.append(type[2])
+                value = event1.split(",",2)
+                type = value[0].split(split0,3)
+                latest_date.append(value[1][-20:-1])
+                latest_type.append(type[2])
             idx = idx + 15
         else:
             idx = idx+1
