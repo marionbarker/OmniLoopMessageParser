@@ -138,8 +138,9 @@ def device_message_dict(data):
     # extract common information, parse Omnipod, other devices ignored for now
     # note that address is ffffffff until Loop and Pod finish some init steps
     device, logAddr, action, restOfLine = stringToUnpack.split(' ', 3)
-    # ensure Omnipod and either send or receive (ignore other keywords for now)
-    podCommsMessage = (device[0:7] == "Omnipod" and
+    # ensure Omni and either send or receive (ignore other keywords for now)
+    #   Omnipod (from OmniKit), Omnipod-DASH (from OmniBLE), Omni (from OmnipodKit)
+    podCommsMessage = (device[0:4] == "Omni" and
                        (action == "send" or action == "receive"))
     if podCommsMessage:
         # address is what pod thinks address is
@@ -163,22 +164,29 @@ def device_message_dict(data):
 
 
 def extract_pod_manager(data):
-    # set up default
+    # set up default (only Loop provides this)
     podMgrDict = {}
+    # OmnipodPumpManger: reported by OmniKit
     if data.get('OmnipodPumpManager'):
         try:
             podMgrDict = dict([[x.strip() for x in v.split(':', 1)]
                               for v in data['PodState']])
         except ValueError:
             print('Information Only: PodState not defined in log file')
-            # ab = 4 # non op
+    # OmniBLEPumpManager: reported by OmniBLE
     elif data.get('OmniBLEPumpManager'):
         try:
             podMgrDict = dict([[x.strip() for x in v.split(':', 1)]
                               for v in data['PodState']])
         except ValueError:
             print('Information Only: PodState not defined in log file')
-            # ab = 4 # non op
+    # OmniPumpManager: reported by OmnipodKit
+    elif data.get('OmniPumpManager'):
+        try:
+            podMgrDict = dict([[x.strip() for x in v.split(':', 1)]
+                              for v in data['PodState']])
+        except ValueError:
+            print('Information Only: PodState not defined in log file')
     return podMgrDict
 
 
@@ -216,13 +224,13 @@ def generate_table(podFrame, radio_on_time):
 
 
 def omnipodP(message):
-    thisIsAPodCommsMessage = message['device'][0:7] == "Omnipod" and \
+    thisIsAPodCommsMessage = message['device'][0:4] == "Omni" and \
         (message['type'] == "send" or message['type'] == "receive")
     return thisIsAPodCommsMessage
 
 
 def otherP(message):
-    thisIsAPodCommsMessage = message['device'][0:7] == "Omnipod" and \
+    thisIsAPodCommsMessage = message['device'][0:4] == "Omni" and \
         ((message['type'] == "send") or (message['type'] == "receive"))
     return not thisIsAPodCommsMessage
 
