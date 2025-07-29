@@ -15,7 +15,8 @@ def main(fileDict, outFlag, vFlag):
     loopReadDict = loop_read_file(fileDict)
     # loopReadDict has keys:
     #   fileDict, logDF, podMgrDict, faultInfoDict,
-    #   loopVersionDict, determBasalDF
+    #   loopVersionDict, determBasalDF, connectDF
+    printDict(loopReadDict)
     fileDict = loopReadDict['fileDict']
     determBasalDF = loopReadDict['determBasalDF']
     # print(loopReadDict)
@@ -67,6 +68,12 @@ def main(fileDict, outFlag, vFlag):
               '     ## MessageLog or\n',
               '     ## Device Communication Log')
         return
+
+    connectDF = loopReadDict['connectDF']
+    if len(connectDF) > 0:
+        print('\n *** Saving pod connect time array')
+        thisFile = "/Users/marion/dev/Common_Development/pod_timing.csv"
+        connectDF.to_csv(thisFile)
 
     if fileDict['recordType'] == "messageLog":
         print('  ----------------------------------------')
