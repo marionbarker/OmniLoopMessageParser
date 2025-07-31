@@ -1,5 +1,6 @@
 from parsers.loop_read_file import loop_read_file
 from analysis.analyzePodMessages import analyzePodMessages
+from analysis.analyzePodConnectionTime import analyzePodConnectionTime
 from analysis.analyzeAllPodsInDeviceLog import analyzeAllPodsInDeviceLog
 from util.report import printLoopDict
 from util.report import writeCombinedLogToOutputFile
@@ -16,7 +17,6 @@ def main(fileDict, outFlag, vFlag):
     # loopReadDict has keys:
     #   fileDict, logDF, podMgrDict, faultInfoDict,
     #   loopVersionDict, determBasalDF, connectDF
-    printDict(loopReadDict)
     fileDict = loopReadDict['fileDict']
     determBasalDF = loopReadDict['determBasalDF']
     # print(loopReadDict)
@@ -68,12 +68,6 @@ def main(fileDict, outFlag, vFlag):
               '     ## MessageLog or\n',
               '     ## Device Communication Log')
         return
-
-    connectDF = loopReadDict['connectDF']
-    if len(connectDF) > 0:
-        print('\n *** Saving pod connect time array')
-        thisFile = "/Users/marion/dev/Common_Development/pod_timing.csv"
-        connectDF.to_csv(thisFile)
 
     if fileDict['recordType'] == "messageLog":
         print('  ----------------------------------------')
@@ -138,4 +132,16 @@ def main(fileDict, outFlag, vFlag):
             print(" *** determTddDF_tcd csv file created: ", thisOutFile)
             determTddDF_tcd.to_csv(thisOutFile)
 
+    print('------------------------------------------\n')
+
+    connectDF = loopReadDict['connectDF']
+    if len(connectDF) > 0:
+        if vFlag == 4 | vFlag == 5:
+            thisOutFile = outFlag + '/' + 'pod_timing.csv'
+            print('\n *** Saving pod connect time array to ', thisOutFile)
+            connectDF.to_csv(thisOutFile)
+        reconnectDF, reconnectStatsDict = analyzePodConnectionTime(fileDict, connectDF, outFlag, vFlag)
+        #print(reconnectDF)
+        print('\nReconnect time statistics for ', fileDict['person']+'/'+fileDict['file'])
+        printDict(reconnectStatsDict)
     print('------------------------------------------\n')

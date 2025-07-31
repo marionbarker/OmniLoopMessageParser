@@ -276,11 +276,6 @@ def extract_messages(recordType, parsed_content, raw_content):
             cgm_messages = list(filter(otherP, messages))
             printList(cgm_messages[1:5])
             printList(cgm_messages[-5:-1])
-        # this works - use it later if desired
-        if 1:
-            print('\n Pod Connect Messages')
-            printList(pod_connect_messages[1:5])
-            printList(pod_connect_messages[-5:-1])
     else:
         print('Filetype is not messageLog or DeviceLog')
         return logDF
