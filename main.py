@@ -134,6 +134,7 @@ def main(fileDict, outFlag, vFlag):
 
     print('------------------------------------------\n')
 
+    ## pod connect time report is same for loop and fx files:
     connectDF = loopReadDict['connectDF']
     if len(connectDF) > 0:
         if vFlag == 4 | vFlag == 5:
@@ -143,5 +144,6 @@ def main(fileDict, outFlag, vFlag):
         reconnectDF, reconnectStatsDict = analyzePodConnectionTime(fileDict, connectDF, outFlag, vFlag)
         #print(reconnectDF)
         print('\nReconnect time statistics for ', fileDict['person']+'/'+fileDict['file'])
-        printDict(reconnectStatsDict)
+        for idx in range(len(reconnectStatsDict)):
+            printDict(reconnectStatsDict[idx])
     print('------------------------------------------\n')
