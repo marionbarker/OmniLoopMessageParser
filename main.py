@@ -3,6 +3,7 @@ from analysis.analyzePodMessages import analyzePodMessages
 from analysis.analyzePodConnectionTime import analyzePodConnectionTime
 from analysis.analyzeAllPodsInDeviceLog import analyzeAllPodsInDeviceLog
 from util.report import printLoopDict
+from util.report import printPodReconnectTimeSummary
 from util.report import writeCombinedLogToOutputFile
 from util.report import generatePlot, printDict
 import platform
@@ -142,8 +143,5 @@ def main(fileDict, outFlag, vFlag):
             print('\n *** Saving pod connect time array to ', thisOutFile)
             connectDF.to_csv(thisOutFile)
         reconnectDF, reconnectStatsDict = analyzePodConnectionTime(fileDict, connectDF, outFlag, vFlag)
-        #print(reconnectDF)
-        print('\nReconnect time statistics for ', fileDict['person']+'/'+fileDict['file'])
-        for idx in range(len(reconnectStatsDict)):
-            printDict(reconnectStatsDict[idx])
+        printPodReconnectTimeSummary(fileDict, reconnectStatsDict)
     print('------------------------------------------\n')

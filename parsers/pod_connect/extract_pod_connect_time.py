@@ -68,7 +68,6 @@ def extract_pod_connect_time(raw_content, recordType):
         thisLine = lines_raw[idx]
         extract_from_this_line = 0
         if (pod_patt_connect in thisLine) | (pod_patt_connect_fx in thisLine):
-            print(thisLine)
             extract_from_this_line = 1
             pod_connect_array.append(1)
             # pod_debug_array.append(0)
