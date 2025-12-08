@@ -24,7 +24,7 @@ def extract_pod_connect_time(raw_content, recordType):
     # raw_content: lines from the log file
     # log_type: "loop" or "fx"
     connectDF = pd.DataFrame({})
-    noisy = 0
+    noisy = 1
 
     # split by newline:
     lines_raw = raw_content.splitlines()
@@ -44,10 +44,6 @@ def extract_pod_connect_time(raw_content, recordType):
     pod_patt_disconnect = "connection Pod disconnected"
     pod_patt_connect_fx = "Device message: Pod connected"
     pod_patt_disconnect_fx = "Device message: Pod disconnected"
-    #pod_patt_error_run_session = "error @@@ runSession"
-    #pod_patt_error_send_message = "error @@@ sendMessage"
-    #pod_patt_error_is_connected= "error @@@ isConnected"
-    #pod_patt_nil = "peripheral state=nil"
 
     # configure blank arrays to use for filling in the dataframe
     idx = -1
@@ -70,26 +66,9 @@ def extract_pod_connect_time(raw_content, recordType):
         if (pod_patt_connect in thisLine) | (pod_patt_connect_fx in thisLine):
             extract_from_this_line = 1
             pod_connect_array.append(1)
-            # pod_debug_array.append(0)
         elif (pod_patt_disconnect in thisLine) | (pod_patt_disconnect_fx in thisLine):
             extract_from_this_line = 1
             pod_connect_array.append(0)
-            # pod_debug_array.append(0)
-        #elif pod_patt_error_run_session in thisLine:
-        #    extract_from_this_line = 1
-        #    pod_connect_array.append(2)
-        #    pod_debug_array.append(1)
-        #elif pod_patt_error_send_message in thisLine:
-        #    extract_from_this_line = 1
-        #    pod_connect_array.append(2)
-        #    pod_debug_array.append(2)
-        #elif pod_patt_error_is_connected in thisLine:
-        #    extract_from_this_line = 1
-        #    pod_connect_array.append(2)
-        #    if pod_patt_nil in thisLine:
-        #        pod_debug_array.append(3)
-        #    else:
-        #        pod_debug_array.append(4)
 
         if extract_from_this_line == 1:
             timestamp = get_timestamp_from_line(thisLine, recordType)
