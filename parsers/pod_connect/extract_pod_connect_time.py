@@ -24,7 +24,7 @@ def extract_pod_connect_time(raw_content, recordType):
     # raw_content: lines from the log file
     # log_type: "loop" or "fx"
     connectDF = pd.DataFrame({})
-    noisy = 1
+    noisy = 0
 
     # split by newline:
     lines_raw = raw_content.splitlines()
