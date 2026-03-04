@@ -47,7 +47,7 @@ def main(fileDict, outFlag, vFlag):
     print('  File: {:s}'.format(fileDict["personFile"]))
     if len(loopReadDict['loopVersionDict']):
         commentString = 'Build Details reported in file'
-        maxItems = 10
+        maxItems = 30
         printLoopDict(commentString, maxItems, loopReadDict['loopVersionDict'])
 
     if len(loopReadDict['faultInfoDict']) and vFlag == 4:
