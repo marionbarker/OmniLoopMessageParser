@@ -29,7 +29,14 @@ def parse_03(byteList, msgDict):
     msgDict['msgMeaning'] = 'setupPod'
 
     if byteList[1] != 0x13:
-        print('Unexpected length of 0x03 command for Loop')
+        print(f'  >> Cannot parse 0x03 message: expected length 0x13,'
+              f' got {hex(byteList[1])}')
+        msgDict['parseError'] = f'unexpected length {hex(byteList[1])}'
+        msgDict['podAddr'] = 'unknown'
+        msgDict['timeOut'] = 0
+        msgDict['dateStamp'] = 'unknown'
+        msgDict['lot'] = 0
+        msgDict['tid'] = 0
         return msgDict
 
     podAddr = combineByte(byteList[2:6])

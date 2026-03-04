@@ -47,6 +47,7 @@ FIXME_RE = re.compile(r'(?!#).(##+.*)')
 # Add new ## Device Communication Log markdown heading:
 #  note it's either MessageLog or Device Communication Log
 MARKDOWN_HEADINGS_TO_EXTRACT = ['OmnipodPumpManager', 'OmniBLEPumpManager',
+                                'OmniPumpManager',
                                 'MessageLog', 'Device Communication Log',
                                 'PodState', 'PodInfoFaultEvent',
                                 'LoopVersion', 'Version', 'Build Details',
