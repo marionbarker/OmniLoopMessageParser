@@ -14,6 +14,23 @@ This code has functions to handle reporting to stdout or files
 """
 
 
+def printPodReconnectTimeSummary(fileDict, reconnectStatsDict):
+    # first draft of pod reconnection time statistics print out
+    print('\nReconnect time statistics for ', fileDict['person']+'/'+fileDict['file'])
+    for idx in range(len(reconnectStatsDict)):
+        print(f'\nPod address,', reconnectStatsDict[idx].get("pod_address"), 
+              f'\nNumber of reconnects in log,',
+              reconnectStatsDict[idx].get("numberConnections"))
+        print("  Reconnect Statistics, sec")
+        print("            Median    ,", reconnectStatsDict[idx].get('sec_median'))
+        statArray = reconnectStatsDict[idx].get('sec_min_05_95_max')
+        print("            Minumum.  ,", statArray[0])
+        print("             5%<      ,", statArray[1])
+        print("            95% <.    ,", statArray[2])
+        print("            Maximum.  ,", statArray[3])
+    return
+
+
 def printActionSummary(actionSummary):
     # do not print incomplete actions. With new 0x0e07 messages, the old method
     # is not accurate for Status&Bolus00 count of incomplete.

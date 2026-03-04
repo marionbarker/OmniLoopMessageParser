@@ -32,6 +32,7 @@ from parsers.fx_logs.extract_raw_determBasal import extract_raw_determBasal
 from parsers.fx_logs.extract_raw_determTdd import extract_raw_determTdd
 from parsers.fx_logs.extract_raw_TDD import extract_raw_TDD
 from parsers.pod_msg.splitFullMsg import splitFullMsg
+from parsers.pod_connect.extract_pod_connect_time import extract_pod_connect_time
 from util.misc import printDict
 from util.misc import printList
 
@@ -235,11 +236,20 @@ def otherP(message):
     return not thisIsAPodCommsMessage
 
 
-def extract_messages(recordType, parsed_content):
+def connectP(message):
+    # note connection is associated with connected or disconnected message
+    # error is found with special debug version used for iPhone 16 tests
+    thisIsAPodConnectMessage = message['device'][0:4] == "Omni" and \
+        ((message['type'] == "connection") or (message['type'] == "error"))
+    return thisIsAPodConnectMessage
+
+def extract_messages(recordType, parsed_content, raw_content):
     # set up default
     logDF = pd.DataFrame({})
     noisy = 0
     pod_messages = ['nil']
+    pod_connect_messages = ['nil']
+
     if recordType == "messageLog":
         # only pod messages are found in this section of the Loop Report
         pod_messages = [message_dict(m) for m in parsed_content['MessageLog']]
@@ -249,6 +259,9 @@ def extract_messages(recordType, parsed_content):
         # search for address then send and seceive explicitly.
         #   address connection has been added already.
         #   Pete warns more keywords may be coming.
+
+        # in 2025 July - need to evaluate reconnect times with InPlay BLE pods
+        # for this, we need raw_content (with current dumb search method)
         messages = [device_message_dict(m)
                     for m in parsed_content['Device Communication Log']]
         pod_messages = list(filter(omnipodP, messages))
