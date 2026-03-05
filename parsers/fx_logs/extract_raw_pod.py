@@ -28,15 +28,20 @@ def extract_raw_pod(raw_content):
         print('first line\n', lines_raw[0])
         print('last line\n', lines_raw[-1])
 
-    # update 9/3/2022 to handle the new Pod connect
+    # update 2022-09-03 to handle the new Pod connect messages
+    # update 2026-03-04 to handle all pod addresses
     #  disconnect and Unacknowledged message log output
+    #    pattern that ends in "f" indicates pod not paired
+    #    pattern that ends in "0" or "1" indicates pod has an address
     pod_patt_f = "DEV: Device message: f"
+    pod_patt_0 = "DEV: Device message: 0"
     pod_patt_1 = "DEV: Device message: 1"
     pod_connect_patt = "DEV: Device message: Pod"
     pod_unack_patt = "DEV: Device message: Unacknowledged"
     pod_messages = [x for x in lines_raw
                     if ((x.find(pod_patt_f) > -1) or
-                    (x.find(pod_patt_1) > -1)) and
+                    (x.find(pod_patt_1) > -1) or
+                    (x.find(pod_patt_0) > -1)) and
                     (x.find(pod_connect_patt) == -1) and
                     (x.find(pod_unack_patt) == -1)]
     if len(pod_messages) == 0:
