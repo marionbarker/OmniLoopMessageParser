@@ -12,7 +12,7 @@ from parsers.fx_logs.extract_raw_pod import extract_raw_pod
 from parsers.fx_logs.extract_raw_determBasal import extract_raw_determBasal
 from parsers.fx_logs.extract_raw_determTdd import extract_raw_determTdd
 from parsers.fx_logs.extract_raw_TDD import extract_raw_TDD
-
+from parsers.pod_connect.extract_pod_connect_time import extract_pod_connect_time
 
 # pass in fileDict instead of filename
 def loop_read_file(fileDict):
@@ -28,6 +28,7 @@ def loop_read_file(fileDict):
     parsed_content = {}
     # define empty dataframes
     logDF = pd.DataFrame({})
+    connectDF = pd.DataFrame({})
     determBasalDF = pd.DataFrame({})
     determTddDF_old = pd.DataFrame({})
     determTddDF_tcd = pd.DataFrame({})
@@ -44,7 +45,8 @@ def loop_read_file(fileDict):
                     'loopVersionDict': loopVersionDict,
                     'determBasalDF': determBasalDF,
                     'determTddDF_old': determTddDF_old,
-                    'determTddDF_tcd': determTddDF_tcd}
+                    'determTddDF_tcd': determTddDF_tcd,
+                    'connectDF': connectDF}
 
     # check loopType and act accordingly
     filename = fileDict['filename']
@@ -53,6 +55,11 @@ def loop_read_file(fileDict):
         parsed_content = parse_filehandle(file)
         # ensure file is closed
         file.close()
+        # also need raw_content for omnipod timing
+        fp = open(filename, "r", encoding='UTF8')
+        raw_content = fp.read()
+        fp.close()
+
         if parsed_content.get('MessageLog'):
             fileDict['recordType'] = "messageLog"
             # handle various versions of status: being tacked onto end
@@ -80,7 +87,9 @@ def loop_read_file(fileDict):
         if parsed_content.get('Device Communication Log'):
             fileDict['recordType'] = "deviceLog"
 
-        logDF = extract_messages(fileDict['recordType'], parsed_content)
+        logDF = extract_messages(fileDict['recordType'], parsed_content, raw_content)
+        recordType = fileDict['recordType']
+        connectDF = extract_pod_connect_time(raw_content, recordType)
         faultInfoDict = extract_fault_info(parsed_content)
         loopVersionDict = extract_loop_version(parsed_content)
         if 'PodState' in parsed_content:
@@ -101,6 +110,8 @@ def loop_read_file(fileDict):
         # read version from old version and evaluate new versionq
         determTddDF_old = extract_raw_determTdd(raw_content)
         determTddDF_tcd = extract_raw_TDD(raw_content)
+        recordType = "FAPSX"
+        connectDF = extract_pod_connect_time(raw_content, recordType)
 
         fileDict['recordType'] = "FAPSX"  # overwrite if both DF are empty
         if determBasalDF.empty and logDF.empty:
@@ -155,6 +166,7 @@ def loop_read_file(fileDict):
                     'loopVersionDict': loopVersionDict,
                     'determBasalDF': determBasalDF,
                     'determTddDF_old': determTddDF_old,
-                    'determTddDF_tcd': determTddDF_tcd}
+                    'determTddDF_tcd': determTddDF_tcd,
+                    'connectDF': connectDF}
 
     return loopReadDict

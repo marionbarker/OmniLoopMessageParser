@@ -1,7 +1,9 @@
 from parsers.loop_read_file import loop_read_file
 from analysis.analyzePodMessages import analyzePodMessages
+from analysis.analyzePodConnectionTime import analyzePodConnectionTime
 from analysis.analyzeAllPodsInDeviceLog import analyzeAllPodsInDeviceLog
 from util.report import printLoopDict
+from util.report import printPodReconnectTimeSummary
 from util.report import writeCombinedLogToOutputFile
 from util.report import generatePlot, printDict
 import platform
@@ -15,7 +17,7 @@ def main(fileDict, outFlag, vFlag):
     loopReadDict = loop_read_file(fileDict)
     # loopReadDict has keys:
     #   fileDict, logDF, podMgrDict, faultInfoDict,
-    #   loopVersionDict, determBasalDF
+    #   loopVersionDict, determBasalDF, connectDF
     fileDict = loopReadDict['fileDict']
     determBasalDF = loopReadDict['determBasalDF']
     # print(loopReadDict)
@@ -131,4 +133,15 @@ def main(fileDict, outFlag, vFlag):
             print(" *** determTddDF_tcd csv file created: ", thisOutFile)
             determTddDF_tcd.to_csv(thisOutFile)
 
+    print('------------------------------------------\n')
+
+    ## pod connect time report is same for loop and fx files:
+    connectDF = loopReadDict['connectDF']
+    if len(connectDF) > 0:
+        if vFlag == 4 | vFlag == 5:
+            thisOutFile = outFlag + '/' + 'pod_timing.csv'
+            print('\n *** Saving pod connect time array to ', thisOutFile)
+            connectDF.to_csv(thisOutFile)
+        reconnectDF, reconnectStatsDict = analyzePodConnectionTime(fileDict, connectDF, outFlag, vFlag)
+        printPodReconnectTimeSummary(fileDict, reconnectStatsDict)
     print('------------------------------------------\n')
