@@ -105,7 +105,7 @@ def printPodInfo(podInfo, nomNumSteps):
             if podInfo['podStyle'] == 'Dash':
                 # BLE pod
                 print(f' Dash Pod: Addr {podInfo["podAddr"]}, '
-                      f'Lot {podInfo["lot"]}, '
+                      f'Lot {podInfo["lot"]} ({podInfo.get("lot_human", "")}), '
                       f'Seq {podInfo["tid"]}, '
                       f'Pod_FW: {podInfo["pmVersion"]}, '
                       f'BLE_FW: {podInfo["piVersion"]}'
@@ -113,7 +113,7 @@ def printPodInfo(podInfo, nomNumSteps):
             elif podInfo['podStyle'] == 'Eros':
                 # Eros Pod
                 print(f' Eros Pod: Addr {podInfo["podAddr"]}, '
-                      f'Lot {podInfo["lot"]}, '
+                      f'Lot {podInfo["lot"]} ({podInfo.get("lot_human", "")}), '
                       f'Tid {podInfo["tid"]}, '
                       f'PM: {podInfo["pmVersion"]}, '
                       f'PI: {podInfo["piVersion"]}, '
@@ -123,7 +123,7 @@ def printPodInfo(podInfo, nomNumSteps):
             else:
                 # Unknown Type of Pod
                 print(f' Unkn Pod: Addr {podInfo["podAddr"]}, '
-                      f'Lot {podInfo["lot"]}, '
+                      f'Lot {podInfo["lot"]} ({podInfo.get("lot_human", "")}), '
                       f'Tid {podInfo["tid"]}, '
                       f'PM: {podInfo["pmVersion"]}, '
                       f'PI: {podInfo["piVersion"]}, '
