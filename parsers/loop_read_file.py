@@ -1,5 +1,6 @@
 # loop_read_file.py
 
+import re
 import pandas as pd
 import numpy as np
 #
@@ -13,6 +14,33 @@ from parsers.fx_logs.extract_raw_determBasal import extract_raw_determBasal
 from parsers.fx_logs.extract_raw_determTdd import extract_raw_determTdd
 from parsers.fx_logs.extract_raw_TDD import extract_raw_TDD
 from parsers.pod_connect.extract_pod_connect_time import extract_pod_connect_time
+
+def _extract_trio_build_info(raw_content):
+    """Extract OS-AID and OmnipodKit branch/SHA from a Trio 'DEV: Trio Started' line.
+
+    Example line fragment:
+      DEV: Trio Started: v0.6.0.51(1) ... [Branch: mdb/add_all_managers 38a7315]
+      [submodules: ..., OmnipodKit: O5-integration-continued2 482be1a, ...]
+    """
+    result = {'osAidBranch': '', 'osAidSHA': '',
+              'omnipodKitBranch': '', 'omnipodKitSHA': ''}
+    # find the DEV: Trio Started line first, then search within it
+    line_match = re.search(r'DEV: Trio Started.*', raw_content)
+    if not line_match:
+        return result
+    line = line_match.group(0)
+    # OS-AID branch and SHA from [Branch: <branch> <sha>]
+    m = re.search(r'\[Branch:\s+(\S+)\s+([0-9a-f]+)\]', line)
+    if m:
+        result['osAidBranch'] = m.group(1)
+        result['osAidSHA'] = m.group(2)
+    # OmnipodKit branch and SHA from submodules list
+    m = re.search(r'OmnipodKit:\s+(\S+)\s+([0-9a-f]+)', line)
+    if m:
+        result['omnipodKitBranch'] = m.group(1)
+        result['omnipodKitSHA'] = m.group(2)
+    return result
+
 
 # pass in fileDict instead of filename
 def loop_read_file(fileDict):
@@ -159,6 +187,28 @@ def loop_read_file(fileDict):
             loopVersionDict['workspaceGitRevision']
     if 'workspaceGitBranch' in loopVersionDict:
         fileDict['workspaceGitBranch'] = loopVersionDict['workspaceGitBranch']
+
+    # OS-AID app type, workspace branch/SHA, and OmnipodKit submodule branch/SHA
+    fileDict['osAidBranch'] = ''
+    fileDict['osAidSHA'] = ''
+    fileDict['omnipodKitBranch'] = ''
+    fileDict['omnipodKitSHA'] = ''
+    if fileDict['loopType'].lower() == 'loop':
+        fileDict['osAidType'] = 'Loop'
+        fileDict['osAidBranch'] = loopVersionDict.get('Workspace branch', '')
+        fileDict['osAidSHA'] = loopVersionDict.get('Workspace SHA', '')
+        opkValue = loopVersionDict.get('OmnipodKit', '')
+        if opkValue and ', ' in opkValue:
+            parts = opkValue.split(', ', 1)
+            fileDict['omnipodKitBranch'] = parts[0].strip()
+            fileDict['omnipodKitSHA'] = parts[1].strip()
+    elif fileDict['loopType'].lower() == 'fx':
+        fileDict['osAidType'] = 'Trio'
+        trioBuildInfo = _extract_trio_build_info(raw_content)
+        fileDict.update(trioBuildInfo)
+    else:
+        fileDict['osAidType'] = ''
+
     loopReadDict = {'fileDict': fileDict,
                     'logDF': logDF,
                     'podMgrDict': podMgrDict,
