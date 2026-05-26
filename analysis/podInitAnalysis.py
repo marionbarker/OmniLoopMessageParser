@@ -26,6 +26,7 @@ def getPodInitCmdCount(initFrame):
         'pmVersion': 0,
         'piVersion': 0,
         'lot': 0,
+        'lot_human': '',
         'tid': 0,
         'PP115': 0,
         'lastPP': 0,
@@ -78,6 +79,7 @@ def getPodInitCmdCount(initFrame):
             podInitCmdCount['pmVersion'] = msgDict['pmVersion']
             podInitCmdCount['piVersion'] = msgDict['piVersion']
             podInitCmdCount['lot'] = msgDict['lot']
+            podInitCmdCount['lot_human'] = msgDict.get('lot_human', '')
             podInitCmdCount['tid'] = msgDict['tid']
             podInitCmdCount['podAddr'] = msgDict['podAddr']
 
@@ -90,6 +92,7 @@ def getPodInitCmdCount(initFrame):
             podInitCmdCount['pmVersion'] = msgDict['pmVersion']
             podInitCmdCount['piVersion'] = msgDict['piVersion']
             podInitCmdCount['lot'] = msgDict['lot']
+            podInitCmdCount['lot_human'] = msgDict.get('lot_human', '')
             podInitCmdCount['tid'] = msgDict['tid']
             podInitCmdCount['podAddr'] = msgDict['podAddr']
 

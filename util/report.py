@@ -105,7 +105,7 @@ def printPodInfo(podInfo, nomNumSteps):
             if podInfo['podStyle'] == 'Dash':
                 # BLE pod
                 print(f' Dash Pod: Addr {podInfo["podAddr"]}, '
-                      f'Lot {podInfo["lot"]}, '
+                      f'Lot {podInfo["lot"]} ({podInfo.get("lot_human", "")}), '
                       f'Seq {podInfo["tid"]}, '
                       f'Pod_FW: {podInfo["pmVersion"]}, '
                       f'BLE_FW: {podInfo["piVersion"]}'
@@ -113,7 +113,7 @@ def printPodInfo(podInfo, nomNumSteps):
             elif podInfo['podStyle'] == 'Eros':
                 # Eros Pod
                 print(f' Eros Pod: Addr {podInfo["podAddr"]}, '
-                      f'Lot {podInfo["lot"]}, '
+                      f'Lot {podInfo["lot"]} ({podInfo.get("lot_human", "")}), '
                       f'Tid {podInfo["tid"]}, '
                       f'PM: {podInfo["pmVersion"]}, '
                       f'PI: {podInfo["piVersion"]}, '
@@ -123,7 +123,7 @@ def printPodInfo(podInfo, nomNumSteps):
             else:
                 # Unknown Type of Pod
                 print(f' Unkn Pod: Addr {podInfo["podAddr"]}, '
-                      f'Lot {podInfo["lot"]}, '
+                      f'Lot {podInfo["lot"]} ({podInfo.get("lot_human", "")}), '
                       f'Tid {podInfo["tid"]}, '
                       f'PM: {podInfo["pmVersion"]}, '
                       f'PI: {podInfo["piVersion"]}, '
@@ -559,14 +559,13 @@ def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps,
     stream_out = open(outFile, mode='at')
     if not isItThere:
         # set up a table format order
-        headerString = 'Who, Finish1, Finish2, lastMsgDate, podAddr, ' + \
+        headerString = 'Who, OS-AID, Finish1, Finish2, lastMsgDate, podAddr, ' + \
                        'podHrs, logHrs, #Messages, #Sent, #Recv, ' + \
                        '#Recv/#Send%,  InsulinDelivered, LotNo, SeqNo, ' + \
                        'PodFW, BleFW, rawHex(Fault), PDM RefCode, ' + \
-                       'filename ' + \
-                       'appNameAndVersion, buildDate, ' + \
-                       'gitRevision, gitBranch, ' + \
-                       'workspaceGitRevision, workspaceGitBranch, ' + \
+                       'filename, appNameAndVersion, buildDate, ' + \
+                       'OS-AID branch, OS-AID SHA, ' + \
+                       'OmnipodKit branch, OmnipodKit SHA, ' + \
                        'Comment, More Comments'
         stream_out.write(headerString)
         stream_out.write('\n')
@@ -584,6 +583,7 @@ def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps,
         lotNo = ''
         seqNo = ''
     stream_out.write(f"{fileDict['person']},")
+    stream_out.write(f"{fileDict.get('osAidType', '')},")
     stream_out.write(f"{Finish1},")
     stream_out.write(f"{Finish2},")
     stream_out.write(f"{logInfoDict['last_msg']},")
@@ -604,10 +604,10 @@ def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps,
     stream_out.write(f"{fileDict['personFile']},")
     stream_out.write(f"{fileDict['appNameAndVersion']},")
     stream_out.write(f"{fileDict['buildDateString']},")
-    stream_out.write(f"{fileDict['gitRevision']},")
-    stream_out.write(f"{fileDict['gitBranch']},")
-    stream_out.write(f"{fileDict['workspaceGitRevision']},")
-    stream_out.write(f"{fileDict['workspaceGitBranch']},")
+    stream_out.write(f"{fileDict.get('osAidBranch', '')},")
+    stream_out.write(f"{fileDict.get('osAidSHA', '')},")
+    stream_out.write(f"{fileDict.get('omnipodKitBranch', '')},")
+    stream_out.write(f"{fileDict.get('omnipodKitSHA', '')},")
     stream_out.write('\n')
     stream_out.close()
     print('  Row appended to ', outFile)

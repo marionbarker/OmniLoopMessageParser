@@ -166,7 +166,7 @@ def returnPodID(podDict, podInfo):
             'tid': 'unknown',
             'piVersion': 'unknown',
             'pmVersion': 'unknown',
-            'address': podInfo['podAddr']}
+            'address': podInfo.get('podAddr', 'unknown')}
     if podID['podType'] == 2:
         podID['podStyle'] = 'Eros'
     elif podID['podType'] == 4:
@@ -220,6 +220,12 @@ def getDescriptiveStringFromPodStateRow(md, reqTB, reqBolus, pod_progress):
     dStr = ''
     # print(md)
     # print(reqTB, reqBolus)
+
+    # if this message had a parse error, return a descriptive string and skip
+    if md.get('parseError'):
+        return 'Unparsed: {:s} ({:s})'.format(
+            md.get('msgType', '??'), md.get('parseError', ''))
+
     # organize by app sent then pod sent
     appPrefix = 'App Sent: '
     podPrefix = 'Pod Sent: '
@@ -320,6 +326,10 @@ def getDescriptiveStringFromPodStateRow(md, reqTB, reqBolus, pod_progress):
         dStr = podPrefix + '{:s}, fault_code {:s}, reseed_word {:x} '.format(
             md['msgMeaning'], md['fault_code'], md['nonce_reseed_word'])
 
+    if not dStr:
+        dStr = 'Unknown msgType: {:s}, {:s}'.format(
+            md.get('msgType', '??'), md.get('msgMeaning', ''))
+
     return dStr
 
 
@@ -363,7 +373,7 @@ def getNameFromMsgType(msgType):
         '0x1f6': '0x1f6-look-up',
         '0x1f7': 'CnxAll'}
 
-    return msgName[msgType]
+    return msgName.get(msgType, f'Unknown({msgType})')
 
 
 # if appropriate:

@@ -1,5 +1,6 @@
 from util.misc import combineByte
 from util.misc import versionString
+from parsers.lot_decoder import decode_lot
 
 
 def parse_01(byteList, msgDict):
@@ -86,6 +87,7 @@ def parse_01(byteList, msgDict):
     msgDict['piVersion'] = versionString(piVer)
     msgDict['pod_progress'] = pprog
     msgDict['lot'] = podLot
+    msgDict['lot_human'] = decode_lot(podLot).printable_version
     msgDict['tid'] = podTid
     msgDict['podAddr'] = hex(podAddr)
 

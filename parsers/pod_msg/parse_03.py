@@ -2,6 +2,7 @@
 #  wiki: https://github.com/openaps/openomni/wiki/Command-03-Setup-Pod
 
 from util.misc import combineByte
+from parsers.lot_decoder import decode_lot
 
 
 def parse_03(byteList, msgDict):
@@ -29,7 +30,15 @@ def parse_03(byteList, msgDict):
     msgDict['msgMeaning'] = 'setupPod'
 
     if byteList[1] != 0x13:
-        print('Unexpected length of 0x03 command for Loop')
+        print(f'  >> Cannot parse 0x03 message: expected length 0x13,'
+              f' got {hex(byteList[1])}')
+        msgDict['parseError'] = f'unexpected length {hex(byteList[1])}'
+        msgDict['podAddr'] = 'unknown'
+        msgDict['timeOut'] = 0
+        msgDict['dateStamp'] = 'unknown'
+        msgDict['lot'] = 0
+        msgDict['lot_human'] = ''
+        msgDict['tid'] = 0
         return msgDict
 
     podAddr = combineByte(byteList[2:6])
@@ -50,6 +59,7 @@ def parse_03(byteList, msgDict):
                            '{0:#0{1}d}'.format(hh, 2) + ':' + \
                            '{0:#0{1}d}'.format(mm, 2)
     msgDict['lot'] = podLot
+    msgDict['lot_human'] = decode_lot(podLot).printable_version
     msgDict['tid'] = podTid
 
     return msgDict

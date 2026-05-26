@@ -78,8 +78,15 @@ def processMsg(msg):
         # print(thisMessage)
     else:
         msgDict['msgType'] = '{0:#0{1}x}'.format(byteList[0], 4)
-        thisMessage = chooseMsgType.get(byteList[0],
-                                        unparsedMsg)(byteList, msgDict)
+        try:
+            thisMessage = chooseMsgType.get(byteList[0],
+                                            unparsedMsg)(byteList, msgDict)
+        except Exception as e:
+            print(f'  >> Cannot parse message type {msgDict["msgType"]}'
+                  f' (length {len(byteList)}): {e}')
+            msgDict['msgMeaning'] = 'parseError'
+            msgDict['parseError'] = str(e)
+            thisMessage = msgDict
     # add msg_body last cause it's long
     if 'mlen' not in msgDict:
         msgDict['mlen'] = byteList[1]

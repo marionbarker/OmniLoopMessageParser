@@ -47,6 +47,7 @@ FIXME_RE = re.compile(r'(?!#).(##+.*)')
 # Add new ## Device Communication Log markdown heading:
 #  note it's either MessageLog or Device Communication Log
 MARKDOWN_HEADINGS_TO_EXTRACT = ['OmnipodPumpManager', 'OmniBLEPumpManager',
+                                'OmniPumpManager',
                                 'MessageLog', 'Device Communication Log',
                                 'PodState', 'PodInfoFaultEvent',
                                 'LoopVersion', 'Version', 'Build Details',
@@ -111,6 +112,26 @@ def message_dict(data):
     return podMessagesDict
 
 
+def _is_valid_pod_hex(logAddr, hexData):
+    """Return True if hexData is a valid omnipod message, not O5 BLE handshaking.
+
+    Valid messages satisfy one of:
+      - logAddr is 'noPod'         (initial pairing broadcast, hex is ffffffff)
+      - hex starts with ffffffff   (address negotiation frames)
+      - hex starts with the pod address  (normal pod messages)
+
+    O5 BLE handshaking has hex that matches none of the above and must be excluded.
+    """
+    if logAddr == 'noPod':
+        return True
+    hexPrefix = hexData[:8].lower()
+    if hexPrefix == 'ffffffff':
+        return True
+    if hexPrefix == logAddr.lower():
+        return True
+    return False
+
+
 def device_message_dict(data):
     # set default values in case they cannot be found or have wrong format
     device = 'unknown'
@@ -138,11 +159,13 @@ def device_message_dict(data):
 
     # extract common information, parse Omnipod, other devices ignored for now
     # note that address is ffffffff until Loop and Pod finish some init steps
-    device, logAddr, action, restOfLine = stringToUnpack.split(' ', 3)
+    # split(None, 3) handles variable whitespace, e.g. "noPod    send" alignment
+    device, logAddr, action, restOfLine = stringToUnpack.split(None, 3)
     # ensure Omni and either send or receive (ignore other keywords for now)
     #   Omnipod (from OmniKit), Omnipod-DASH (from OmniBLE), Omni (from OmnipodKit)
     podCommsMessage = (device[0:4] == "Omni" and
-                       (action == "send" or action == "receive"))
+                       (action == "send" or action == "receive") and
+                       _is_valid_pod_hex(logAddr, restOfLine))
     if podCommsMessage:
         # address is what pod thinks address is
         address, msgDict = splitFullMsg(restOfLine)
@@ -225,8 +248,11 @@ def generate_table(podFrame, radio_on_time):
 
 
 def omnipodP(message):
+    # msgDict is empty when _is_valid_pod_hex rejected the message (e.g. O5
+    # BLE handshaking) — exclude those even though device/type look like Omni.
     thisIsAPodCommsMessage = message['device'][0:4] == "Omni" and \
-        (message['type'] == "send" or message['type'] == "receive")
+        (message['type'] == "send" or message['type'] == "receive") and \
+        bool(message['msgDict'])
     return thisIsAPodCommsMessage
 
 
