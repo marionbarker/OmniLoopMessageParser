@@ -248,8 +248,11 @@ def generate_table(podFrame, radio_on_time):
 
 
 def omnipodP(message):
+    # msgDict is empty when _is_valid_pod_hex rejected the message (e.g. O5
+    # BLE handshaking) — exclude those even though device/type look like Omni.
     thisIsAPodCommsMessage = message['device'][0:4] == "Omni" and \
-        (message['type'] == "send" or message['type'] == "receive")
+        (message['type'] == "send" or message['type'] == "receive") and \
+        bool(message['msgDict'])
     return thisIsAPodCommsMessage
 
 
