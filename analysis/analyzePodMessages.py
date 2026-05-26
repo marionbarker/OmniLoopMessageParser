@@ -35,7 +35,7 @@ def analyzePodMessages(fileDict, podFrame, podDict, outFlag,
     dashStatsFlag = 0
 
     if vFlag == 5:
-        dashStatsFile = outFlag + '/' + 'dash_stats.csv'
+        dashStatsFile = fileDict.get('statsFile', outFlag + '/dash_stats.csv')
         dashStatsFlag = 1
         vFlag = 4  # rest of code uses this for verbose reporting
 
