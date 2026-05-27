@@ -172,9 +172,31 @@ for who, person_df in df.groupby('Who', sort=True):
                 filenames.append(fstr)
         filenames_str = '; '.join(filenames)
 
+        # ── PodType from PkgLot prefix ────────────────────────────────────
+        if len(pkg_lot) >= 2:
+            prefix2 = pkg_lot[:2].upper()
+            if prefix2 in ('PP', 'PH', 'PR'):
+                pod_type = 'O5'
+            elif prefix2 == 'PD':
+                pod_type = 'DASH'
+            else:
+                pod_type = ''
+        else:
+            pod_type = ''
+
+        # ── ManufDate from PkgLot characters 5-10 (1-indexed) ────────────
+        if len(pkg_lot) >= 10:
+            mm = pkg_lot[4:6]
+            dd = pkg_lot[6:8]
+            yy = pkg_lot[8:10]
+            manuf_date = f'20{yy}/{mm}/{dd}'
+        else:
+            manuf_date = ''
+
         output_rows.append({
             'Who':               who,
             'OS-AID':            os_aid,
+            'PodType':           pod_type,
             'Finish1':           finish1,
             'Finish2':           finish2,
             'lastMsgDate':       last_msg_date,
@@ -188,6 +210,7 @@ for who, person_df in df.groupby('Who', sort=True):
             '#Recv/#Send%':      recv_send_pct,
             'InsulinDelivered':  f'{insulin_delivered:6.2f}',
             'PkgLot':            pkg_lot,
+            'ManufDate':         manuf_date,
             'PodFW':             pod_fw,
             'BleFW':             ble_fw,
             'LotNo':             lot_no,
@@ -208,9 +231,9 @@ for who, person_df in df.groupby('Who', sort=True):
 
 if output_rows:
     out_df = pd.DataFrame(output_rows, columns=[
-        'Who', 'OS-AID', 'Finish1', 'Finish2', 'lastMsgDate', 'podAddr',
+        'Who', 'OS-AID', 'PodType', 'Finish1', 'Finish2', 'lastMsgDate', 'podAddr',
         'podHrs', 'logHrs', '#Messages', 'Msg/hr', '#Sent', '#Recv', '#Recv/#Send%',
-        'InsulinDelivered', 'PkgLot', 'PodFW', 'BleFW', 'LotNo', 'SeqNo',
+        'InsulinDelivered', 'PkgLot', 'ManufDate', 'PodFW', 'BleFW', 'LotNo', 'SeqNo',
         'PDM RefCode', 'rawHex(Fault)', 'filenames',
         'appNameAndVersion', 'buildDate',
         'OS-AID branch', 'OS-AID SHA', 'OmnipodKit branch', 'OmnipodKit SHA',
