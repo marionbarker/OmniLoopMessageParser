@@ -79,7 +79,7 @@ fileDict = {
     'date':       thisDate,
     'person':     person,
     # statsFile overrides the default dash_stats.csv in analyzePodMessages
-    'statsFile':  os.path.join(outputPath, 'omnipodkit_stats.csv'),
+    'statsFile':  os.path.join(outputPath, 'omnipodkit_raw_pod_list.csv'),
 }
 
 print(f'\n Processing: {filename}')

@@ -4,7 +4,7 @@
 # Beta Input folder, oldest first (by file modification time).
 #
 # Designed to be re-run as new files arrive: just drop new files into the
-# Input folder and run this script.  Delete omnipodkit_stats.csv in the
+# Input folder and run this script.  Delete omnipodkit_raw_pod_list.csv in the
 # Output folder first if you want a fresh summary.
 
 import os
@@ -76,7 +76,7 @@ for filename, _ in files:
         'recordType': 'unknown',
         'date':       thisDate,
         'person':     person,
-        'statsFile':  os.path.join(outputPath, 'omnipodkit_stats.csv'),
+        'statsFile':  os.path.join(outputPath, 'omnipodkit_raw_pod_list.csv'),
     }
 
     print(f'========================================')
