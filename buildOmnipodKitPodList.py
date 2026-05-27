@@ -107,8 +107,8 @@ for who, person_df in df.groupby('Who', sort=True):
         pkg_lot = sv(start_row['PkgLot']) if start_row is not None else ''
         pod_fw  = sv(start_row['PodFW'])  if start_row is not None else ''
         ble_fw  = sv(start_row['BleFW'])  if start_row is not None else ''
-        lot_no  = sv(start_row['LotNo'])  if start_row is not None else ''
-        seq_no  = sv(start_row['SeqNo'])  if start_row is not None else ''
+        lot_no  = str(int(float(sv(start_row['LotNo'])))) if start_row is not None and sv(start_row['LotNo']) else ''
+        seq_no  = str(int(float(sv(start_row['SeqNo'])))) if start_row is not None and sv(start_row['SeqNo']) else ''
 
         # ── end-of-pod fields ─────────────────────────────────────────────
         finish1           = sv(end_row['Finish1'])
@@ -212,7 +212,9 @@ if output_rows:
         'appNameAndVersion', 'buildDate',
         'OS-AID branch', 'OS-AID SHA', 'OmnipodKit branch', 'OmnipodKit SHA',
     ])
-    out_df.fillna('').to_csv(outFile, index=False)
+    # Force all columns to string so mixed empty/numeric cols don't become floats
+    out_df = out_df.astype(str).replace('nan', '')
+    out_df.to_csv(outFile, index=False)
     print(f'\n{len(output_rows)} pod(s) written to {outFile}')
 else:
     print('\nNo pods to write.')
