@@ -9,8 +9,11 @@
 
 import os
 import re
+import shutil
 from main import main
 from preprocessOmnipodInput import preprocess_input_folder
+
+processedPath = os.path.expanduser('~/dev/OPK_Private_Beta/Processed')
 
 inputPath = os.path.expanduser('~/dev/OPK_Private_Beta/Input')
 outputPath = os.path.expanduser('~/dev/OPK_Private_Beta/Output')
@@ -90,3 +93,8 @@ for filename, _ in files:
     print(f'   Date:     {thisDate}')
 
     main(fileDict, outputPath, vFlag)
+
+    # ── move processed file to Processed folder (overwrite if exists) ─────
+    dest = os.path.join(processedPath, filename)
+    shutil.move(fullFilePath, dest)
+    print(f'  Moved to Processed/')
