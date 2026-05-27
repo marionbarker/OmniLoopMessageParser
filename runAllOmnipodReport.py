@@ -10,10 +10,14 @@
 import os
 import re
 from main import main
+from preprocessOmnipodInput import preprocess_input_folder
 
 inputPath = os.path.expanduser('~/dev/OPK_Private_Beta/Input')
 outputPath = os.path.expanduser('~/dev/OPK_Private_Beta/Output')
 vFlag = 5   # verbose csv output + stats row
+
+# ── unzip any uploaded archives before collecting files ──────────────────────
+preprocess_input_folder()
 
 # ── collect all .md and .txt files, sorted oldest first ──────────────────────
 files = []
