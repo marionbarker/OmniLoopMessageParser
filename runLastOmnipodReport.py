@@ -8,7 +8,7 @@
 #   Trio files:  "YYYY-MM-DD - Google Name.txt"
 #
 # Output goes to ~/dev/OPK_Private_Beta/Output:
-#   omnipodkit_stats.csv        one row per pod (appended, header on first run)
+#   omnipodkit_raw_pod_list.csv        one row per pod (appended, header on first run)
 #   podState_Name_YYYYMMDD_HHMM_#.csv  per-pod state detail
 
 import os

@@ -612,9 +612,13 @@ def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps,
     stream_out.write(f"{fileDict['appNameAndVersion']},")
     stream_out.write(f"{fileDict['buildDateString']},")
     stream_out.write(f"{fileDict.get('osAidBranch', '')},")
-    stream_out.write(f"{fileDict.get('osAidSHA', '')},")
+    sha = fileDict.get('osAidSHA', '')
+    sha_out = "'" + sha if sha else ''
+    stream_out.write(f"{sha_out},")
     stream_out.write(f"{fileDict.get('omnipodKitBranch', '')},")
-    stream_out.write(f"{fileDict.get('omnipodKitSHA', '')},")
+    sha = fileDict.get('omnipodKitSHA', '')
+    sha_out = "'" + sha if sha else ''
+    stream_out.write(f"{sha_out},")
     stream_out.write('\n')
     stream_out.close()
     print('  Row appended to ', outFile)
