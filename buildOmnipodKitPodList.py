@@ -88,6 +88,8 @@ for who, person_df in df.groupby('Who', sort=True):
         os_aid      = sv(grp['OS-AID'].mode().iloc[0])
         max_pod_hrs = grp['podHrs'].max()
 
+        # Deduplicate rows that are identical windows (same file appended twice)
+        grp = grp.drop_duplicates(subset=['lastMsgDate', 'podHrs', 'logHrs'])
         # Sort within session by lastMsgDate for end-row and Trio gap detection
         grp = grp.sort_values('lastMsgDate').reset_index(drop=True)
         end_row     = grp.iloc[-1]
@@ -180,6 +182,7 @@ for who, person_df in df.groupby('Who', sort=True):
             'podHrs':            f'{pod_hrs:6.2f}',
             'logHrs':            f'{log_hrs:6.2f}',
             '#Messages':         num_msgs,
+            'Msg/hr':            f'{num_msgs / pod_hrs:.1f}' if pod_hrs > 0 and abs(pod_hrs - log_hrs) / pod_hrs <= 0.10 else '',
             '#Sent':             num_sent,
             '#Recv':             num_recv,
             '#Recv/#Send%':      recv_send_pct,
@@ -206,7 +209,7 @@ for who, person_df in df.groupby('Who', sort=True):
 if output_rows:
     out_df = pd.DataFrame(output_rows, columns=[
         'Who', 'OS-AID', 'Finish1', 'Finish2', 'lastMsgDate', 'podAddr',
-        'podHrs', 'logHrs', '#Messages', '#Sent', '#Recv', '#Recv/#Send%',
+        'podHrs', 'logHrs', '#Messages', 'Msg/hr', '#Sent', '#Recv', '#Recv/#Send%',
         'InsulinDelivered', 'PkgLot', 'PodFW', 'BleFW', 'LotNo', 'SeqNo',
         'PDM RefCode', 'rawHex(Fault)', 'filenames',
         'appNameAndVersion', 'buildDate',
