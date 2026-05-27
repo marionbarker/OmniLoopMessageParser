@@ -562,8 +562,8 @@ def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps,
         # set up a table format order
         headerString = 'Who, OS-AID, Finish1, Finish2, lastMsgDate, podAddr, ' + \
                        'podHrs, logHrs, #Messages, #Sent, #Recv, ' + \
-                       '#Recv/#Send%,  InsulinDelivered, LotNo, PkgLot, SeqNo, ' + \
-                       'PodFW, BleFW, PDM RefCode, rawHex(Fault), ' + \
+                       '#Recv/#Send%,  InsulinDelivered, PkgLot, PodFW, BleFW, LotNo, SeqNo, ' + \
+                       'PDM RefCode, rawHex(Fault), ' + \
                        'filename, appNameAndVersion, buildDate, ' + \
                        'OS-AID branch, OS-AID SHA, ' + \
                        'OmnipodKit branch, OmnipodKit SHA, ' + \
@@ -601,11 +601,11 @@ def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps,
     stream_out.write(f"{recvMsgs},")
     stream_out.write(f"{100*recvMsgs/sendMsgs:6.0f},")
     stream_out.write(f"{logInfoDict['insulinDelivered']:6.2f},")
-    stream_out.write(f"{lotNo},")
     stream_out.write(f"{pkgLot},")
-    stream_out.write(f"{seqNo},")
     stream_out.write(f"{podFw},")
     stream_out.write(f"{bleFw},")
+    stream_out.write(f"{lotNo},")
+    stream_out.write(f"{seqNo},")
     stream_out.write(f"{pdmRefCode},")
     stream_out.write(f"{hexPattern},")
     stream_out.write(f"{fileDict['personFile']},")
