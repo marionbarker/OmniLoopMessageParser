@@ -13,10 +13,12 @@
 
 import os
 import re
+import shutil
 from main import main
 
-inputPath = os.path.expanduser('~/dev/OPK_Private_Beta/Input')
-outputPath = os.path.expanduser('~/dev/OPK_Private_Beta/Output')
+inputPath     = os.path.expanduser('~/dev/OPK_Private_Beta/Input')
+outputPath    = os.path.expanduser('~/dev/OPK_Private_Beta/Output')
+processedPath = os.path.expanduser('~/dev/OPK_Private_Beta/Processed')
 vFlag = 5   # verbose csv output + stats row
 
 # ── find the most recent .md or .txt file ────────────────────────────────────
@@ -88,3 +90,8 @@ print(f'   Type:     {loopType}')
 print(f'   Date:     {thisDate}')
 
 main(fileDict, outputPath, vFlag)
+
+# ── move processed file to Processed folder (overwrite if exists) ─────────────
+dest = os.path.join(processedPath, filename)
+shutil.move(fullFilePath, dest)
+print(f'  Moved to Processed/')
