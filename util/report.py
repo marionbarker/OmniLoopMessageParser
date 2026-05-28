@@ -593,7 +593,7 @@ def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps,
     stream_out.write(f"{Finish1},")
     stream_out.write(f"{Finish2},")
     stream_out.write(f"{logInfoDict['last_msg']},")
-    stream_out.write(f"{lastRow['address']},")
+    stream_out.write(f"'{lastRow['address']},")  # ' prefix prevents scientific notation
     stream_out.write(f"{(logInfoDict['podOnTime']/60):6.2f},")
     stream_out.write(f"{logInfoDict['msgLogHrs']:6.2f},")
     stream_out.write(f"{logInfoDict['numMsgs']},")

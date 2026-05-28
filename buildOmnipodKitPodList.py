@@ -200,7 +200,7 @@ for who, person_df in df.groupby('Who', sort=True):
             'Finish1':           finish1,
             'Finish2':           finish2,
             'lastMsgDate':       last_msg_date,
-            'podAddr':           pod_addr,
+            'podAddr':           "'" + pod_addr,
             'podHrs':            f'{pod_hrs:6.2f}',
             'logHrs':            f'{log_hrs:6.2f}',
             '#Messages':         num_msgs,
