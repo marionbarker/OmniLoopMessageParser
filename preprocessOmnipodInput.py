@@ -2,14 +2,18 @@
 #
 # Preprocess the OPK Private Beta Input folder before running analysis.
 #
-# For every .zip file matching "{any name} - Google Name.zip":
-#   1. Extract the Google user name from the zip filename.
-#   2. Unzip the archive.
-#   3. For each .md or .txt file inside (skipping __MACOSX metadata):
-#      - Append " - Google Name" before the file extension.
-#      - Move the renamed file to the Input folder.
-#   4. Move the zip file to ~/dev/OPK_Private_Beta/Processed.
-#   5. Remove the now-empty extraction directory (if any).
+# Handles two zip formats:
+#
+# 1. Per-person zips: "{any name} - Google Name.zip"
+#    - Extract .md and .txt files, appending " - Google Name" before extension.
+#    - Move zip to Processed.
+#
+# 2. Drive-download zips: "drive-download*.zip" (Google Drive bulk download)
+#    - Contains files already named with " - Google Name" convention.
+#    - Valid files (.md, date-prefixed .txt) are extracted to Input as-is.
+#    - Nested per-person .zip files are handled like case 1 above.
+#    - Unrecognised files (log, watch_log, etc.) are moved to Processed.
+#    - Move the outer zip to Processed.
 #
 # Called by runAllOmnipodReport.py and can also be run standalone.
 
@@ -18,61 +22,114 @@ import re
 import shutil
 import zipfile
 
-inputPath    = os.path.expanduser('~/dev/OPK_Private_Beta/Input')
+inputPath     = os.path.expanduser('~/dev/OPK_Private_Beta/Input')
 processedPath = os.path.expanduser('~/dev/OPK_Private_Beta/Processed')
+
+
+def _is_valid_report(basename):
+    """Return True if the file looks like a Loop or Trio report we want to process."""
+    if basename.endswith('.md'):
+        return True
+    if basename.endswith('.txt') and re.match(r'\d{4}-\d{2}-\d{2}', basename):
+        return True
+    return False
+
+
+def _handle_person_zip(zip_path, person_raw, dest_dir):
+    """
+    Extract .md/.txt files from a per-person zip, appending " - person_raw"
+    before the extension, into dest_dir. Returns list of extracted filenames.
+    """
+    suffix = ' - ' + person_raw
+    extracted = []
+    extract_dir = zip_path + '_extracted'
+    os.makedirs(extract_dir, exist_ok=True)
+
+    with zipfile.ZipFile(zip_path, 'r') as zf:
+        for member in zf.namelist():
+            if member.startswith('__MACOSX') or os.path.basename(member).startswith('._'):
+                continue
+            base = os.path.basename(member)
+            if not (base.endswith('.md') or base.endswith('.txt')):
+                continue
+            root, ext = os.path.splitext(base)
+            new_name = root + suffix + ext
+            zf.extract(member, extract_dir)
+            shutil.move(os.path.join(extract_dir, member),
+                        os.path.join(dest_dir, new_name))
+            print(f'  Extracted: {new_name}')
+            extracted.append(new_name)
+
+    shutil.rmtree(extract_dir, ignore_errors=True)
+    return extracted
 
 
 def preprocess_input_folder():
     os.makedirs(processedPath, exist_ok=True)
 
-    zip_files = [f for f in os.listdir(inputPath)
-                 if f.endswith('.zip') and ' - ' in f]
+    zip_files = [f for f in os.listdir(inputPath) if f.endswith('.zip')]
 
     if not zip_files:
         return
 
     for zip_name in zip_files:
         zip_path = os.path.join(inputPath, zip_name)
+        stem = zip_name[:-4]
 
-        # Extract Google user name from "... - Google Name.zip"
-        stem = zip_name[:-4]                          # strip .zip
-        person_raw = stem.rsplit(' - ', 1)[1]         # text after last " - "
-        suffix = ' - ' + person_raw                   # e.g. " - Marion Barker"
+        # ── Case 1: per-person zip ("{name} - Google Name.zip") ──────────────
+        if ' - ' in stem and not stem.lower().startswith('drive-download'):
+            person_raw = stem.rsplit(' - ', 1)[1]
+            print(f'\nUnzipping (per-person): {zip_name}')
+            print(f'  Person: {person_raw}')
+            _handle_person_zip(zip_path, person_raw, inputPath)
+            shutil.move(zip_path, os.path.join(processedPath, zip_name))
+            print(f'  Moved zip to Processed/')
+            continue
 
-        print(f'\nUnzipping: {zip_name}')
-        print(f'  Person: {person_raw}')
+        # ── Case 2: Google Drive bulk download ("drive-download*.zip") ───────
+        if stem.lower().startswith('drive-download'):
+            print(f'\nUnzipping (drive-download): {zip_name}')
+            extract_dir = os.path.join(inputPath, stem + '_extracted')
+            os.makedirs(extract_dir, exist_ok=True)
 
-        # Extract to a temp subdirectory inside Input to avoid name collisions
-        extract_dir = os.path.join(inputPath, stem + '_extracted')
-        os.makedirs(extract_dir, exist_ok=True)
+            with zipfile.ZipFile(zip_path, 'r') as zf:
+                zf.extractall(extract_dir)
 
-        with zipfile.ZipFile(zip_path, 'r') as zf:
-            for member in zf.namelist():
-                # Skip macOS metadata entries
-                if member.startswith('__MACOSX') or os.path.basename(member).startswith('._'):
-                    continue
-                # Only process .md and .txt files
-                base = os.path.basename(member)
-                if not (base.endswith('.md') or base.endswith('.txt')):
-                    continue
+            # Walk the extracted contents
+            for dirpath, _, filenames in os.walk(extract_dir):
+                for fname in filenames:
+                    if fname.startswith('__MACOSX') or fname.startswith('._'):
+                        continue
+                    fpath = os.path.join(dirpath, fname)
 
-                # Build new filename: insert " - Person" before extension
-                root, ext = os.path.splitext(base)
-                new_name = root + suffix + ext
+                    # Nested per-person zip
+                    if fname.endswith('.zip') and ' - ' in fname:
+                        nested_stem = fname[:-4]
+                        person_raw = nested_stem.rsplit(' - ', 1)[1]
+                        print(f'  Nested zip: {fname}  (person: {person_raw})')
+                        _handle_person_zip(fpath, person_raw, inputPath)
+                        # nested zip itself goes to Processed
+                        shutil.move(fpath, os.path.join(processedPath, fname))
+                        continue
 
-                # Extract to temp dir then move to Input
-                zf.extract(member, extract_dir)
-                extracted_path = os.path.join(extract_dir, member)
-                dest_path = os.path.join(inputPath, new_name)
-                shutil.move(extracted_path, dest_path)
-                print(f'  Extracted: {new_name}')
+                    # Valid Loop/Trio report — move to Input as-is
+                    if _is_valid_report(fname):
+                        dest = os.path.join(inputPath, fname)
+                        shutil.move(fpath, dest)
+                        print(f'  Extracted: {fname}')
+                        continue
 
-        # Remove extraction directory tree (now empty of useful files)
-        shutil.rmtree(extract_dir, ignore_errors=True)
+                    # Everything else (log, watch_log, etc.) — discard to Processed
+                    print(f'  Skipping (not a report): {fname}')
+                    shutil.move(fpath, os.path.join(processedPath, fname))
 
-        # Move zip to Processed folder
-        shutil.move(zip_path, os.path.join(processedPath, zip_name))
-        print(f'  Moved zip to Processed/')
+            shutil.rmtree(extract_dir, ignore_errors=True)
+            shutil.move(zip_path, os.path.join(processedPath, zip_name))
+            print(f'  Moved zip to Processed/')
+            continue
+
+        # ── Unrecognised zip (no " - " and not drive-download) ───────────────
+        print(f'\nSkipping unrecognised zip: {zip_name}')
 
 
 if __name__ == '__main__':
