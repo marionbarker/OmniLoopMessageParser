@@ -23,7 +23,7 @@ outputPath = os.path.expanduser('~/dev/OPK_Private_Beta/Output')
 rawFile  = os.path.join(outputPath, 'omnipodkit_raw_pod_list.csv')
 outFile  = os.path.join(outputPath, 'omnipodkit_pod_list.csv')
 
-MIN_NOMINAL_HRS = 60.0   # Success pods below this hrs → still running, skip
+MIN_NOMINAL_HRS = 48.0   # Success pods below this hrs → still running, skip
 PAIRING_TOL_HRS =  2.0   # rows within this window of pairedAt → same pod session
 TRIO_GAP_HRS    = 26.0   # gap between Trio rows → intermediate file missing
 
@@ -172,17 +172,8 @@ for who, person_df in df.groupby('Who', sort=True):
                 filenames.append(fstr)
         filenames_str = '; '.join(filenames)
 
-        # ── PodType from PkgLot prefix ────────────────────────────────────
-        if len(pkg_lot) >= 2:
-            prefix2 = pkg_lot[:2].upper()
-            if prefix2 in ('PP', 'PH', 'PR'):
-                pod_type = 'O5'
-            elif prefix2 == 'PD':
-                pod_type = 'DASH'
-            else:
-                pod_type = ''
-        else:
-            pod_type = ''
+        # ── PodType from raw list (set by report.py at parse time) ──────────
+        pod_type = sv(end_row['PodType'])
 
         # ── ManufDate from PkgLot characters 5-10 (1-indexed) ────────────
         if len(pkg_lot) >= 10:
