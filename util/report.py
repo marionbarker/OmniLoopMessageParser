@@ -527,6 +527,18 @@ def generatePlot(outFlag, fileDict, df):
     return thisOutFile
 
 
+def _pod_type_from_addr(address):
+    """Infer pod type from the 8-character hex pod address prefix."""
+    addr = str(address).lstrip("'").lower()
+    if addr.startswith('002'):
+        return 'O5'
+    elif addr.startswith('17'):
+        return 'DASH'
+    elif addr.startswith('1f'):
+        return 'Eros'
+    return ''
+
+
 def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps,
                    faultProcessedMsg):
     # if final message is not 0x1d or 0x0202, return without printing
@@ -560,7 +572,7 @@ def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps,
     stream_out = open(outFile, mode='at')
     if not isItThere:
         # set up a table format order
-        headerString = 'Who, OS-AID, Finish1, Finish2, lastMsgDate, podAddr, ' + \
+        headerString = 'Who, OS-AID, PodType, Finish1, Finish2, lastMsgDate, podAddr, ' + \
                        'podHrs, logHrs, #Messages, #Sent, #Recv, ' + \
                        '#Recv/#Send%,  InsulinDelivered, PkgLot, PodFW, BleFW, LotNo, SeqNo, ' + \
                        'PDM RefCode, rawHex(Fault), ' + \
@@ -588,8 +600,22 @@ def writeDashStats(outFile, podState, fileDict, logInfoDict, numInitSteps,
         lotNo = ''
         seqNo = ''
         pkgLot = ''
+
+    # Infer PodType: prefer PkgLot prefix, fall back to podAddr prefix
+    if len(pkgLot) >= 2:
+        prefix2 = pkgLot[:2].upper()
+        if prefix2 in ('PP', 'PH', 'PR'):
+            pod_type = 'O5'
+        elif prefix2 == 'PD':
+            pod_type = 'DASH'
+        else:
+            pod_type = _pod_type_from_addr(lastRow['address'])
+    else:
+        pod_type = _pod_type_from_addr(lastRow['address'])
+
     stream_out.write(f"{fileDict['person']},")
     stream_out.write(f"{fileDict.get('osAidType', '')},")
+    stream_out.write(f"{pod_type},")
     stream_out.write(f"{Finish1},")
     stream_out.write(f"{Finish2},")
     stream_out.write(f"{logInfoDict['last_msg']},")
