@@ -65,7 +65,9 @@ for filename, _ in files:
     # Loop files: "Loop Report YYYY-MM-DD HH_MM_SS<tz> ..."
     # Trio files: date is read from inside the file by loop_read_file
     if loopType == 'Loop':
-        match = re.search(r'(\d{4})-(\d{2})-(\d{2})\s+(\d{2})_(\d{2})', stem)
+        # Tolerate any separator between HH and MM (_  :  /  or none) to handle
+        # airdrop filenames (macOS shows / in Finder, Python sees :) vs email.
+        match = re.search(r'(\d{4})-(\d{2})-(\d{2})\D+(\d{2})[^0-9]?(\d{2})', stem)
         if match:
             thisDate = (match.group(1) + match.group(2) + match.group(3) +
                         '_' + match.group(4) + match.group(5))

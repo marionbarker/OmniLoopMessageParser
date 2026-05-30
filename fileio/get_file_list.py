@@ -92,15 +92,13 @@ def getFileDict(folderPath, personFile, loopType):
         fileDict['file'] = raw_filename[0][1:]
 
     if loopType.lower() == "loop":
-        val = '/.*$'
-        thisFullName = re.findall(val, personFile)
-        thisFullName = thisFullName[0]
-        thisFullName = thisFullName[1:]
-        thisFullName = thisFullName.replace(' ', '')  # remove spaces
-        thisFullName = thisFullName.replace('-', '')  # remove hypens
-        thisFullName = thisFullName.replace('_', '')  # remove underscores
-        # trim off some characters
-        thisDate = thisFullName[10:18] + '_' + thisFullName[18:22]
+        # Extract YYYYMMDD_HHMM from filename, tolerating any separator between
+        # HH and MM (_  :  /  or none) to handle airdrop vs email delivery.
+        m = re.search(r'(\d{4})-(\d{2})-(\d{2})\D+(\d{2})[^0-9]?(\d{2})',
+                      personFile)
+        if m:
+            thisDate = (m.group(1) + m.group(2) + m.group(3) +
+                        '_' + m.group(4) + m.group(5))
         fileDict['date'] = thisDate
 
     elif loopType.lower() == "fx":
