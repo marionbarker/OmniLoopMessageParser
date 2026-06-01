@@ -36,7 +36,7 @@ def pod_type_section(label, subset):
 
     lines.append(f'## {label} Pods\n')
     lines.append(f'**Total pods:** {total}  ')
-    lines.append(f'**Pods with faults:** {n_faults} ({pct_success:.1f}% success)\n')
+    lines.append(f'**Pods with faults:** {n_faults} ({pct_success:.0f}% success)\n')
 
     if n_faults > 0:
         lines.append('### Fault types\n')
@@ -84,6 +84,31 @@ lines.extend(pod_type_section('DASH', dash_pods))
 lines.append('## Tester List\n')
 for t in tester_list:
     lines.append(f'- {t}')
+lines.append('')
+
+# ── Statistics by User ────────────────────────────────────────────────────────
+
+lines.append('## Statistics by User\n')
+lines.append('| Tester | Pod Type | # Pods | % Success | Faults |')
+lines.append('|---|---|---:|---:|---|')
+
+for who in sorted(df['Who'].unique()):
+    person_df = df[df['Who'] == who]
+    display_name = who.replace('_', ' ')
+    for pod_type in ['O5', 'DASH', 'Eros']:
+        subset = person_df[person_df['PodType'].str.strip() == pod_type]
+        if len(subset) == 0:
+            continue
+        total = len(subset)
+        faulted = subset[subset['Finish2'].str.strip() == 'Fault']
+        n_faults = len(faulted)
+        pct_success = 100 * (total - n_faults) / total
+        if n_faults > 0:
+            fault_counts = faulted['Finish1'].value_counts()
+            fault_str = ', '.join(f'{code} x {cnt}' for code, cnt in fault_counts.items())
+        else:
+            fault_str = ''
+        lines.append(f'| {display_name} | {pod_type} | {total} | {pct_success:.0f} | {fault_str} |')
 lines.append('')
 
 report_md = '\n'.join(lines)
