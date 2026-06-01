@@ -97,8 +97,8 @@ for who, person_df in df.groupby('Who', sort=True):
 
         # Exclusion: still running
         if end_finish2 != 'Fault' and max_pod_hrs < MIN_NOMINAL_HRS:
-            print(f'  Skipping {who} / {pod_addr}: still running '
-                  f'({max_pod_hrs:.2f} hrs, no fault)')
+            print(f'  Skipping row from {who} / {pod_addr}: pod active time shorter than '
+                  f'{MIN_NOMINAL_HRS:.0f} hrs ({max_pod_hrs:.2f} hrs, no fault)')
             continue
 
         # Pairing row: earliest row with PkgLot
