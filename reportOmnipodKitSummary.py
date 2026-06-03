@@ -89,8 +89,8 @@ lines.append('')
 # ── Statistics by User ────────────────────────────────────────────────────────
 
 lines.append('## Statistics by User\n')
-lines.append('| Tester | Pod Type | # Pods | % Success | Faults |')
-lines.append('|---|---|---:|---:|---|')
+lines.append('| Tester | Pod Type | OS-AID | # Pods | % Success | Faults |')
+lines.append('|---|---|---|---:|---:|---|')
 
 for who in sorted(df['Who'].unique()):
     person_df = df[df['Who'] == who]
@@ -108,7 +108,9 @@ for who in sorted(df['Who'].unique()):
             fault_str = ', '.join(f'{code} x {cnt}' for code, cnt in fault_counts.items())
         else:
             fault_str = ''
-        lines.append(f'| {display_name} | {pod_type} | {total} | {pct_success:.0f} | {fault_str} |')
+        os_aids = sorted(subset['OS-AID'].str.strip().unique())
+        os_aid_str = ', '.join(a for a in os_aids if a)
+        lines.append(f'| {display_name} | {pod_type} | {os_aid_str} | {total} | {pct_success:.0f} | {fault_str} |')
 lines.append('')
 
 report_md = '\n'.join(lines)
