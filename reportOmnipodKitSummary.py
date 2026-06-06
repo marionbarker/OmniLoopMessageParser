@@ -122,9 +122,9 @@ if len(faults_df) > 0:
         ['Finish1', 'ManufDate', 'PkgLot', 'OS-AID'],
         na_position='last'
     )
-    fault_cols = ['Finish1', 'PodType', 'PkgLot', 'ManufDate', 'SeqNo',
+    fault_cols = ['Finish1', 'PodType', 'podHrs', 'PkgLot', 'ManufDate', 'SeqNo',
                   'PDM RefCode', 'PodFW', 'BleFW', 'OS-AID', 'Who']
-    fault_out = faults_df[fault_cols].rename(columns={'Finish1': 'Fault'})
+    fault_out = faults_df[fault_cols].rename(columns={'Finish1': 'Fault', 'podHrs': 'PodHrs'})
     fault_file = os.path.join(outputPath, 'fault_details.csv')
     fault_out.to_csv(fault_file, index=False)
 
