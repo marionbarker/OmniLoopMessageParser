@@ -113,6 +113,21 @@ for who in sorted(df['Who'].unique()):
         lines.append(f'| {display_name} | {pod_type} | {os_aid_str} | {total} | {pct_success:.0f} | {fault_str} |')
 lines.append('')
 
+# ── Fault Details CSV ─────────────────────────────────────────────────────────
+
+faults_df = df[df['Finish2'].str.strip() == 'Fault'].copy()
+if len(faults_df) > 0:
+    faults_df['Who'] = faults_df['Who'].str.replace('_', ' ')
+    faults_df = faults_df.sort_values(
+        ['Finish1', 'ManufDate', 'PkgLot', 'OS-AID'],
+        na_position='last'
+    )
+    fault_cols = ['Finish1', 'PodType', 'PkgLot', 'ManufDate', 'SeqNo',
+                  'PDM RefCode', 'PodFW', 'BleFW', 'OS-AID', 'Who']
+    fault_out = faults_df[fault_cols].rename(columns={'Finish1': 'Fault'})
+    fault_file = os.path.join(outputPath, 'fault_details.csv')
+    fault_out.to_csv(fault_file, index=False)
+
 report_md = '\n'.join(lines)
 
 # ── print markdown to terminal ────────────────────────────────────────────────
@@ -146,3 +161,5 @@ css = CSS(string='''
 
 HTML(string=html).write_pdf(reportFile, stylesheets=[css])
 print(f'\nReport written to {reportFile}')
+if len(faults_df) > 0:
+    print(f'Fault details written to {fault_file}')
