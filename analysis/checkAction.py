@@ -121,6 +121,8 @@ def checkAction(frame):
         if ((thisIdx[0] < 2) and (thisID == 2)):
             badIdx = np.append(badIdx, thisIdx[0])
             thisIdx = np.delete(thisIdx, 0)
+        if len(thisIdx) == 0:
+            continue
         if (thisIdx[-1] >= len(thisFrame)-1):
             # print("keys, values, thisIdx[-1] is ", keys, values)
             # print("thisIdx[-1], badIdx is ", thisIdx[-1], badIdx)
