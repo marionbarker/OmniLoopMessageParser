@@ -23,7 +23,7 @@ outputPath = os.path.expanduser('~/dev/OPK_Private_Beta/Output')
 rawFile  = os.path.join(outputPath, 'omnipodkit_raw_pod_list.csv')
 outFile  = os.path.join(outputPath, 'omnipodkit_pod_list.csv')
 
-MIN_NOMINAL_HRS = 48.0   # Success pods below this hrs → still running, skip
+MIN_NOMINAL_HRS = 36.0   # Success pods below this hrs → still running, skip
 PAIRING_TOL_HRS =  2.0   # rows within this window of pairedAt → same pod session
 TRIO_GAP_HRS    = 26.0   # gap between Trio rows → intermediate file missing
 
