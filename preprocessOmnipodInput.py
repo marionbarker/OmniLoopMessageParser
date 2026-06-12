@@ -21,9 +21,11 @@
 # Called by runAllOmnipodReport.py and can also be run standalone.
 
 import gzip
+import io
 import os
 import re
 import shutil
+import tarfile
 import zipfile
 
 inputPath     = os.path.expanduser('~/dev/OPK_Private_Beta/Input')
@@ -114,6 +116,62 @@ def _handle_gz_trio(fpath, fname, dest_dir):
     return out_name
 
 
+def _handle_tar(fpath, fname, dest_dir):
+    """
+    Handle a tar archive named like "tar03 - Joseph Moran.out".
+
+    Each tar contains directories (e.g. "2026-03-12_15PM_Trio_O5_79h/")
+    with a log.txt.gz inside. For each log.txt.gz, decompress it, extract
+    the date from the first line, and write as "YYYY-MM-DD - Person.txt".
+    Returns list of output filenames.
+    """
+    stem = fname.rsplit('.', 1)[0]  # "tar03 - Joseph Moran"
+    if ' - ' not in stem:
+        return []
+
+    person_name = stem.rsplit(' - ', 1)[1].strip()
+    extracted = []
+
+    try:
+        tf = tarfile.open(fpath)
+    except Exception as e:
+        print(f'  Warning: could not open tar {fname}: {e}')
+        return []
+
+    for member in tf.getmembers():
+        base = os.path.basename(member.name)
+        # Skip macOS metadata and non-gz files
+        if base.startswith('._') or not base.endswith('.gz'):
+            continue
+        # Skip directories
+        if not member.isfile():
+            continue
+
+        try:
+            gz_file = tf.extractfile(member)
+            content = gzip.decompress(gz_file.read()).decode('utf-8', errors='replace')
+        except Exception as e:
+            print(f'  Warning: could not decompress {member.name} in {fname}: {e}')
+            continue
+
+        first_line = content.lstrip().split('\n')[0]
+        date_match = re.match(r'(\d{4}-\d{2}-\d{2})', first_line)
+        if not date_match:
+            print(f'  Warning: no date in {member.name} from {fname}, skipping')
+            continue
+
+        date_str = date_match.group(1)
+        out_name = f'{date_str} - {person_name}.txt'
+        out_path = os.path.join(dest_dir, out_name)
+
+        with open(out_path, 'w', encoding='utf-8') as out_f:
+            out_f.write(content)
+        extracted.append(out_name)
+
+    tf.close()
+    return extracted
+
+
 def preprocess_input_folder():
     os.makedirs(processedPath, exist_ok=True)
 
@@ -169,6 +227,19 @@ def preprocess_input_folder():
                         else:
                             shutil.move(fpath, os.path.join(processedPath, fname))
                         continue
+
+                    # Tar archive with Trio logs (e.g. "tar03 - Person.out")
+                    if fname.endswith('.out') and ' - ' in fname:
+                        try:
+                            tarfile.open(fpath)
+                        except tarfile.TarError:
+                            pass
+                        else:
+                            out_names = _handle_tar(fpath, fname, inputPath)
+                            for out_name in out_names:
+                                print(f'  From tar {fname}: {out_name}')
+                            shutil.move(fpath, os.path.join(processedPath, fname))
+                            continue
 
                     # Valid Loop/Trio report — move to Input as-is
                     if _is_valid_report(fname):
