@@ -2,6 +2,7 @@
 #
 # Generate a PDF summary report from omnipodkit_pod_list.csv.
 # Prints to the terminal and writes to omnipodkit_summary.pdf in the Output folder.
+# Also writes summary_for_each_tester.csv and fault_details.csv.
 
 import os
 import markdown
@@ -49,6 +50,18 @@ def pod_type_section(label, subset):
             lines.append(f'| {fault_code} | {count} |')
         lines.append('')
 
+        # Detailed fault list
+        lines.append('### Detailed Fault List\n')
+        lines.append('| Fault code | PodHrs | FaultTime(UTC) | PkgLot | ManufDate | PDM RefCode |')
+        lines.append('|---|---|---|---|---|---|')
+        fault_rows = faults.sort_values(['Finish1', 'lastMsgDate'], na_position='last')
+        for _, row in fault_rows.iterrows():
+            def sv(col):
+                v = row.get(col, '')
+                return '' if pd.isna(v) else str(v).strip()
+            lines.append(f'| {sv("Finish1")} | {sv("podHrs")} | {sv("lastMsgDate")} | {sv("PkgLot")} | {sv("ManufDate")} | {sv("PDM RefCode")} |')
+        lines.append('')
+
     return lines
 
 
@@ -62,7 +75,6 @@ valid_dates = df['lastMsgDate'].dropna()
 earliest = valid_dates.min()
 latest   = valid_dates.max()
 testers  = df['Who'].nunique()
-tester_list = sorted(df['Who'].str.replace('_', ' ').unique())
 
 lines.append('## Overview\n')
 lines.append(f'**Testers:** {testers}  ')
@@ -81,17 +93,9 @@ o5_pods   = df[df['PodType'].str.strip() == 'O5']
 lines.extend(pod_type_section('O5', o5_pods))
 lines.extend(pod_type_section('DASH', dash_pods))
 
-lines.append('## Tester List\n')
-for t in tester_list:
-    lines.append(f'- {t}')
-lines.append('')
+# ── Summary for each tester CSV ──────────────────────────────────────────────
 
-# ── Statistics by User ────────────────────────────────────────────────────────
-
-lines.append('## Statistics by User\n')
-lines.append('| Tester | Pod Type | OS-AID | # Pods | % Success | Faults |')
-lines.append('|---|---|---|---:|---:|---|')
-
+tester_rows = []
 for who in sorted(df['Who'].unique()):
     person_df = df[df['Who'] == who]
     display_name = who.replace('_', ' ')
@@ -110,8 +114,19 @@ for who in sorted(df['Who'].unique()):
             fault_str = ''
         os_aids = sorted(subset['OS-AID'].str.strip().unique())
         os_aid_str = ', '.join(a for a in os_aids if a)
-        lines.append(f'| {display_name} | {pod_type} | {os_aid_str} | {total} | {pct_success:.0f} | {fault_str} |')
-lines.append('')
+        tester_rows.append({
+            'Tester': display_name,
+            'Pod Type': pod_type,
+            'OS-AID': os_aid_str,
+            '# Pods': total,
+            '% Success': f'{pct_success:.0f}',
+            'Faults': fault_str,
+        })
+
+tester_file = os.path.join(outputPath, 'summary_for_each_tester.csv')
+if tester_rows:
+    tester_df = pd.DataFrame(tester_rows)
+    tester_df.to_csv(tester_file, index=False)
 
 # ── Fault Details CSV ─────────────────────────────────────────────────────────
 
@@ -162,5 +177,6 @@ css = CSS(string='''
 
 HTML(string=html).write_pdf(reportFile, stylesheets=[css])
 print(f'\nReport written to {reportFile}')
+print(f'Tester summary written to {tester_file}')
 if len(faults_df) > 0:
     print(f'Fault details written to {fault_file}')
