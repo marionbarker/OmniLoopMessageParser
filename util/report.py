@@ -15,20 +15,32 @@ This code has functions to handle reporting to stdout or files
 """
 
 
-def printPodReconnectTimeSummary(fileDict, reconnectStatsDict):
-    # first draft of pod reconnection time statistics print out
-    print('\nReconnect time statistics for ', fileDict['person']+'/'+fileDict['file'])
-    for idx in range(len(reconnectStatsDict)):
-        print(f'\nPod address,', reconnectStatsDict[idx].get("pod_address"), 
-              f'\nNumber of reconnects in log,',
-              reconnectStatsDict[idx].get("numberConnections"))
-        print("  Reconnect Statistics, sec")
-        print("            Median    ,", reconnectStatsDict[idx].get('sec_median'))
-        statArray = reconnectStatsDict[idx].get('sec_min_05_95_max')
-        print("            Minumum.  ,", statArray[0])
+def _printTimingStats(label, statsDict):
+    """Print timing statistics for a list of per-pod stat dicts."""
+    for stats in statsDict:
+        if stats.get('count', 0) <= 0:
+            continue
+        print(f'\nPod address,', stats.get("pod_address"),
+              f'\nNumber of {label} in log,',
+              stats.get("count"))
+        print(f"  {label} Statistics, sec")
+        print("            Median    ,", stats.get('sec_median'))
+        statArray = stats.get('sec_min_05_95_max')
+        print("            Minimum   ,", statArray[0])
         print("             5%<      ,", statArray[1])
-        print("            95% <.    ,", statArray[2])
-        print("            Maximum.  ,", statArray[3])
+        print("            95% <     ,", statArray[2])
+        print("            Maximum   ,", statArray[3])
+
+
+def printPodReconnectTimeSummary(fileDict, reconnectStatsDict):
+    print('\nReconnect time statistics for ', fileDict['person']+'/'+fileDict['file'])
+    _printTimingStats('reconnects', reconnectStatsDict)
+    return
+
+
+def printPodConnectedTimeSummary(fileDict, connectedStatsDict):
+    print('\nConnected duration statistics for ', fileDict['person']+'/'+fileDict['file'])
+    _printTimingStats('connections', connectedStatsDict)
     return
 
 

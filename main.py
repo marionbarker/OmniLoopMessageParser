@@ -3,9 +3,10 @@ from analysis.analyzePodMessages import analyzePodMessages
 from analysis.analyzePodConnectionTime import analyzePodConnectionTime
 from analysis.analyzeAllPodsInDeviceLog import analyzeAllPodsInDeviceLog
 from util.report import printLoopDict
-from util.report import printPodReconnectTimeSummary
+from util.report import printPodReconnectTimeSummary, printPodConnectedTimeSummary
 from util.report import writeCombinedLogToOutputFile
 from util.report import generatePlot, printDict
+import pandas as pd
 import platform
 import os
 
@@ -137,11 +138,13 @@ def main(fileDict, outFlag, vFlag):
 
     ## pod connect time report is same for loop and fx files:
     connectDF = loopReadDict['connectDF']
+    logDF = loopReadDict.get('logDF', pd.DataFrame())
     if len(connectDF) > 0:
         if vFlag == 4 | vFlag == 5:
             thisOutFile = outFlag + '/' + 'pod_timing.csv'
             print('\n *** Saving pod connect time array to ', thisOutFile)
             connectDF.to_csv(thisOutFile)
-        reconnectDF, reconnectStatsDict = analyzePodConnectionTime(fileDict, connectDF, outFlag, vFlag)
+        reconnectDF, reconnectStatsDict, connectedStatsDict = analyzePodConnectionTime(fileDict, connectDF, logDF, outFlag, vFlag)
         printPodReconnectTimeSummary(fileDict, reconnectStatsDict)
+        printPodConnectedTimeSummary(fileDict, connectedStatsDict)
     print('------------------------------------------\n')

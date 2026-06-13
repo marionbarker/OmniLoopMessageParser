@@ -14,7 +14,13 @@ def get_timestamp_from_line(thisLine, recordType):
 
 def get_pod_address_from_line(thisLine, recordType):
     if recordType == "deviceLog":
-        pod_address = thisLine[41:49]
+        # Extract 8-char hex address before " connection"
+        # Works for both "Omni <addr>" (O5) and "Omnipod-Dash <addr>" (DASH)
+        pos = thisLine.find(' connection')
+        if pos >= 8:
+            pod_address = thisLine[pos-8:pos]
+        else:
+            pod_address = thisLine[41:49]
     else:
         pod_address = "N/A"
 
