@@ -32,7 +32,7 @@ def extract_pod_connect_time(raw_content, recordType):
 
     if numLines == 0:
         print("numLines = ", numLines, " in extract_pod_connect_time")
-        return logDF
+        return connectDF
     elif noisy:
         print("numLines = ", numLines, " in extract_pod_connect_time")
         print('first line\n', lines_raw[0])
@@ -82,11 +82,10 @@ def extract_pod_connect_time(raw_content, recordType):
     connectDF = pd.DataFrame(d)
 
     # git deltaTime between every message
-    connectDF['time'] = pd.to_datetime(connectDF['time'])
+    connectDF['time'] = pd.to_datetime(connectDF['time'], errors='coerce', utc=True)
     # calculate all the delta times
-    connectDF['deltaTime'] = (connectDF['time'] -
-                         connectDF['time'].shift()
-                         ).dt.seconds.fillna(0).astype(float)
+    delta = connectDF['time'] - connectDF['time'].shift()
+    connectDF['deltaTime'] = delta.dt.total_seconds().fillna(0).astype(float)
 
     if noisy:
         print(connectDF)

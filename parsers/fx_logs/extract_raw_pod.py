@@ -64,6 +64,6 @@ def extract_raw_pod(raw_content):
     logDF['time'] = pd.to_datetime(logDF['time'])
     logDF['deltaSec'] = (
         logDF['time'] -
-        logDF['time'].shift()).dt.seconds.fillna(0).astype(float)
+        logDF['time'].shift()).dt.total_seconds().fillna(0).astype(float)
 
     return logDF

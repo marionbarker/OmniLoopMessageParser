@@ -175,6 +175,29 @@ def _handle_tar(fpath, fname, dest_dir):
 def preprocess_input_folder():
     os.makedirs(processedPath, exist_ok=True)
 
+    # ── Handle standalone .gz and .out (tar) files in Input ──────────────────
+    for fname in list(os.listdir(inputPath)):
+        fpath = os.path.join(inputPath, fname)
+
+        if fname.endswith('.gz') and ' - ' in fname:
+            out_name = _handle_gz_trio(fpath, fname, inputPath)
+            if out_name:
+                print(f'Decompressed: {fname} → {out_name}')
+            os.remove(fpath)
+            continue
+
+        if fname.endswith('.out') and ' - ' in fname:
+            try:
+                tarfile.open(fpath)
+            except tarfile.TarError:
+                continue
+            out_names = _handle_tar(fpath, fname, inputPath)
+            for out_name in out_names:
+                print(f'From tar {fname}: {out_name}')
+            shutil.move(fpath, os.path.join(processedPath, fname))
+            continue
+
+    # ── Handle zip files ─────────────────────────────────────────────────────
     zip_files = [f for f in os.listdir(inputPath) if f.endswith('.zip')]
 
     if not zip_files:
